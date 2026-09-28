@@ -174,7 +174,7 @@ section{padding-top:72px}
       tags: ['meet', 'welcome', 'party'],
       ru: { t: 'Человеческое бинго', m: 'от 15 гостей · 30–60 минут', d: 'Карточка бинго из фактов о гостях: «был в трёх странах», «поёт в хоре». Найди людей, собери линию — и забирай приз.' },
       en: { t: 'Human Bingo', m: '15+ guests · 30–60 min', d: 'A bingo card made of guest facts: “has been to three countries”, “sings in a choir”. Find the people, complete a line and claim the prize.' } },
-    { id: 'couple-quiz', status: 'soon', emoji: ['💍', '❓'],
+    { id: 'couple-quiz', href: 'quiz/', status: 'beta', emoji: ['💍', '❓'],
       bg: 'linear-gradient(140deg,#3a2a33 0%,#1e1a22 100%)', blobs: ['#d4b2ab', '#e2cd92', '#c27078'],
       tags: ['wedding', 'quiz'],
       ru: { t: 'Квиз о паре', m: 'любое число гостей · 15–25 минут', d: 'Как хорошо гости знают жениха и невесту? Вопросы на экране, ответы с телефонов, таблица лидеров в реальном времени.' },
@@ -184,7 +184,7 @@ section{padding-top:72px}
   var I = {
     ru: { brand: 'Белоглазов', brandSub: 'игры для праздников', navGames: 'Игры', navHow: 'Как это работает', navPro: 'Тарифы', navLogin: 'Мои игры', kicker: 'Интерактивы для праздников',
       heroH: 'Игры, которые <em>знакомят</em> гостей', heroP: 'Выберите игру — гости сканируют QR и играют со своих телефонов, а вы видите весь вечер на большом экране.',
-      heroBtn: 'Выбрать игру', heroBtn2: 'Как это работает', open: 'Открыть игру', soon: 'Скоро', live: 'Доступно',
+      heroBtn: 'Выбрать игру', heroBtn2: 'Как это работает', open: 'Открыть игру', beta: 'Прототип', demo: 'Попробовать демо', soon: 'Скоро', live: 'Доступно',
       howK: 'Как это работает', howH: 'Три шага до живого вечера',
       s1h: 'Выберите игру', s1p: 'Каждая игра решает свою задачу: знакомство, разогрев, общий смех или трогательные пожелания паре.',
       s2h: 'Настройте под событие', s2p: 'Имена пары, свои задания и факты о гостях, язык — русский или английский. Всё из удобной панели ведущего.',
@@ -202,7 +202,7 @@ section{padding-top:72px}
       proP: 'Хотите получить доступ одним из первых? Оставьте заявку.', proBtn: 'Оставить заявку', foot: '© Павел Белоглазов · ведущий и автор игр' },
     en: { brand: 'Beloglazov', brandSub: 'games for celebrations', navGames: 'Games', navHow: 'How it works', navPro: 'Pricing', navLogin: 'My games', kicker: 'Interactive games for celebrations',
       heroH: 'Games that <em>connect</em> your guests', heroP: 'Pick a game — guests scan a QR code and play on their own phones, while you watch the whole night unfold on the big screen.',
-      heroBtn: 'Choose a game', heroBtn2: 'How it works', open: 'Open game', soon: 'Coming soon', live: 'Available',
+      heroBtn: 'Choose a game', heroBtn2: 'How it works', open: 'Open game', beta: 'Prototype', demo: 'Try the demo', soon: 'Coming soon', live: 'Available',
       howK: 'How it works', howH: 'Three steps to a lively night',
       s1h: 'Pick a game', s1p: 'Each game has its own job: breaking the ice, warming up the room, shared laughs or heartfelt wishes for the couple.',
       s2h: 'Make it yours', s2p: 'The couple’s names, your own missions and guest facts, Russian or English — all from a simple host panel.',
@@ -232,12 +232,12 @@ section{padding-top:72px}
     document.getElementById('filters').innerHTML = Object.keys(TAGS).filter(function (k) { return used[k]; }).map(function (k) {
       return '<button data-f="' + k + '"' + (k === F ? ' class="on"' : '') + '>' + TAGS[k][L === 'ru' ? 0 : 1] + '</button>'; }).join('');
     document.getElementById('grid').innerHTML = GAMES.filter(function (g) { return F === 'all' || g.tags.indexOf(F) >= 0; }).map(function (g) {
-      var t = g[L], live = g.status === 'live', tag = live ? 'a href="' + g.href + '"' : 'div';
+      var t = g[L], beta = g.status === 'beta', live = g.status === 'live' || beta, tag = live ? 'a href="' + g.href + '"' : 'div';
       var bl = g.blobs.map(function (c, i) { var p = [['-12%', '-30%', '62%'], ['62%', '48%', '52%'], ['70%', '-24%', '34%']][i]; return '<i class="b' + (i + 1) + '" style="background:' + c + ';opacity:.5;left:' + p[0] + ';top:' + p[1] + ';width:' + p[2] + ';aspect-ratio:1"></i>'; }).join('');
       return '<' + tag + ' class="game"><div class="cover" style="background:' + g.bg + '">' + bl + '<div class="em">' + g.emoji.map(function (e) { return '<span>' + e + '</span>'; }).join('') + '</div>' +
-        '<span class="badge' + (live ? '' : ' soon') + '">' + (live ? d.live : d.soon) + '</span></div>' +
+        '<span class="badge' + (live && !beta ? '' : ' soon') + '">' + (beta ? d.beta : live ? d.live : d.soon) + '</span></div>' +
         '<div class="body"><h3>' + esc(t.t) + '</h3><div class="meta">' + esc(t.m) + '</div><div class="tags">' + g.tags.map(function (k) { return '<span class="chip">' + TAGS[k][L === 'ru' ? 0 : 1] + '</span>'; }).join('') + '</div>' +
-        '<p>' + esc(t.d) + '</p>' + (live ? '<span class="btn gold">' + d.open + '</span>' : '<span class="btn ghost" disabled>' + d.soon + '</span>') + '</div></' + (live ? 'a' : 'div') + '>';
+        '<p>' + esc(t.d) + '</p>' + (live ? '<span class="btn gold">' + (beta ? d.demo : d.open) + '</span>' : '<span class="btn ghost" disabled>' + d.soon + '</span>') + '</div></' + (live ? 'a' : 'div') + '>';
     }).join('');
   }
   document.getElementById('filters').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; F = b.dataset.f; paint(); };
