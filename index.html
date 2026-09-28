@@ -1,669 +1,197 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Секретная миссия · Secret Mission</title>
-<meta name="description" content="Лев и Наташа · Секретная миссия">
-<meta name="theme-color" content="#212330">
-<meta property="og:title" content="Секретная миссия · Secret Mission">
-<meta property="og:description" content="Лев и Наташа · Lev & Natasha">
+<title>Игры для праздников · Павел Белоглазов</title>
+<meta name="description" content="Интерактивные игры для свадеб и праздников: гости играют с телефонов по QR-коду.">
+<meta name="theme-color" content="#14151d">
+<meta property="og:title" content="Игры для праздников · Павел Белоглазов">
+<meta property="og:description" content="Интерактивы, которые знакомят гостей и оживляют вечер">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --accent:#b8894d; --bg:#f6f1e9; --card:#ffffff; --ink:#2a2420; --muted:#86796c; --line:#e8dfd2;
-    --ok:#3f8a5a; --err:#b4483c; --r:18px;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.45}
-  body{min-height:100vh;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 28px)}
-  .wrap{max-width:460px;margin:0 auto}
-  h1,h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;margin:0;line-height:1.1}
-  h1{font-size:44px;letter-spacing:.5px}
-  h2{font-size:30px}
-  .langbar{display:flex;justify-content:flex-end;margin-bottom:6px}
-  .lang{display:inline-flex;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:3px}
-  .lang button{border:0;background:none;font:inherit;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);padding:6px 12px;border-radius:999px}
-  .lang button.on{background:var(--ink);color:#fff}
-  .hero{text-align:center;padding:10px 6px 22px}
-  .kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:8px}
-  .lead{color:var(--muted);margin:14px 0 0}
-  .card{background:var(--card);border-radius:var(--r);padding:20px;margin-bottom:14px;box-shadow:0 1px 2px rgba(60,40,20,.05),0 8px 24px rgba(60,40,20,.06)}
-  .center{text-align:center}
-  .lbl{display:block;font-weight:700;font-size:15px;margin:4px 0 8px}
-  .lbl .opt{font-weight:500;color:var(--muted);font-size:13px}
-  .lbl + .inp, .lbl + .seg{margin-bottom:18px}
-  .hint{color:var(--muted);font-size:13px;margin:-4px 0 12px}
-  .inp{width:100%;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;font:inherit;font-size:17px;background:#fffdfa;color:var(--ink);outline:none;resize:none}
-  .inp:focus{border-color:var(--accent)}
-  .inp.code{font-size:34px;letter-spacing:.35em;text-align:center;font-weight:700;padding:12px}
-  textarea.inp{font-size:16px}
-  .seg{display:flex;gap:8px}
-  .seg button{flex:1;border:1.5px solid var(--line);background:#fffdfa;border-radius:12px;padding:12px 6px;font:inherit;font-size:14px;font-weight:600;color:var(--ink)}
-  .seg button.on{border-color:var(--accent);background:var(--accent);color:#fff}
-  .facts{display:flex;flex-direction:column;gap:8px}
-  .fact{display:flex;align-items:center;gap:12px;text-align:left;border:1.5px solid var(--line);background:#fffdfa;border-radius:14px;padding:12px 14px;font:inherit;font-size:15px;color:var(--ink)}
-  .fact .box{flex:0 0 22px;height:22px;border-radius:7px;border:2px solid var(--line);position:relative}
-  .fact.on{border-color:var(--accent);background:#fbf5ec}
-  .fact.on .box{background:var(--accent);border-color:var(--accent)}
-  .fact.on .box:after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
-  .btn{display:block;width:100%;border:0;border-radius:16px;padding:17px;margin-top:16px;font:inherit;font-size:17px;font-weight:700;background:var(--ink);color:#fff}
-  .btn.acc{background:var(--accent)}
-  .btn:disabled{opacity:.55}
-  .link{display:block;margin:12px auto 0;background:none;border:0;color:var(--muted);font:inherit;font-size:14px;text-decoration:underline;text-underline-offset:3px;padding:8px}
-  .err{color:var(--err);font-size:14px;font-weight:600;margin-top:10px;min-height:0}
-  .err:empty{display:none}
-  .muted{color:var(--muted)}
-  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
-  .hello{font-weight:700;font-size:17px}
-  .dots{display:flex;gap:5px;margin-top:6px;align-items:center;flex-wrap:wrap}
-  .dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
-  .dot.on{background:var(--accent)}
-  .plus{font-size:12px;color:var(--accent);font-weight:700;margin-left:4px}
-  .codechip{border:1.5px solid var(--accent);background:#fff;border-radius:14px;padding:6px 12px;text-align:center;font:inherit;color:var(--ink)}
-  .codechip span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
-  .codechip b{font-size:22px;letter-spacing:.12em}
-  .task{font-size:19px;line-height:1.4;margin:12px 0 0}
-  .task.big{font-family:"Cormorant Garamond",Georgia,serif;font-size:27px;font-weight:600;line-height:1.2}
-  .secret{font-size:12px;color:var(--muted);margin:14px 0 0;letter-spacing:.04em}
-  .emoji{font-size:110px;line-height:1;margin:14px 0 6px}
-  .ename{font-family:"Cormorant Garamond",Georgia,serif;font-size:32px;font-weight:600}
-  .banner{background:var(--ink);color:#fff;border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
-  .banner b{color:#f3d9ae}
-  .photo{display:flex;align-items:center;justify-content:center;gap:10px;border:1.5px dashed var(--line);border-radius:14px;padding:14px;margin-top:14px;color:var(--muted);font-weight:600;cursor:pointer;flex-direction:column}
-  .photo input{display:none}
-  .photo img{max-width:100%;max-height:220px;border-radius:10px}
-  .spin{width:54px;height:54px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--accent);margin:18px auto;animation:sp 1s linear infinite}
-  @keyframes sp{to{transform:rotate(360deg)}}
-  .ov{position:fixed;inset:0;background:rgba(30,22,16,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px;z-index:10;animation:fi .2s}
-  .ovcard{background:var(--card);border-radius:24px;padding:28px 22px 18px;width:100%;max-width:460px;text-align:center;animation:up .28s cubic-bezier(.2,.9,.3,1.2)}
-  @keyframes fi{from{opacity:0}}
-  @keyframes up{from{transform:translateY(40px);opacity:0}}
-  .check{width:68px;height:68px;border-radius:50%;background:var(--ok);color:#fff;font-size:36px;line-height:68px;margin:0 auto 14px}
-  .bigcode{font-size:84px;font-weight:700;letter-spacing:.15em;margin:10px 0}
-  .progress{font-weight:700;color:var(--accent);margin-top:10px}
-  .loading{text-align:center;padding-top:30vh;color:var(--muted)}
-  /* живая лента */
-  .live{padding:18px 18px 8px}
-  .livehead{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--ink)}
-  .pulse{width:8px;height:8px;border-radius:50%;background:#d0493b;box-shadow:0 0 0 0 rgba(208,73,59,.5);animation:pl 1.6s infinite}
-  @keyframes pl{70%{box-shadow:0 0 0 8px rgba(208,73,59,0)}100%{box-shadow:0 0 0 0 rgba(208,73,59,0)}}
-  .lstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 6px}
-  .lstats div{background:#fbf7f1;border-radius:12px;padding:10px 8px;text-align:center}
-  .lstats b{display:block;font-size:24px;font-weight:700;line-height:1.1}
-  .lstats span{font-size:11px;color:var(--muted);font-weight:600}
-  .podium{margin:14px 0 4px}
-  .podium h3,.ticker h3{margin:0 0 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
-  .prow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
-  .prow:last-child{border:0}
-  .medal{font-size:22px;width:28px;text-align:center}
-  .pname{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pscore{font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
-  .ticker{margin-top:14px}
-  .trow{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
-  .trow:last-child{border:0}
-  .trow .tt{flex:1}
-  .trow .ago{font-size:12px;color:var(--muted);white-space:nowrap}
-  .trow.new{animation:nw 1.2s ease}
-  @keyframes nw{from{background:#fbf0de}to{background:transparent}}
-  .empty{color:var(--muted);font-size:14px;padding:6px 0 10px}
+:root{--bg:#14151d;--bg2:#1b1c27;--card:#212330;--card2:#272a39;--line:rgba(255,255,255,.08);--ink:#f5efe4;--text:#e7dfd1;--muted:#a99c8e;--gold:#e2cd92;--gold2:#d8c28a;--acc:#b8894d}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.55;overflow-x:clip}
+a{color:inherit}
+.serif{font-family:"Cormorant Garamond",Georgia,serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.top{position:sticky;top:0;z-index:10;background:rgba(20,21,29,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
+.brand i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#e2cd92,#8a6a35);display:grid;place-items:center;font-style:normal;color:#14151d;font-weight:800;font-size:14px}
+.brand b{font-family:"Cormorant Garamond",Georgia,serif;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:.2px}
+.brand span{color:var(--muted);font-size:13px}
+.nav{display:flex;gap:4px;margin-left:auto;align-items:center}
+.nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:14px;padding:8px 12px;border-radius:999px}
+.nav a:hover,.nav a.on{color:var(--ink);background:rgba(255,255,255,.06)}
+.lang{border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:800;font-size:12px;letter-spacing:.06em;width:40px;height:40px;border-radius:50%;cursor:pointer;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:14px;padding:14px 22px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;transition:transform .15s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:linear-gradient(135deg,#e8d59e,#c9a86a);color:#191a24}
+.btn.ghost{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:rgba(255,255,255,.1)}
+.btn[disabled]{opacity:.45;cursor:default}
+.k{color:var(--gold2);letter-spacing:.24em;text-transform:uppercase;font-weight:700;font-size:12px}
+.chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--muted);font-weight:600}
+footer{border-top:1px solid var(--line);margin-top:80px;padding:32px 0 48px;color:var(--muted);font-size:13px}
+footer .wrap{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
+@media (max-width:760px){.nav a:not(.keep){display:none}.brand span{display:none}.wrap{padding:0 16px}}
+
+.hero{padding:72px 0 40px;text-align:center;position:relative}
+.hero:before{content:"";position:absolute;left:50%;top:-40px;width:900px;height:420px;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(226,205,146,.16),rgba(20,21,29,0) 65%);pointer-events:none}
+.hero h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clamp(42px,7vw,76px);line-height:1.02;margin:14px 0 16px;color:var(--ink)}
+.hero h1 em{color:var(--gold);font-style:italic}
+.hero p{max-width:620px;margin:0 auto;color:var(--muted);font-size:18px}
+.hero .cta{display:flex;gap:10px;justify-content:center;margin-top:28px;flex-wrap:wrap}
+.filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:24px 0 28px}
+.filters button{border:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-weight:600;font-size:14px;padding:8px 16px;border-radius:999px;cursor:pointer}
+.filters button.on{background:var(--ink);color:#14151d;border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.game{background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:transform .25s,box-shadow .25s,border-color .25s}
+.game:hover{transform:translateY(-4px);box-shadow:0 24px 50px rgba(0,0,0,.35);border-color:rgba(226,205,146,.25)}
+.cover{position:relative;aspect-ratio:16/10;overflow:hidden;display:grid;place-items:center}
+.cover .b1,.cover .b2,.cover .b3{position:absolute;border-radius:50%;filter:blur(2px)}
+.cover .em{position:relative;font-size:clamp(64px,8vw,92px);line-height:1;filter:drop-shadow(0 14px 22px rgba(0,0,0,.35));display:flex;gap:6px;transition:transform .4s}
+.game:hover .cover .em{transform:scale(1.06) rotate(-2deg)}
+.badge{position:absolute;top:12px;right:12px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(20,21,29,.7);color:var(--gold);backdrop-filter:blur(6px)}
+.badge.soon{color:#cbbfb1}
+.body{padding:18px 20px 20px;display:flex;flex-direction:column;flex:1}
+.body h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;font-weight:600;margin:0;color:var(--ink);line-height:1.1}
+.meta{color:var(--muted);font-size:13px;margin:6px 0 10px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.body p{margin:0 0 18px;color:var(--text);font-size:14.5px;flex:1}
+.body .btn{width:100%}
+section{padding-top:72px}
+.h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clamp(34px,4.6vw,48px);color:var(--ink);margin:10px 0 28px;line-height:1.05}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.step{background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:24px}
+.step b{display:block;font-family:"Cormorant Garamond",Georgia,serif;font-size:44px;color:var(--gold);line-height:1;font-weight:500}
+.step h4{margin:12px 0 6px;font-size:18px;color:var(--ink)}
+.step p{margin:0;color:var(--muted);font-size:14.5px}
+.pro{background:linear-gradient(135deg,#262838,#1b1c27);border:1px solid rgba(226,205,146,.18);border-radius:28px;padding:44px;display:grid;grid-template-columns:1.3fr 1fr;gap:32px;align-items:center}
+.pro ul{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.pro li{display:flex;gap:12px;color:var(--text)}
+.pro li:before{content:"✦";color:var(--gold)}
+.pro .soon{display:inline-block;margin-bottom:14px}
+@media (max-width:980px){.grid{grid-template-columns:repeat(2,1fr)}.pro{grid-template-columns:1fr;padding:28px}}
+@media (max-width:640px){.grid,.steps{grid-template-columns:1fr}.hero{padding:48px 0 24px}.hero p{font-size:16px}}
 </style>
 </head>
 <body>
+<div class="top"><div class="wrap">
+  <a class="brand" href="./"><i>PB</i><b data-t="brand"></b><span data-t="brandSub"></span></a>
+  <nav class="nav"><a href="#games" class="on keep" data-t="navGames"></a><a href="#how" data-t="navHow"></a><a href="#pro" data-t="navPro"></a></nav>
+  <button class="lang" id="lang">EN</button>
+</div></div>
+
 <div class="wrap">
-  <div class="langbar"><div class="lang" id="lang"><button data-l="ru">RU</button><button data-l="en">EN</button></div></div>
-  <div id="app"><div class="loading"><div class="spin"></div></div></div>
-  <div id="live"></div>
+  <div class="hero">
+    <div class="k" data-t="kicker"></div>
+    <h1 data-h="heroH"></h1>
+    <p data-t="heroP"></p>
+    <div class="cta"><a class="btn gold" href="#games" data-t="heroBtn"></a><a class="btn ghost" href="#how" data-t="heroBtn2"></a></div>
+  </div>
+
+  <div id="games">
+    <div class="filters" id="filters"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <section id="how">
+    <div class="k" data-t="howK"></div>
+    <div class="h2" data-t="howH"></div>
+    <div class="steps">
+      <div class="step"><b>01</b><h4 data-t="s1h"></h4><p data-t="s1p"></p></div>
+      <div class="step"><b>02</b><h4 data-t="s2h"></h4><p data-t="s2p"></p></div>
+      <div class="step"><b>03</b><h4 data-t="s3h"></h4><p data-t="s3p"></p></div>
+    </div>
+  </section>
+
+  <section id="pro">
+    <div class="pro">
+      <div>
+        <span class="chip soon" data-t="proSoon"></span>
+        <div class="h2" style="margin-top:0" data-t="proH"></div>
+        <ul><li data-t="pro1"></li><li data-t="pro2"></li><li data-t="pro3"></li><li data-t="pro4"></li></ul>
+      </div>
+      <div style="text-align:center">
+        <p style="color:var(--muted);margin:0 0 18px" data-t="proP"></p>
+        <a class="btn gold" href="https://pabeloglazov.com" target="_blank" rel="noopener" data-t="proBtn"></a>
+      </div>
+    </div>
+  </section>
 </div>
-<script>window.SM_API = "https://script.google.com/macros/s/AKfycbya_bzgLHs0WaEi4XPcToAAQ039oqrWCSDM6sTKrdPgLLcmf2yVhJPdj6N944349FMv/exec"; var CFG = null;</script>
-<script>
-window.SM_START = function () {
-  var app = document.getElementById('app');
-  var liveEl = document.getElementById('live');
-  var LS = 'secret_mission_gid_v1', LS_LANG = 'secret_mission_lang';
-  var gid = store('get', LS);
-  var ST = null, pollT = null, feedT = null, lastSig = '', photoData = null, busy = false;
-  var regSide = '', regFacts = {}, view = 'welcome', FEED = null, seenEv = {};
 
+<footer><div class="wrap"><span data-t="foot"></span><a href="https://pabeloglazov.com" target="_blank" rel="noopener">pabeloglazov.com</a></div></footer>
+
+<script>
+(function () {
+  var GAMES = [
+    { id: 'secret-mission', href: 'secret-mission/', status: 'live', emoji: ['🕶️', '💌'],
+      bg: 'linear-gradient(140deg,#2b2d40 0%,#1c1d29 100%)', blobs: ['#e2cd92', '#c27078', '#b7d3e8'],
+      tags: ['wedding', 'meet', 'welcome'],
+      ru: { t: 'Секретная миссия', m: 'от 20 гостей · 1–2 часа · телефоны по QR', d: 'Каждый гость получает личную тайную миссию: найти пару по символу, познакомиться с «другой стороной», собрать пожелания молодым. Ведущий видит всё вживую на проекторе.' },
+      en: { t: 'Secret Mission', m: '20+ guests · 1–2 hours · phones via QR', d: 'Every guest gets a private secret mission: find their emoji match, meet the other side of the family, collect wishes for the couple. The host sees it all live on the projector.' } },
+    { id: 'human-bingo', status: 'soon', emoji: ['🎯', '✅'],
+      bg: 'linear-gradient(140deg,#2a3340 0%,#1b1f29 100%)', blobs: ['#b7d3e8', '#a7ae86', '#e08b45'],
+      tags: ['meet', 'welcome', 'party'],
+      ru: { t: 'Человеческое бинго', m: 'от 15 гостей · 30–60 минут', d: 'Карточка бинго из фактов о гостях: «был в трёх странах», «поёт в хоре». Найди людей, собери линию — и забирай приз.' },
+      en: { t: 'Human Bingo', m: '15+ guests · 30–60 min', d: 'A bingo card made of guest facts: “has been to three countries”, “sings in a choir”. Find the people, complete a line and claim the prize.' } },
+    { id: 'couple-quiz', status: 'soon', emoji: ['💍', '❓'],
+      bg: 'linear-gradient(140deg,#3a2a33 0%,#1e1a22 100%)', blobs: ['#d4b2ab', '#e2cd92', '#c27078'],
+      tags: ['wedding', 'quiz'],
+      ru: { t: 'Квиз о паре', m: 'любое число гостей · 15–25 минут', d: 'Как хорошо гости знают жениха и невесту? Вопросы на экране, ответы с телефонов, таблица лидеров в реальном времени.' },
+      en: { t: 'Couple Quiz', m: 'any group size · 15–25 min', d: 'How well do the guests know the bride and groom? Questions on screen, answers from phones, a live leaderboard.' } }
+  ];
+  var TAGS = { all: ['Все игры', 'All games'], wedding: ['Свадьба', 'Wedding'], meet: ['Знакомство', 'Icebreaker'], welcome: ['Welcome-зона', 'Welcome area'], quiz: ['Квиз', 'Quiz'], party: ['Вечеринка', 'Party'] };
   var I = {
-    ru: {
-      name: 'Как тебя зовут?', namePh: 'Имя', side: 'Ты гость со стороны…', groom: 'жениха', bride: 'невесты', both: 'обоих',
-      factsLbl: 'Отметь, что про тебя правда', factsHint: 'По этим пунктам тебя будут искать другие гости. Можно ничего не отмечать.',
-      getMission: 'Получить миссию', issuing: 'Выдаём миссию…', lost: 'Я уже играю, но потерял(а) страницу', enterName: 'Напиши своё имя',
-      backTitle: 'Вернуться в игру', backLead: 'Введи имя и свой код — так же, как при регистрации.', nameShort: 'Имя', yourCode: 'Твой код',
-      back: 'Вернуться', goBack: 'Назад', closed: 'Игра сейчас закрыта. Следи за ведущим!', doneCount: 'Выполнено миссий: ',
-      codeChip: 'твой код', finale: 'Финал!', noteLbl: 'Что интересного узнал(а)?', optional: 'по желанию', notePh: 'Ведущему может пригодиться',
-      addPhoto: '+ Добавить фото', mission: 'Миссия № ', ready: 'Готов(а)?', readyNext: 'Готов(а) к следующей?',
-      onlyYou: 'Задание увидишь только ты. Никому его не показывай.',
-      tFind: 'найди человека', tMeet: 'новое знакомство', tFun: 'весёлая миссия',
-      pairLost: 'Твоя пара потерялась', pairPick: 'Подбираем тебе пару', pairNew: 'Ищем тебе новую. ', pairWait: 'Это займёт до 20 секунд. Не закрывай страницу.', noWait: 'Не ждать — дать другое задание',
-      findPair: 'найди свою пару', pairText: 'Где-то в зале есть ещё один человек с таким же символом. Найдите друг друга!',
-      pairHint: 'Подсказка: можно показывать экран — символ не секрет', pairCode: 'Нашли? Введите код друг друга', weFound: 'Мы нашли друг друга',
-      metKicker: 'вы нашлись', itsX: 'Это {n}!', didIt: 'Выполнили', secret: 'Секретно. Не показывай этот экран.',
-      askCode: 'Нашёл(ла)? Спроси его код', count: 'Засчитать', done: 'Готово', skip: 'Пропустить эту миссию (осталось: {n})',
-      cantFind: 'Не можем найти друг друга', processing: 'Обрабатываем…', replacePhoto: 'Заменить фото', photoFail: 'Не получилось, попробуй другое фото',
-      choosing: 'Выбираем миссию…', code3: 'Код — это 3 цифры', checking: 'Проверяем…', enterCode3: 'Введи 3-значный код человека',
-      uploading: 'Загружаем фото…', changing: 'Меняем…', giveUpQ: 'Точно не можете найти друг друга? Выдадим тебе другую миссию.',
-      showCode: 'Покажи его человеку, который тебя нашёл.', close: 'Закрыть', allDone: 'Все миссии выполнены', inFinal: 'Ты в финале!',
-      playOn: 'Играть дальше', counted: 'Засчитано!', newFriend: 'Новое знакомство: ', of: ' из ', nextMission: 'Следующая миссия', later: 'Чуть позже',
-      wait: 'Секунду…',
-      live: 'Сейчас в игре', players: 'игроков', meets: 'знакомств', missions: 'миссий', top3: 'Лидеры', tick: 'Что происходит',
-      noLeaders: 'Первые миссии вот-вот будут выполнены', noEvents: 'Скоро здесь появятся первые события',
-      eJoin: '👋 К игре присоединился новый гость', ePair: '{e} Пара нашла друг друга', eFind: '🔎 Кто-то нашёл нужного человека',
-      eMeet: '🤝 Новое знакомство', eFun: '🎉 Выполнена весёлая миссия', ePairDone: '💬 Пара выполнила общее задание', eFinish: '🏆 Кто-то прошёл все миссии!',
-      now: 'только что', min: ' мин', hour: ' ч', ago: ' назад', finishedMark: '★ финал'
-    },
-    en: {
-      name: 'What’s your name?', namePh: 'Name', side: 'You’re a guest of the…', groom: 'groom', bride: 'bride', both: 'both',
-      factsLbl: 'Check what’s true about you', factsHint: 'Other guests will look for you by these. You can skip them all.',
-      getMission: 'Get my mission', issuing: 'Getting your mission…', lost: 'I’m already playing but lost the page', enterName: 'Please enter your name',
-      backTitle: 'Back to the game', backLead: 'Enter your name and code, exactly as when you signed up.', nameShort: 'Name', yourCode: 'Your code',
-      back: 'Continue', goBack: 'Back', closed: 'The game is closed right now. Watch for the host!', doneCount: 'Missions completed: ',
-      codeChip: 'your code', finale: 'Finale!', noteLbl: 'What did you learn?', optional: 'optional', notePh: 'The host might use it',
-      addPhoto: '+ Add a photo', mission: 'Mission #', ready: 'Ready?', readyNext: 'Ready for the next one?',
-      onlyYou: 'Only you will see the mission. Don’t show it to anyone.',
-      tFind: 'find someone', tMeet: 'new acquaintance', tFun: 'fun mission',
-      pairLost: 'Your partner got lost', pairPick: 'Finding you a partner', pairNew: 'Looking for a new one. ', pairWait: 'This takes up to 20 seconds. Keep this page open.', noWait: 'Don’t wait — give me another mission',
-      findPair: 'find your match', pairText: 'Somewhere in the room there’s one more person with the same symbol. Find each other!',
-      pairHint: 'Tip: you can show your screen — the symbol isn’t secret', pairCode: 'Found each other? Enter each other’s code', weFound: 'We found each other',
-      metKicker: 'you found each other', itsX: 'It’s {n}!', didIt: 'Done', secret: 'Secret. Don’t show this screen.',
-      askCode: 'Found them? Ask for their code', count: 'Submit', done: 'Done', skip: 'Skip this mission ({n} left)',
-      cantFind: 'We can’t find each other', processing: 'Processing…', replacePhoto: 'Replace photo', photoFail: 'That didn’t work, try another photo',
-      choosing: 'Picking a mission…', code3: 'The code is 3 digits', checking: 'Checking…', enterCode3: 'Enter the person’s 3-digit code',
-      uploading: 'Uploading photo…', changing: 'Switching…', giveUpQ: 'Really can’t find each other? We’ll give you another mission.',
-      showCode: 'Show it to the person who found you.', close: 'Close', allDone: 'All missions complete', inFinal: 'You made the finale!',
-      playOn: 'Keep playing', counted: 'Nice work!', newFriend: 'New acquaintance: ', of: ' of ', nextMission: 'Next mission', later: 'Later',
-      wait: 'One sec…',
-      live: 'Live now', players: 'players', meets: 'new friends', missions: 'missions', top3: 'Leaderboard', tick: 'What’s happening',
-      noLeaders: 'The first missions are about to be completed', noEvents: 'The first events will show up here soon',
-      eJoin: '👋 A new guest joined the game', ePair: '{e} A pair found each other', eFind: '🔎 Someone found the right person',
-      eMeet: '🤝 A new acquaintance', eFun: '🎉 A fun mission was completed', ePairDone: '💬 A pair completed their task', eFinish: '🏆 Someone completed all missions!',
-      now: 'just now', min: ' min', hour: ' h', ago: ' ago', finishedMark: '★ finale'
-    }
+    ru: { brand: 'Белоглазов', brandSub: 'игры для праздников', navGames: 'Игры', navHow: 'Как это работает', navPro: 'Для ведущих', kicker: 'Интерактивы для праздников',
+      heroH: 'Игры, которые <em>знакомят</em> гостей', heroP: 'Выберите игру — гости сканируют QR и играют со своих телефонов, а вы видите весь вечер на большом экране.',
+      heroBtn: 'Выбрать игру', heroBtn2: 'Как это работает', open: 'Открыть игру', soon: 'Скоро', live: 'Доступно',
+      howK: 'Как это работает', howH: 'Три шага до живого вечера',
+      s1h: 'Выберите игру', s1p: 'Каждая игра решает свою задачу: знакомство, разогрев, общий смех или трогательные пожелания паре.',
+      s2h: 'Настройте под событие', s2p: 'Имена пары, свои задания и факты о гостях, язык — русский или английский. Всё из удобной панели ведущего.',
+      s3h: 'Гости играют по QR', s3p: 'Никаких приложений: камера телефона → код → игра. На проекторе — живая статистика, в конце — итоги и отчёт.',
+      proSoon: 'Скоро · подписка', proH: 'Проводите эти игры сами', pro1: 'Все игры каталога для ваших мероприятий', pro2: 'Своя панель ведущего и QR-коды', pro3: 'Экран для проектора и итоги вечера', pro4: 'Отчёт на память для пары и гостей',
+      proP: 'Хотите получить доступ одним из первых? Оставьте заявку.', proBtn: 'Оставить заявку', foot: '© Павел Белоглазов · ведущий и автор игр' },
+    en: { brand: 'Beloglazov', brandSub: 'games for celebrations', navGames: 'Games', navHow: 'How it works', navPro: 'For hosts', kicker: 'Interactive games for celebrations',
+      heroH: 'Games that <em>connect</em> your guests', heroP: 'Pick a game — guests scan a QR code and play on their own phones, while you watch the whole night unfold on the big screen.',
+      heroBtn: 'Choose a game', heroBtn2: 'How it works', open: 'Open game', soon: 'Coming soon', live: 'Available',
+      howK: 'How it works', howH: 'Three steps to a lively night',
+      s1h: 'Pick a game', s1p: 'Each game has its own job: breaking the ice, warming up the room, shared laughs or heartfelt wishes for the couple.',
+      s2h: 'Make it yours', s2p: 'The couple’s names, your own missions and guest facts, Russian or English — all from a simple host panel.',
+      s3h: 'Guests play via QR', s3p: 'No apps: phone camera → code → game. Live stats on the projector, results and a keepsake report at the end.',
+      proSoon: 'Coming soon · subscription', proH: 'Run these games yourself', pro1: 'Every game in the catalog for your events', pro2: 'Your own host panel and QR codes', pro3: 'Projector screen and end-of-night results', pro4: 'A keepsake report for the couple and guests',
+      proP: 'Want early access? Leave a request.', proBtn: 'Request access', foot: '© Pavel Beloglazov · host and game author' }
   };
-
-  var L = pickLang();
-  function pickLang() {
-    var s = store('get', LS_LANG);
-    if (s === 'ru' || s === 'en') return s;
-    if (CFG.defaultLang === 'ru' || CFG.defaultLang === 'en') return CFG.defaultLang;
-    var n = (navigator.language || 'ru').toLowerCase();
-    return /^(ru|uk|be|kk|uz|hy|ka)/.test(n) ? 'ru' : 'en';
-  }
-  function T(k, n) { var s = (I[L] && I[L][k]) || I.ru[k] || k; return n === undefined ? s : s.replace('{n}', n); }
-  function cfgTitle() { return L === 'en' ? CFG.titleEn : CFG.title; }
-  function cfgCouple() { return L === 'en' ? CFG.coupleEn : CFG.couple; }
-  function cfgIntro() { return L === 'en' ? CFG.introEn : CFG.intro; }
-
-  document.documentElement.style.setProperty('--accent', CFG.accent || '#b8894d');
-
-  function store(op, key, v) {
-    try {
-      if (op === 'get') return localStorage.getItem(key);
-      if (op === 'set') localStorage.setItem(key, v);
-      if (op === 'del') localStorage.removeItem(key);
-    } catch (e) {}
-    return null;
-  }
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-  function nl(s) { return esc(s).replace(/\n/g, '<br>'); }
-  function $(id) { return document.getElementById(id); }
-  function callApi(name, args, tries) {
-    tries = tries || 0;
-    return fetch(window.SM_API, {
-      method: 'POST', credentials: 'omit', redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ fn: name, args: args })
-    }).then(function (r) { return r.json(); }).then(function (j) {
-      if (!j.ok) throw { api: true, msg: String(j.error || '').replace(/^(Exception|Error|Исключение):\s*/i, '') };
-      return j.data;
-    }).catch(function (e) {
-      if (e && e.api) throw e.msg;
-      if (tries < 2 && /^api(State|Feed|Config)$/.test(name)) return new Promise(function (r) { setTimeout(r, 800 * (tries + 1)); }).then(function () { return callApi(name, args, tries + 1); });
-      throw (L === 'en' ? 'No connection. Try again.' : 'Нет связи. Попробуй ещё раз.');
-    });
-  }
-  function call(name) {
-    var args = [].slice.call(arguments, 1);
-    if (window.SM_API) return callApi(name, args);
-    return new Promise(function (res, rej) {
-      var r = google.script.run.withSuccessHandler(res).withFailureHandler(function (e) {
-        var msg = (e && e.message) ? e.message : String(e);
-        rej(msg.replace(/^(Exception|Error|Исключение):\s*/i, ''));
-      });
-      r[name].apply(r, args);
-    });
-  }
-  function setErr(msg) { var e = $('err'); if (e) e.textContent = msg || ''; }
-  function lock(btn, text) {
-    busy = true;
-    if (btn) { btn.dataset.t = btn.textContent; btn.textContent = text || T('wait'); btn.disabled = true; }
-  }
-  function unlock(btn) {
-    busy = false;
-    if (btn && btn.dataset.t) { btn.textContent = btn.dataset.t; btn.disabled = false; }
-  }
-
-  /* ---------- язык ---------- */
-
-  function paintLang() {
-    document.documentElement.lang = L;
-    document.title = cfgTitle();
-    [].forEach.call($('lang').children, function (b) { b.classList.toggle('on', b.dataset.l === L); });
-  }
-  $('lang').onclick = function (e) {
-    var b = e.target.closest('button'); if (!b || b.dataset.l === L) return;
-    L = b.dataset.l; store('set', LS_LANG, L); paintLang();
-    renderLive();
-    if (view === 'welcome') welcome();
-    else if (view === 'recover') recoverView();
-    else if (gid) { lastSig = ''; if (ST) showState(ST, true); refresh(); }
-  };
-
-  /* ---------- регистрация ---------- */
-
-  function welcome() {
-    view = 'welcome';
-    clearTimeout(pollT);
-    if (!CFG.open) { app.innerHTML = closedView(null); return; }
-    var nameVal = $('name') ? $('name').value : '';
-    var facts = (CFG.facts || []).map(function (f) {
-      return '<button type="button" class="fact' + (regFacts[f.key] ? ' on' : '') + '" data-k="' + esc(f.key) + '"><span class="box"></span><span>' + esc(L === 'en' ? f.qEn : f.q) + '</span></button>';
+  var L = (function () { try { var s = localStorage.getItem('pb_lang'); if (s === 'ru' || s === 'en') return s; } catch (e) {} return /^(ru|uk|be|kk)/i.test(navigator.language || 'ru') ? 'ru' : 'en'; })();
+  var F = 'all';
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function paint() {
+    var d = I[L]; document.documentElement.lang = L;
+    [].forEach.call(document.querySelectorAll('[data-t]'), function (el) { el.textContent = d[el.dataset.t]; });
+    [].forEach.call(document.querySelectorAll('[data-h]'), function (el) { el.innerHTML = d[el.dataset.h]; });
+    document.getElementById('lang').textContent = L === 'ru' ? 'EN' : 'RU';
+    document.title = L === 'ru' ? 'Игры для праздников · Павел Белоглазов' : 'Games for celebrations · Pavel Beloglazov';
+    var used = { all: 1 }; GAMES.forEach(function (g) { g.tags.forEach(function (t) { used[t] = 1; }); });
+    document.getElementById('filters').innerHTML = Object.keys(TAGS).filter(function (k) { return used[k]; }).map(function (k) {
+      return '<button data-f="' + k + '"' + (k === F ? ' class="on"' : '') + '>' + TAGS[k][L === 'ru' ? 0 : 1] + '</button>'; }).join('');
+    document.getElementById('grid').innerHTML = GAMES.filter(function (g) { return F === 'all' || g.tags.indexOf(F) >= 0; }).map(function (g) {
+      var t = g[L], live = g.status === 'live', tag = live ? 'a href="' + g.href + '"' : 'div';
+      var bl = g.blobs.map(function (c, i) { var p = [['-12%', '-30%', '62%'], ['62%', '48%', '52%'], ['70%', '-24%', '34%']][i]; return '<i class="b' + (i + 1) + '" style="background:' + c + ';opacity:.5;left:' + p[0] + ';top:' + p[1] + ';width:' + p[2] + ';aspect-ratio:1"></i>'; }).join('');
+      return '<' + tag + ' class="game"><div class="cover" style="background:' + g.bg + '">' + bl + '<div class="em">' + g.emoji.map(function (e) { return '<span>' + e + '</span>'; }).join('') + '</div>' +
+        '<span class="badge' + (live ? '' : ' soon') + '">' + (live ? d.live : d.soon) + '</span></div>' +
+        '<div class="body"><h3>' + esc(t.t) + '</h3><div class="meta">' + esc(t.m) + '</div><div class="tags">' + g.tags.map(function (k) { return '<span class="chip">' + TAGS[k][L === 'ru' ? 0 : 1] + '</span>'; }).join('') + '</div>' +
+        '<p>' + esc(t.d) + '</p>' + (live ? '<span class="btn gold">' + d.open + '</span>' : '<span class="btn ghost" disabled>' + d.soon + '</span>') + '</div></' + (live ? 'a' : 'div') + '>';
     }).join('');
-    app.innerHTML =
-      '<div class="hero">' + (cfgCouple() ? '<div class="kicker">' + esc(cfgCouple()) + '</div>' : '') +
-      '<h1>' + esc(cfgTitle()) + '</h1><p class="lead">' + nl(cfgIntro()) + '</p></div>' +
-      '<div class="card">' +
-      '<label class="lbl" for="name">' + T('name') + '</label>' +
-      '<input id="name" class="inp" maxlength="40" autocomplete="given-name" placeholder="' + T('namePh') + '" value="' + esc(nameVal) + '">' +
-      '<label class="lbl">' + T('side') + '</label>' +
-      '<div class="seg" id="side">' +
-      ['Жених', 'Невеста', 'Оба'].map(function (s) {
-        var t = s === 'Жених' ? T('groom') : s === 'Невеста' ? T('bride') : T('both');
-        return '<button type="button" data-s="' + s + '"' + (regSide === s ? ' class="on"' : '') + '>' + t + '</button>';
-      }).join('') + '</div>' +
-      (facts ? '<label class="lbl">' + T('factsLbl') + '</label><p class="hint">' + T('factsHint') + '</p><div class="facts" id="facts">' + facts + '</div>' : '') +
-      '<div class="err" id="err"></div>' +
-      '<button class="btn acc" id="go">' + T('getMission') + '</button>' +
-      '</div>' +
-      '<button class="link" id="rec">' + T('lost') + '</button>';
-
-    $('side').onclick = function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      regSide = b.dataset.s;
-      [].forEach.call(this.children, function (c) { c.classList.toggle('on', c === b); });
-    };
-    if ($('facts')) $('facts').onclick = function (e) {
-      var b = e.target.closest('.fact'); if (!b) return;
-      var k = b.dataset.k; regFacts[k] = !regFacts[k]; b.classList.toggle('on', regFacts[k]);
-    };
-    $('rec').onclick = recoverView;
-    $('go').onclick = function () {
-      if (busy) return;
-      var name = $('name').value.trim();
-      if (!name) { setErr(T('enterName')); $('name').focus(); return; }
-      var facts = Object.keys(regFacts).filter(function (k) { return regFacts[k]; });
-      var btn = this; lock(btn, T('issuing')); setErr('');
-      call('apiRegister', name, regSide, facts, L).then(function (r) {
-        busy = false; gid = r.guestId; store('set', LS, gid); lastSig = ''; showState(r.state, true); loadFeed();
-      }).catch(function (m) { unlock(btn); setErr(m); });
-    };
   }
-
-  function recoverView() {
-    view = 'recover';
-    app.innerHTML =
-      '<div class="hero"><h2>' + T('backTitle') + '</h2><p class="lead">' + T('backLead') + '</p></div>' +
-      '<div class="card"><label class="lbl" for="rname">' + T('nameShort') + '</label><input id="rname" class="inp" maxlength="40">' +
-      '<label class="lbl" for="rcode">' + T('yourCode') + '</label><input id="rcode" class="inp code" inputmode="numeric" maxlength="3" placeholder="000">' +
-      '<div class="err" id="err"></div><button class="btn" id="rgo">' + T('back') + '</button></div>' +
-      '<button class="link" id="back">' + T('goBack') + '</button>';
-    $('back').onclick = welcome;
-    $('rgo').onclick = function () {
-      if (busy) return;
-      var btn = this; lock(btn); setErr('');
-      call('apiRecover', $('rname').value, $('rcode').value, L).then(function (r) {
-        busy = false; gid = r.guestId; store('set', LS, gid); lastSig = ''; showState(r.state, true);
-      }).catch(function (m) { unlock(btn); setErr(m); });
-    };
-  }
-
-  function closedView(st) {
-    return '<div class="hero">' + (cfgCouple() ? '<div class="kicker">' + esc(cfgCouple()) + '</div>' : '') +
-      '<h1>' + esc(cfgTitle()) + '</h1><p class="lead">' + T('closed') + '</p></div>' +
-      (st ? '<div class="card center"><div class="kicker">' + T('yourCode') + '</div><div class="bigcode">' + esc(st.me.code) + '</div><p class="muted">' + T('doneCount') + st.me.done + '</p></div>' : '');
-  }
-
-  /* ---------- основной экран ---------- */
-
-  function sigOf(st) {
-    var m = st.mission;
-    if (!st.open) return 'closed|' + L;
-    if (!m) return 'none|' + st.me.done + '|' + st.me.finished + '|' + L;
-    return [m.type, m.status, m.emoji || '', m.partnerName || '', m.text, m.requeued ? 1 : 0, L].join('|');
-  }
-
-  function showState(st, force) {
-    view = 'game';
-    ST = st;
-    clearTimeout(pollT);
-    var sig = sigOf(st);
-    if (sig !== lastSig || force) {
-      var note = $('note') ? $('note').value : '', code = $('code') ? $('code').value : '';
-      lastSig = sig; photoData = null;
-      app.innerHTML = st.open ? mainView(st) : closedView(st);
-      if (note && $('note')) $('note').value = note;
-      if (code && $('code')) $('code').value = code;
-      if (force) window.scrollTo(0, 0);
-    }
-    updateLive(st);
-    schedule(st);
-  }
-
-  function schedule(st) {
-    var m = st.mission;
-    var ms = 0;
-    if (!st.open) ms = 20000;
-    else if (m && m.type === 'pair' && m.status === 'waiting') ms = 3000;
-    else if (m && m.type === 'pair' && m.status === 'searching') ms = 6000;
-    if (ms) pollT = setTimeout(refresh, ms);
-  }
-
-  function refresh() {
-    if (!gid) return;
-    call('apiState', gid, L).then(handle).catch(function () { pollT = setTimeout(refresh, 8000); });
-  }
-
-  function handle(r) {
-    if (r && r.lost) { store('del', LS); gid = null; lastSig = ''; welcome(); return; }
-    showState(r.state);
-  }
-
-  function dots(me) {
-    var h = '';
-    for (var i = 0; i < me.goal; i++) h += '<span class="dot' + (i < me.done ? ' on' : '') + '"></span>';
-    if (me.done > me.goal) h += '<span class="plus">+' + (me.done - me.goal) + '</span>';
-    return h;
-  }
-
-  function mainView(st) {
-    var me = st.me, m = st.mission;
-    var h = '<div class="top"><div><div class="hello">' + esc(me.name) + '</div><div class="dots">' + dots(me) + '</div></div>' +
-      '<button class="codechip" data-act="code"><span>' + T('codeChip') + '</span><b>' + esc(me.code) + '</b></button></div>';
-    if (me.finished) h += '<div class="banner"><b>' + T('finale') + '</b> ' + esc(st.finale) + '</div>';
-    h += missionView(st, m);
-    return h;
-  }
-
-  function noteField() {
-    return '<label class="lbl" for="note">' + T('noteLbl') + ' <span class="opt">' + T('optional') + '</span></label>' +
-      '<textarea id="note" class="inp" rows="2" maxlength="300" placeholder="' + T('notePh') + '"></textarea>';
-  }
-  function photoField() {
-    return '<label class="photo" id="photoLbl"><input type="file" id="photo" accept="image/*">' +
-      '<span id="photoTxt">' + T('addPhoto') + '</span><img id="photoPrev" alt="" hidden></label>';
-  }
-
-  function missionView(st, m) {
-    var me = st.me;
-    if (!m) {
-      return '<div class="card center"><div class="kicker">' + T('mission') + (me.done + 1) + '</div>' +
-        '<h2>' + (me.done ? T('readyNext') : T('ready')) + '</h2>' +
-        '<p class="muted">' + T('onlyYou') + '</p>' +
-        '<button class="btn acc" data-act="next">' + T('getMission') + '</button></div>';
-    }
-    var labels = { find: T('tFind'), meet: T('tMeet'), fun: T('tFun') };
-
-    if (m.type === 'pair' && m.status === 'waiting') {
-      return '<div class="card center"><div class="kicker">' + T('mission') + m.num + '</div>' +
-        '<h2>' + (m.requeued ? T('pairLost') : T('pairPick')) + '</h2>' +
-        '<div class="spin"></div><p class="muted">' + (m.requeued ? T('pairNew') : '') + T('pairWait') + '</p>' +
-        '<button class="link" data-act="nowait">' + T('noWait') + '</button></div>';
-    }
-    if (m.type === 'pair' && m.status === 'searching') {
-      return '<div class="card center"><div class="kicker">' + T('mission') + m.num + ' · ' + T('findPair') + '</div>' +
-        '<div class="emoji">' + esc(m.emoji) + '</div><div class="ename">' + esc(m.emojiName) + '</div>' +
-        '<p>' + T('pairText') + '</p>' +
-        '<p class="secret">' + T('pairHint') + '</p></div>' +
-        '<div class="card"><label class="lbl" for="code">' + T('pairCode') + '</label>' +
-        '<input id="code" class="inp code" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="000">' +
-        '<div class="err" id="err"></div><button class="btn" data-act="confirm">' + T('weFound') + '</button></div>' +
-        '<div id="giveup"></div>';
-    }
-    if (m.type === 'pair' && m.status === 'met') {
-      return '<div class="card"><div class="kicker">' + T('mission') + m.num + ' · ' + T('metKicker') + '</div>' +
-        '<h2>' + esc(T('itsX', m.partnerName)) + '</h2><p class="task">' + nl(m.text) + '</p></div>' +
-        '<div class="card">' + noteField() + (m.photo ? photoField() : '') +
-        '<div class="err" id="err"></div><button class="btn acc" data-act="complete">' + T('didIt') + '</button></div>';
-    }
-    var h = '<div class="card"><div class="kicker">' + T('mission') + m.num + ' · ' + (labels[m.type] || '') + '</div>' +
-      '<p class="task big">' + nl(m.text) + '</p><p class="secret">' + T('secret') + '</p></div>' +
-      '<div class="card">';
-    if (m.needCode) {
-      h += '<label class="lbl" for="code">' + T('askCode') + '</label>' +
-        '<input id="code" class="inp code" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="000">';
-    }
-    h += noteField() + (m.photo ? photoField() : '') +
-      '<div class="err" id="err"></div><button class="btn acc" data-act="complete">' + (m.needCode ? T('count') : T('done')) + '</button></div>';
-    if (m.canSkip) h += '<button class="link" data-act="skip">' + T('skip', st.me.skipsLeft) + '</button>';
-    return h;
-  }
-
-  function updateLive(st) {
-    var m = st.mission, box = $('giveup');
-    if (!box) return;
-    if (m && m.type === 'pair' && m.status === 'searching' && m.elapsed >= m.giveUpAfter) {
-      if (!box.innerHTML) box.innerHTML = '<button class="link" data-act="giveup">' + T('cantFind') + '</button>';
-    } else box.innerHTML = '';
-  }
-
-  /* ---------- живая лента ---------- */
-
-  function loadFeed() {
-    if (!CFG.feed) return;
-    clearTimeout(feedT);
-    call('apiFeed').then(function (f) {
-      if (f && f.off) { liveEl.innerHTML = ''; return; }
-      FEED = f; renderLive();
-      feedT = setTimeout(loadFeed, 20000);
-    }).catch(function () { feedT = setTimeout(loadFeed, 30000); });
-  }
-
-  function ago(t) {
-    var base = FEED ? FEED.now : Date.now();
-    var s = Math.max(0, (base - t) / 1000);
-    if (s < 60) return T('now');
-    if (s < 3600) return Math.floor(s / 60) + T('min') + T('ago');
-    return Math.floor(s / 3600) + T('hour') + T('ago');
-  }
-
-  function evText(e) {
-    if (e.type === 'join') return T('eJoin');
-    if (e.type === 'pair') return T('ePair').replace('{e}', e.emoji || '🤝');
-    if (e.type === 'finish') return T('eFinish');
-    if (e.type === 'done') return e.mtype === 'find' ? T('eFind') : e.mtype === 'meet' ? T('eMeet') : e.mtype === 'pair' ? T('ePairDone') : T('eFun');
-    return '';
-  }
-
-  function renderLive() {
-    if (!FEED || !CFG.feed) { liveEl.innerHTML = ''; return; }
-    var s = FEED.stats, medals = ['🥇', '🥈', '🥉'];
-    var top = FEED.top.length ? FEED.top.map(function (p, i) {
-      return '<div class="prow"><span class="medal">' + medals[i] + '</span><span class="pname">' + esc(p.name) + '</span>' +
-        '<span class="pscore">' + (p.finished ? T('finishedMark') + ' · ' : '') + p.done + T('of') + FEED.goal + '</span></div>';
-    }).join('') : '<div class="empty">' + T('noLeaders') + '</div>';
-    var evs = FEED.events.length ? FEED.events.slice(0, 8).map(function (e) {
-      var k = e.t + e.type + (e.emoji || '') + (e.mtype || ''), isNew = Object.keys(seenEv).length && !seenEv[k];
-      seenEv[k] = 1;
-      return '<div class="trow' + (isNew ? ' new' : '') + '"><span class="tt">' + esc(evText(e)) + '</span><span class="ago">' + ago(e.t) + '</span></div>';
-    }).join('') : '<div class="empty">' + T('noEvents') + '</div>';
-    liveEl.innerHTML = '<div class="card live">' +
-      '<div class="livehead"><span class="pulse"></span>' + T('live') + '</div>' +
-      '<div class="lstats"><div><b>' + s.players + '</b><span>' + T('players') + '</span></div><div><b>' + s.meets + '</b><span>' + T('meets') + '</span></div><div><b>' + s.done + '</b><span>' + T('missions') + '</span></div></div>' +
-      '<div class="podium"><h3>' + T('top3') + '</h3>' + top + '</div>' +
-      '<div class="ticker"><h3>' + T('tick') + '</h3>' + evs + '</div></div>';
-  }
-
-  /* ---------- действия ---------- */
-
-  app.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-act]');
-    if (!b) return;
-    var a = b.dataset.act;
-    if (a === 'code') return showCode();
-    if (a === 'closeov') return closeOv();
-    if (busy) return;
-    if (a === 'next') return doNext(b);
-    if (a === 'confirm') return doConfirm(b);
-    if (a === 'complete') return doComplete(b);
-    if (a === 'skip') return doSkip(b);
-    if (a === 'giveup') return doGiveUp(b);
-    if (a === 'nowait') return doNoWait(b);
-  });
-
-  app.addEventListener('change', function (e) {
-    if (e.target.id !== 'photo' || !e.target.files || !e.target.files[0]) return;
-    $('photoTxt').textContent = T('processing');
-    resize(e.target.files[0], function (data) {
-      photoData = data;
-      var img = $('photoPrev');
-      if (data && img) { img.src = data; img.hidden = false; $('photoTxt').textContent = T('replacePhoto'); }
-      else $('photoTxt').textContent = T('photoFail');
-    });
-  });
-
-  app.addEventListener('input', function (e) {
-    if (e.target.id === 'code' || e.target.id === 'rcode') e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
-  });
-
-  function doNext(b) {
-    lock(b, T('choosing'));
-    call('apiNext', gid, L).then(function (r) { busy = false; closeOv(); if (r.lost) return handle(r); lastSig = ''; showState(r.state, true); })
-      .catch(function (m) { unlock(b); alert(m); });
-  }
-
-  function doConfirm(b) {
-    var code = ($('code') || {}).value || '';
-    if (!/^\d{3}$/.test(code)) { setErr(T('code3')); return; }
-    lock(b, T('checking')); setErr('');
-    call('apiConfirmPair', gid, code, L).then(function (r) { busy = false; handle(r); loadFeed(); })
-      .catch(function (m) { unlock(b); setErr(m); });
-  }
-
-  function doComplete(b) {
-    var m = ST && ST.mission; if (!m) return;
-    var code = ($('code') || {}).value || '';
-    if (m.needCode && !/^\d{3}$/.test(code)) { setErr(T('enterCode3')); return; }
-    var note = ($('note') || {}).value || '';
-    lock(b, photoData ? T('uploading') : T('checking')); setErr('');
-    call('apiComplete', gid, code, note, photoData, L).then(function (r) {
-      busy = false;
-      if (r.lost) return handle(r);
-      lastSig = ''; showState(r.state, true);
-      showResult(r.state, r.state.result || {});
-      loadFeed();
-    }).catch(function (msg) { unlock(b); setErr(msg); });
-  }
-
-  function doSkip(b) {
-    lock(b, T('changing'));
-    call('apiSkip', gid, L).then(function (r) { busy = false; lastSig = ''; handle(r); })
-      .catch(function (m) { unlock(b); alert(m); });
-  }
-
-  function doGiveUp(b) {
-    if (!confirm(T('giveUpQ'))) return;
-    lock(b);
-    call('apiGiveUpPair', gid, L).then(function (r) { busy = false; lastSig = ''; handle(r); })
-      .catch(function (m) { unlock(b); alert(m); });
-  }
-
-  function doNoWait(b) {
-    lock(b, T('choosing'));
-    call('apiGiveUpPair', gid, L).then(function (r) { busy = false; lastSig = ''; handle(r); })
-      .catch(function (m) { unlock(b); alert(m); });
-  }
-
-  /* ---------- оверлеи ---------- */
-
-  function overlay(html) {
-    closeOv();
-    var d = document.createElement('div');
-    d.className = 'ov'; d.id = 'ov';
-    d.innerHTML = '<div class="ovcard">' + html + '</div>';
-    d.addEventListener('click', function (e) { if (e.target === d) closeOv(); });
-    app.appendChild(d);
-  }
-  function closeOv() { var o = $('ov'); if (o) o.remove(); }
-
-  function showCode() {
-    overlay('<div class="kicker">' + T('yourCode') + '</div><div class="bigcode">' + esc(ST.me.code) + '</div>' +
-      '<p class="muted">' + T('showCode') + '</p><button class="btn" data-act="closeov">' + T('close') + '</button>');
-  }
-
-  function showResult(st, res) {
-    var me = st.me;
-    if (res.justFinished) {
-      overlay('<div class="check">★</div><div class="kicker">' + T('allDone') + '</div><h2>' + T('inFinal') + '</h2>' +
-        '<p>' + nl(st.finale) + '</p>' +
-        '<button class="btn acc" data-act="next">' + T('playOn') + '</button><button class="link" data-act="closeov">' + T('close') + '</button>');
-      return;
-    }
-    overlay('<div class="check">✓</div><h2>' + T('counted') + '</h2>' +
-      (res.partner ? '<p>' + T('newFriend') + '<b>' + esc(res.partner) + '</b></p>' : '') +
-      '<div class="progress">' + me.done + T('of') + me.goal + '</div>' +
-      '<button class="btn acc" data-act="next">' + T('nextMission') + '</button><button class="link" data-act="closeov">' + T('later') + '</button>');
-  }
-
-  /* ---------- фото ---------- */
-
-  function resize(file, cb) {
-    var url = URL.createObjectURL(file);
-    var img = new Image();
-    img.onload = function () {
-      var max = 1280, w = img.naturalWidth, h = img.naturalHeight;
-      var k = Math.min(1, max / Math.max(w, h));
-      var c = document.createElement('canvas');
-      c.width = Math.round(w * k); c.height = Math.round(h * k);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url);
-      try { cb(c.toDataURL('image/jpeg', 0.82)); } catch (e) { cb(null); }
-    };
-    img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
-    img.src = url;
-  }
-
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState !== 'visible') return;
-    if (gid && !busy) { clearTimeout(pollT); refresh(); }
-    loadFeed();
-  });
-
-  /* ---------- старт ---------- */
-  paintLang();
-  if (gid) refresh(); else welcome();
-  loadFeed();
-};
-</script>
-<script>
-(function boot(n) {
-  fetch(window.SM_API, { method: 'POST', credentials: 'omit', redirect: 'follow',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'apiConfig', args: [] }) })
-    .then(function (r) { return r.json(); })
-    .then(function (j) { if (!j.ok) throw new Error(j.error); CFG = j.data; window.SM_START(); })
-    .catch(function () {
-      if (n < 3) return setTimeout(function () { boot(n + 1); }, 1000 * (n + 1));
-      document.getElementById('app').innerHTML = '<div style="text-align:center;padding:40px 10px;color:#86796c">Нет связи · No connection<br><br><button onclick="location.reload()" style="border:0;border-radius:12px;padding:12px 20px;background:#212330;color:#fff;font:inherit">Обновить · Reload</button></div>';
-    });
-})(0);
+  document.getElementById('filters').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; F = b.dataset.f; paint(); };
+  document.getElementById('lang').onclick = function () { L = L === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('pb_lang', L); } catch (e) {} paint(); };
+  paint();
+})();
 </script>
 </body>
 </html>
