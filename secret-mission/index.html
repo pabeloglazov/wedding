@@ -299,7 +299,7 @@ section{padding-top:80px}
     ru: { brand: 'Белоглазов', brandSub: 'игры для праздников', all: '← Все игры', kicker: 'Игра для знакомства гостей', title: 'Секретная миссия',
       lead: 'Каждый гость сканирует QR и получает личную тайную миссию: найти свою пару по символу, познакомиться с «другой стороной», узнать пожелание паре. Никто не знает чужих заданий — и весь зал начинает знакомиться.',
       f1: '👥 от 20 гостей', f2: '⏱ 1–2 часа', f3: '📱 без приложений', f4: '🇷🇺 🇺🇸 два языка',
-      play: 'Я гость — играть', hostBtn: 'Панель ведущего',
+      play: 'Я гость — играть', hostBtn: 'Вход для ведущего',
       mName: 'Аня', mCode: 'твой код', mK: 'Миссия 3 · найди свою пару', mTask: 'Где-то в зале есть ещё один 🍩', mK2: 'Миссия 4 · знакомство', mTask2: 'Узнай у кого-то из старшего поколения его пожелание паре', mBtn: 'Засчитать',
       typesK: 'Как проходит игра', typesH: 'Четыре вида миссий',
       t1h: 'Знакомство', t1p: 'Найти нового человека — со стороны жениха или невесты — и узнать что-то интересное. Засчитывается по коду.',
@@ -319,7 +319,7 @@ section{padding-top:80px}
     en: { brand: 'Beloglazov', brandSub: 'games for celebrations', all: '← All games', kicker: 'An icebreaker game for guests', title: 'Secret Mission',
       lead: 'Every guest scans a QR code and gets a private secret mission: find their emoji match, meet someone from the other side of the family, collect a wish for the couple. Nobody knows anyone else’s task — and the whole room starts connecting.',
       f1: '👥 20+ guests', f2: '⏱ 1–2 hours', f3: '📱 no apps', f4: '🇷🇺 🇺🇸 two languages',
-      play: 'I’m a guest — play', hostBtn: 'Host panel',
+      play: 'I’m a guest — play', hostBtn: 'Host sign-in',
       mName: 'Anna', mCode: 'your code', mK: 'Mission 3 · find your match', mTask: 'Somewhere in the room is another 🍩', mK2: 'Mission 4 · new acquaintance', mTask2: 'Ask someone from the older generation for their wish for the couple', mBtn: 'Submit',
       typesK: 'How the game works', typesH: 'Four kinds of missions',
       t1h: 'New acquaintance', t1p: 'Meet someone new — from the bride’s or the groom’s side — and learn something about them. Confirmed by code.',
@@ -347,7 +347,7 @@ section{padding-top:80px}
     document.title = d.title + ' · ' + (L === 'ru' ? 'игра для знакомства гостей' : 'an icebreaker game');
   }
   $('lang').onclick = function () { L = L === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('pb_lang', L); localStorage.setItem('secret_mission_lang', L); } catch (e) {} paint(); };
-  $('hostBtn').onclick = function () { $('modal').classList.add('on'); setTimeout(function () { $('key').focus(); }, 50); };
+  $('hostBtn').onclick = function () { location.href = '../host/'; };
   $('mhCancel').onclick = function () { $('modal').classList.remove('on'); };
   $('modal').onclick = function (e) { if (e.target === this) this.classList.remove('on'); };
   function go() { var k = $('key').value.trim(); if (!k) return $('key').focus(); window.open(EXEC + '?admin=' + encodeURIComponent(k), '_blank', 'noopener'); $('modal').classList.remove('on'); $('key').value = ''; }
