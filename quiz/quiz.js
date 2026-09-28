@@ -41,7 +41,7 @@ const BOTS = ['Аня', 'Максим К.', 'Оля', 'Дима', 'Лиза', '�
 const TYPES = { choice: 'Обычный', couple: 'Угадай ответ пары', number: 'Число' };
 
 function coupleNames(s) { const p = String(s || '').split(/\s+(?:и|&|and|\+)\s+/i).map(x => x.trim()).filter(Boolean); return [p[0] || 'Жених', p[1] || 'Невеста']; }
-const O = (t, img) => ({ t: t || '', img: img || '' });
+const O = t => ({ t: t || '' });
 function sampleQs(couple) {
   const [g, b] = coupleNames(couple);
   return [
@@ -213,11 +213,11 @@ function goLogin() { try { localStorage.setItem('pb_next', 'quiz'); } catch (e) 
 
 /* ================= конфиг квиза ================= */
 const KEY_CFG = 'pbq_cfg_v2', KEY_LIVE = 'pbq_live_v2';
-const optFilled = o => !!(o && ((o.t || '').trim() || o.img));
+const optFilled = o => !!(o && (o.t || '').trim());
 function normQ(q) {
   q = Object.assign({ id: uid(), type: 'choice', text: '', img: '', opts: [], ok: [], x2: false }, q || {});
   if (!TYPES[q.type]) q.type = 'choice';
-  q.opts = (q.opts || []).slice(0, 4).map((o, i) => typeof o === 'string' ? O(o, q.oimg && q.oimg[i]) : O(o && o.t, o && o.img));
+  q.opts = (q.opts || []).slice(0, 4).map(o => typeof o === 'string' ? O(o) : O(o && o.t));
   delete q.oimg;
   if (typeof q.ok === 'number') q.ok = [q.ok];
   q.ok = (q.ok || []).filter(i => i >= 0 && i < q.opts.length);
@@ -657,7 +657,7 @@ function pushScores() {
 function rvOf() {
   const q = G.qs[G.qi], A = (G.ans[G.qi] || {}), E = entities(G);
   return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
-    q: q ? { text: q.text || '', type: q.type, opts: q.opts.map(o => o.t || (o.img ? 'фото' : '')), ok: q.ok || [], num: q.num == null ? null : q.num, unit: q.unit || '' } : null,
+    q: q ? { text: q.text || '', type: q.type, opts: q.opts.map(o => o.t || ''), ok: q.ok || [], num: q.num == null ? null : q.num, unit: q.unit || '' } : null,
     cpl: (G.cpl[G.qi]) || {}, roles: coupleRoles(), answered: Object.keys(A).length, n: Object.keys(G.players).length,
     online: Object.keys(ONLINE).length, canIntro: G.phase === 'lobby' && E.length > 0, play: G.s.play,
     intro: G.phase === 'intro' && E[G.ii] ? { i: G.ii, of: E.length, name: E[G.ii].name } : null,
@@ -703,7 +703,7 @@ function scrKey(g) {
   if (g.phase === 'board') return g.id + ':b:' + g.qi + (g.final ? 'f' : '');
   return g.id + ':' + g.phase;
 }
-function isPicQ(q) { return q.type !== 'number' && (q.opts || []).some(o => o.img); }
+function isPicQ() { return false; }
 function renderScreen(box, g, snd) {
   if (!box) return;
   const key = scrKey(g), st = box._st || (box._st = {});
@@ -1325,8 +1325,28 @@ const ICON = {
   up: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
   down: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
   trash: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.8c0-.4.4-.8.8-.8h4.4c.4 0 .8.4.8.8V7M6.5 7l.8 12.2c.1.9.8 1.8 1.8 1.8h5.8c1 0 1.7-.9 1.8-1.8L17.5 7"/></svg>',
+  grip: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>',
   cam: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>'
 };
+function tip(text) { return `<span class="tip" tabindex="0" role="button" aria-label="Подсказка"><i>i</i><span class="tipb">${text}</span></span>`; }
+const QTIP = {
+  choice: 'Нажмите на букву, чтобы отметить правильный ответ — правильных может быть несколько.',
+  couple: 'Правильный ответ даст пара прямо во время игры — со своих телефонов или через ваш пульт.',
+  number: 'Гости вводят число. Точный ответ — 1200 очков, чем ближе — тем больше.'
+};
+function qTip(q) { return tip(QTIP[q.type] + '<br><br>Порядок вопросов и вариантов меняйте, перетаскивая за ≡.<br>Фото к вопросу можно вставить Ctrl+V или перетащить на карточку.<br>×2 — двойные очки за вопрос.'); }
+function placeTip(t) {
+  const b = t.querySelector('.tipb'), r = t.getBoundingClientRect(), vw = document.documentElement.clientWidth, w = Math.min(280, vw - 24);
+  b.style.width = w + 'px'; b.style.left = Math.max(12, Math.min(r.left - 6, vw - w - 12)) + 'px'; b.style.top = (r.bottom + 8) + 'px';
+  requestAnimationFrame(() => { const h = b.offsetHeight; if (h && r.bottom + 8 + h > innerHeight - 8 && r.top - 8 - h > 8) b.style.top = (r.top - 8 - h) + 'px'; });
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('.tip');
+  document.querySelectorAll('.tip.on').forEach(x => { if (x !== t) x.classList.remove('on'); });
+  if (t) { t.classList.toggle('on'); placeTip(t); }
+});
+document.addEventListener('mouseover', e => { const t = e.target.closest && e.target.closest('.tip'); if (t) placeTip(t); });
+window.addEventListener('scroll', () => document.querySelectorAll('.tip.on').forEach(x => x.classList.remove('on')), { passive: true });
 function accTag() {
   if (!ACC.token) return '<span class="tag">Демо</span><button class="btn gold sm" id="bLogin">Войти</button>';
   if (ACC.loading && !ACC.info) return '<span class="tag">…</span>';
@@ -1356,8 +1376,8 @@ function renderEditor() {
     `<label class="sw">Последний вопрос ×2<input type="checkbox" id="sX2"></label><label class="sw">Звуки на экране<input type="checkbox" id="sSound"></label>` +
     `<label class="sw">Гости-боты для проверки<input type="checkbox" id="sBots"></label></div></details></div>` +
     `<div class="panel"><h3>Оформление</h3><div class="lbl" style="margin-top:0">Основной цвет</div><div class="swatches" id="sws"></div>` +
-    `<div class="lbl">Фото пары на заставку</div><div class="photoSlot"><div class="ph" id="cPh"></div><div><button class="btn ghost sm" id="cPhB">Загрузить фото</button> <button class="btn ghost sm" id="cPhD" style="display:none">Убрать</button><div class="hint">Появится на экране, пока гости заходят</div></div><input type="file" accept="image/*" hidden id="cPhF"></div>` +
-    `<div class="lbl">Wi‑Fi для гостей (по желанию)</div><div class="row2"><input class="inp" id="wS" placeholder="Название сети" maxlength="40"><input class="inp" id="wP" placeholder="Пароль" maxlength="60"></div><div class="hint">На экране появится QR-код для подключения к Wi‑Fi — выручает, если в зале слабая связь.</div></div>` +
+    `<div class="lbl">Фото пары на заставку ${tip('Появится на экране, пока гости заходят.')}</div><div class="photoSlot"><div class="ph" id="cPh"></div><div><button class="btn ghost sm" id="cPhB">Загрузить фото</button> <button class="btn ghost sm" id="cPhD" style="display:none">Убрать</button></div><input type="file" accept="image/*" hidden id="cPhF"></div>` +
+    `<div class="lbl">Wi‑Fi для гостей (по желанию) ${tip('На экране появится QR-код для подключения к Wi‑Fi — выручает, если в зале слабая связь.')}</div><div class="row2"><input class="inp" id="wS" placeholder="Название сети" maxlength="40"><input class="inp" id="wP" placeholder="Пароль" maxlength="60"></div></div>` +
     `<div class="panel" id="formP"></div>` +
     `<div class="qhead"><h2>Вопросы</h2><span class="muted" id="qCount"></span><span class="sp"></span><button class="btn ghost sm" id="bImport">Вставить списком</button></div><div id="qList"></div>` +
     `<div class="addrow"><button class="btn ghost" data-add="choice">+ Вопрос</button><button class="btn ghost" data-add="couple">+ Угадай ответ пары</button><button class="btn ghost" data-add="number">+ Ответ числом</button></div></div>` +
@@ -1382,7 +1402,7 @@ function addQ(type) {
 function paintModes() {
   $('modes').innerHTML = Object.keys(MODES).map(k => { const m = MODES[k]; return `<button class="mode${CFG.mode === k ? ' on' : ''}" data-m="${k}"><i>${m.ic}</i><b>${m.t}</b><span>${m.d}</span></button>`; }).join('');
   $('plays').innerHTML = Object.keys(PLAYS).map(k => { const m = PLAYS[k]; return `<button class="mode${CFG.s.play === k ? ' on' : ''}" data-p="${k}"><i>${m.ic}</i><b>${m.t}</b><span>${m.d}</span></button>`; }).join('');
-  $('tblRow').innerHTML = CFG.s.play === 'tables' ? `<div class="rng" style="margin-top:12px"><span>Сколько столов в зале</span><input type="range" id="sTbl" min="2" max="40"><b id="sTblV"></b></div>` : CFG.s.play === 'teams' ? '<div class="hint">Команды сами придумывают название при входе. Перед игрой их можно представить залу по очереди.</div>' : '';
+  $('tblRow').innerHTML = CFG.s.play === 'tables' ? `<div class="rng" style="margin-top:12px"><span>Сколько столов в зале</span><input type="range" id="sTbl" min="2" max="40"><b id="sTblV"></b></div>` : CFG.s.play === 'teams' ? `<div class="hint tipline">Как работают команды ${tip('Команды сами придумывают название при входе. Перед игрой их можно представить залу по очереди.')}</div>` : '';
   if ($('sTbl')) { $('sTbl').value = CFG.s.tables; $('sTblV').textContent = CFG.s.tables; $('sTbl').oninput = e => { CFG.s.tables = +e.target.value; $('sTblV').textContent = CFG.s.tables; STORE.save(); }; }
   document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { CFG.mode = b.dataset.m; Object.assign(CFG.s, MODES[CFG.mode].s); STORE.save(); paintModes(); paintTune(); sum(); });
   document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { CFG.s.play = b.dataset.p; STORE.save(); paintModes(); sum(); });
@@ -1442,21 +1462,52 @@ function confirmTwice(btn, label) { if (btn.dataset.sure) return true; const old
 function cardHtml(q, i) {
   const issue = qIssue(q), n = CFG.qs.length;
   let body = `<textarea class="inp" rows="2" placeholder="${q.type === 'couple' ? 'Например: «Кто первым написал сообщение?»' : 'Текст вопроса'}" data-f="text">${esc(q.text)}</textarea><div class="qimg">${imgSlot(q)}</div><input type="file" accept="image/*" class="qfile" hidden>`;
-  if (q.type === 'number') body += `<div class="numrow"><input class="inp" data-f="num" inputmode="decimal" placeholder="Правильное число" value="${esc(q.num == null ? '' : q.num)}"><input class="inp" data-f="unit" placeholder="ед., напр. мес." maxlength="16" value="${esc(q.unit || '')}"></div><div class="hint">Гости вводят число. Точный ответ — 1200 очков, чем ближе — тем больше.</div>`;
+  if (q.type === 'number') body += `<div class="numrow"><input class="inp" data-f="num" inputmode="decimal" placeholder="Правильное число" value="${esc(q.num == null ? '' : q.num)}"><input class="inp" data-f="unit" placeholder="ед., напр. мес." maxlength="16" value="${esc(q.unit || '')}"></div>`;
   else {
-    body += '<div class="opts">' + q.opts.map((o, j) => `<div class="opt${q.type === 'choice' && q.ok.indexOf(j) >= 0 ? ' ok' : ''}" data-j="${j}"><button class="ch ${CL[j]}" data-ok="${j}" title="${q.type === 'choice' ? 'Отметить правильным' : ''}">${L[j]}</button>` +
-      `<input data-o="${j}" maxlength="80" placeholder="${o.img ? 'Подпись (необязательно)' : 'Вариант ' + L[j]}" value="${esc(o.t)}">` +
-      `<button class="oi${o.img ? ' has' : ''}" data-oi="${j}" style="${o.img ? bgUrl(o.img) : ''}" title="Фото вместо текста">${o.img ? '' : ICON.cam}</button>` +
-      (j > 0 ? `<button class="ic" data-mv="${j}:-1" title="Выше">${ICON.up}</button>` : '') + (j < q.opts.length - 1 ? `<button class="ic" data-mv="${j}:1" title="Ниже">${ICON.down}</button>` : '') +
+    body += '<div class="opts">' + q.opts.map((o, j) => `<div class="opt${q.type === 'choice' && q.ok.indexOf(j) >= 0 ? ' ok' : ''}" data-j="${j}"><span class="grip og" title="Перетащить">${ICON.grip}</span><button class="ch ${CL[j]}" data-ok="${j}" title="${q.type === 'choice' ? 'Отметить правильным' : ''}">${L[j]}</button>` +
+      `<input data-o="${j}" maxlength="80" placeholder="Вариант ${L[j]}" value="${esc(o.t)}">` +
       (q.opts.length > 2 ? `<button class="ic" data-del="${j}" title="Удалить вариант">${ICON.trash}</button>` : '') + '</div>').join('') + '</div>' +
-      (q.opts.length < 4 ? '<button class="btn ghost sm" data-addopt style="margin-top:8px">+ Вариант</button>' : '') + '<input type="file" accept="image/*" class="ofile" hidden>';
-    body += q.type === 'couple' ? '<div class="hint">💍 Правильный ответ даст пара прямо во время игры — со своих телефонов или через ваш пульт.</div>' : (i === 0 ? '<div class="hint">Нажмите на букву, чтобы отметить правильный ответ. Правильных может быть несколько.</div>' : '');
+      (q.opts.length < 4 ? '<button class="btn ghost sm" data-addopt style="margin-top:8px">+ Вариант</button>' : '');
   }
   if (issue) body += `<div class="hint w">⚠ ${esc(issue)}</div>`;
-  return `<div class="qcard${issue ? ' warn' : ''}" data-i="${i}"><div class="qtop"><span class="qnum">${i + 1}</span><div class="seg">${Object.keys(TYPES).map(t => `<button data-t="${t}" class="${q.type === t ? 'on' : ''}">${TYPES[t]}</button>`).join('')}</div><button class="x2b${q.x2 ? ' on' : ''}" data-x2 title="Двойные очки">×2</button>` +
-    `<div class="qtools">${i > 0 ? `<button class="ic" data-a="up" title="Выше">${ICON.up}</button>` : ''}${i < n - 1 ? `<button class="ic" data-a="down" title="Ниже">${ICON.down}</button>` : ''}<button class="ic" data-a="dup" title="Копия">⧉</button><button class="ic" data-a="del" title="Удалить вопрос">${ICON.trash}</button></div></div>${body}</div>`;
+  return `<div class="qcard${issue ? ' warn' : ''}" data-i="${i}"><div class="qtop"><span class="grip qg" title="Перетащить вопрос">${ICON.grip}</span><span class="qnum">${i + 1}</span><div class="seg">${Object.keys(TYPES).map(t => `<button data-t="${t}" class="${q.type === t ? 'on' : ''}">${TYPES[t]}</button>`).join('')}</div><button class="x2b${q.x2 ? ' on' : ''}" data-x2 title="Двойные очки">×2</button>` +
+    `<div class="qtools">${qTip(q)}<button class="ic" data-a="dup" title="Копия">⧉</button><button class="ic" data-a="del" title="Удалить вопрос">${ICON.trash}</button></div></div>${body}</div>`;
 }
-function paintQs() { $('qList').innerHTML = CFG.qs.map(cardHtml).join(''); document.querySelectorAll('.qcard').forEach(bindCard); $('qCount').textContent = CFG.qs.length + ' ' + plural(CFG.qs.length, 'вопрос', 'вопроса', 'вопросов'); }
+/* перетаскивание за ручку — мышью и пальцем */
+function sortable(box, itemSel, handleSel, onMove) {
+  if (box._sortable) return; box._sortable = true;
+  box.addEventListener('pointerdown', e => {
+    const h = e.target.closest(handleSel); if (!h || !box.contains(h) || (e.button && e.button !== 0)) return;
+    const item = h.closest(itemSel); if (!item || item.parentNode !== box) return;
+    e.preventDefault();
+    const kids = () => [...box.children].filter(el => el !== item && (el.matches(itemSel) || el === ph));
+    const from = [...box.children].filter(el => el.matches(itemSel)).indexOf(item);
+    const r = item.getBoundingClientRect(), dy = e.clientY - r.top, dx = e.clientX - r.left;
+    const ph = document.createElement('div'); ph.className = 'sort-ph ph-' + (item.className.split(' ')[0] || ''); ph.style.height = r.height + 'px';
+    box.insertBefore(ph, item);
+    Object.assign(item.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', zIndex: 60, pointerEvents: 'none', margin: 0, animation: 'none' });
+    item.classList.add('dragging'); document.body.classList.add('sorting');
+    try { h.setPointerCapture(e.pointerId); } catch (err) {}
+    let py = e.clientY, px = e.clientX, raf = 0;
+    const place = () => {
+      item.style.top = (py - dy) + 'px'; item.style.left = (px - dx) + 'px';
+      let best = null, bd = 1e9;
+      kids().forEach(el => { const b = el.getBoundingClientRect(), d = Math.hypot(px - (b.left + b.width / 2), py - (b.top + b.height / 2)); if (d < bd) { bd = d; best = el; } });
+      if (best && best !== ph) { const all = [...box.children]; if (all.indexOf(ph) < all.indexOf(best)) best.after(ph); else box.insertBefore(ph, best); }
+    };
+    const edge = () => { const z = 70; if (py < z) window.scrollBy(0, -14); else if (py > innerHeight - z) window.scrollBy(0, 14); else { raf = 0; return; } place(); raf = requestAnimationFrame(edge); };
+    const move = ev => { py = ev.clientY; px = ev.clientX; place(); if (!raf) raf = requestAnimationFrame(edge); };
+    const end = () => {
+      h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', end); h.removeEventListener('pointercancel', end);
+      if (raf) cancelAnimationFrame(raf);
+      const to = [...box.children].filter(el => el === ph || (el !== item && el.matches(itemSel))).indexOf(ph);
+      ph.replaceWith(item); item.removeAttribute('style'); item.classList.remove('dragging'); document.body.classList.remove('sorting');
+      if (to >= 0 && to !== from) onMove(from, to);
+    };
+    h.addEventListener('pointermove', move); h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
+  });
+}
+function paintQs() { sortable($('qList'), '.qcard', '.qg', (from, to) => { CFG.qs.splice(to, 0, CFG.qs.splice(from, 1)[0]); STORE.save(); paintQs(); }); $('qList').innerHTML = CFG.qs.map(cardHtml).join(''); document.querySelectorAll('.qcard').forEach(bindCard); $('qCount').textContent = CFG.qs.length + ' ' + plural(CFG.qs.length, 'вопрос', 'вопроса', 'вопросов'); }
 function repaintCard(i, focusSel) {
   const old = document.querySelector(`.qcard[data-i="${i}"]`); if (!old) return paintQs();
   const tmp = document.createElement('div'); tmp.innerHTML = cardHtml(CFG.qs[i], i); const nc = tmp.firstChild; nc.style.animation = 'none';
@@ -1475,11 +1526,11 @@ function bindCard(c) {
     q.ok.sort(); STORE.save();
     c.querySelectorAll('.opt').forEach(o => o.classList.toggle('ok', q.ok.indexOf(+o.dataset.j) >= 0)); refreshWarn(c, q);
   });
-  c.querySelectorAll('[data-mv]').forEach(b => b.onclick = () => {
-    const [j, d] = b.dataset.mv.split(':').map(Number), k = j + d; if (k < 0 || k >= q.opts.length) return;
-    [q.opts[j], q.opts[k]] = [q.opts[k], q.opts[j]];
-    q.ok = q.ok.map(x => x === j ? k : x === k ? j : x).sort();
-    STORE.save(); repaintCard(i, `[data-o="${k}"]`);
+  const ob = c.querySelector('.opts');
+  if (ob) sortable(ob, '.opt', '.og', (from, to) => {
+    const idx = q.opts.map((_, k) => k); idx.splice(to, 0, idx.splice(from, 1)[0]);
+    q.opts = idx.map(k => q.opts[k]); q.ok = q.ok.map(x => idx.indexOf(x)).sort();
+    STORE.save(); repaintCard(i);
   });
   c.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
     const j = +b.dataset.del; if (q.opts.length <= 2) return;
@@ -1500,8 +1551,6 @@ function bindCard(c) {
     const a = b.dataset.a;
     if (a === 'del') { if (!confirmTwice(b, '?')) return; if (CFG.qs.length > 1) CFG.qs.splice(i, 1); else CFG.qs[0] = normQ({ opts: [O(), O(), O(), O()] }); }
     else if (a === 'dup') CFG.qs.splice(i + 1, 0, Object.assign(JSON.parse(JSON.stringify(q)), { id: uid() }));
-    else if (a === 'up' && i > 0) CFG.qs.splice(i - 1, 0, CFG.qs.splice(i, 1)[0]);
-    else if (a === 'down' && i < CFG.qs.length - 1) CFG.qs.splice(i + 1, 0, CFG.qs.splice(i, 1)[0]);
     STORE.save(); paintQs(); sum();
   });
   // фото вопроса
@@ -1518,18 +1567,10 @@ function bindCard(c) {
   c.addEventListener('dragover', e => { if (e.dataTransfer && [...(e.dataTransfer.types || [])].indexOf('Files') >= 0) { e.preventDefault(); c.classList.add('drag'); } });
   c.addEventListener('dragleave', e => { if (!c.contains(e.relatedTarget)) c.classList.remove('drag'); });
   c.addEventListener('drop', e => { c.classList.remove('drag'); const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) { e.preventDefault(); take(f); } });
-  // фото вариантов
-  const of = c.querySelector('.ofile'); let oj = -1;
-  c.querySelectorAll('[data-oi]').forEach(b => b.onclick = () => {
-    const j = +b.dataset.oi;
-    if (q.opts[j].img) { q.opts[j].img = ''; STORE.save(); repaintCard(i); return; }
-    oj = j; of.value = ''; of.click();
-  });
-  if (of) of.onchange = () => { const f = of.files && of.files[0]; if (!f || oj < 0) return; const j = oj; IMG.load(f, 700, 140000).then(d => { q.opts[j].img = IMG.put(d); STORE.upImg(q.opts[j].img); STORE.save(); repaintCard(i); }, () => toast('Не получилось открыть фото')); };
 }
 function imgSlot(q) {
   if (q.img && IMG.get(q.img)) return `<div class="has">${picHtml(q.img, 'has-in')}<div class="acts"><button data-im="rep">Заменить</button><button data-im="del">Убрать</button></div></div>`;
-  return `<button class="add" data-im="add">${ICON.cam} Добавить фото к вопросу <small class="dsk-only">· или вставьте Ctrl+V / перетащите</small></button>`;
+  return `<button class="add" data-im="add">${ICON.cam} Добавить фото к вопросу</button>`;
 }
 function sum() {
   const n = CFG.qs.length, ok = CFG.qs.filter(validQ).length, mins = Math.max(1, Math.round(CFG.qs.reduce((s, q) => s + (q.type === 'number' ? Math.max(CFG.s.time, 30) : CFG.s.time) + 12, 0) / 60));
