@@ -5,32 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Мои игры · Белоглазов</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#14151d">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%9B%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#131312">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/brand.css">
+<script src="../assets/brand.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-:root{--bg:#14151d;--bg2:#1b1c27;--card:#212330;--line:rgba(255,255,255,.08);--ink:#f5efe4;--text:#e7dfd1;--muted:#a99c8e;--gold:#e2cd92;--gold2:#d8c28a}
+:root{--bg:#131312;--bg2:#181817;--card:#1c1c1b;--line:rgba(255,255,255,.1);--ink:#ffffff;--text:#e8e8e6;--muted:#a3a3a3;--gold:#f2efe9;--gold2:#d9d6d0}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,system-ui,sans-serif;line-height:1.55}
 a{color:inherit}
-.top{position:sticky;top:0;z-index:5;background:rgba(20,21,29,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:5;background:rgba(19,19,18,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .top .in{max-width:980px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:14px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-.brand i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#e2cd92,#8a6a35);display:grid;place-items:center;font-style:normal;color:#14151d;font-weight:800;font-size:14px}
-.brand b{font-family:"Cormorant Garamond",Georgia,serif;font-size:22px;font-weight:600;color:var(--ink)}
+.brand i{width:30px;height:30px;border-radius:9px;background:#f2efe9;display:grid;place-items:center;font-style:normal;color:#131312;font-weight:800;font-size:14px}
+.brand b{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:22px;font-weight:600;color:var(--ink)}
 .sp{flex:1}
 .lang,.out{border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:800;font-size:12px;height:40px;border-radius:999px;cursor:pointer;padding:0 14px}
 .lang{width:40px;padding:0}
 .out{color:var(--muted);font-weight:700}
 .wrap{max-width:980px;margin:0 auto;padding:40px 24px 80px}
 .k{color:var(--gold2);letter-spacing:.24em;text-transform:uppercase;font-weight:700;font-size:12px}
-h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clamp(38px,6vw,56px);line-height:1.02;margin:10px 0 10px;color:var(--ink)}
+h1{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-weight:600;font-size:clamp(38px,6vw,56px);line-height:1.02;margin:10px 0 10px;color:var(--ink)}
 .lead{color:var(--muted);margin:0 0 28px;max-width:560px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:14px;padding:13px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;transition:transform .15s}
 .btn:active{transform:scale(.97)}
-.btn.gold{background:linear-gradient(135deg,#e8d59e,#c9a86a);color:#191a24}
+.btn.gold{background:#f2efe9;color:#131312}
 .btn.ghost{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line)}
 .btn[disabled]{opacity:.5;cursor:default}
 .login{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px;max-width:460px}
@@ -40,11 +42,11 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clam
 .msg{margin-top:12px;font-size:14px;color:var(--muted);min-height:20px}
 .msg.ok{color:#9fd3b0}.msg.err{color:#e89a8a}
 .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
-.plan{border:1px solid rgba(226,205,146,.35);color:var(--gold);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.plan{border:1px solid rgba(242,239,233,.35);color:var(--gold);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .plan.off{color:var(--muted);border-color:var(--line)}
 .list{display:grid;gap:16px}
 .ev{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}
-.ev h3{font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;font-weight:600;margin:0;color:var(--ink);line-height:1.1}
+.ev h3{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:28px;font-weight:600;margin:0;color:var(--ink);line-height:1.1}
 .ev .meta{color:var(--muted);font-size:13px;margin:4px 0 14px}
 .ev .acts{display:flex;gap:8px;flex-wrap:wrap}
 .ev .acts .btn{padding:10px 14px;font-size:14px;border-radius:12px}
@@ -52,14 +54,31 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clam
 .ev .qr img,.ev .qr canvas{width:96px!important;height:96px!important;display:block}
 .ev.old{opacity:.6}
 .empty{color:var(--muted);background:var(--bg2);border:1px dashed var(--line);border-radius:22px;padding:28px;text-align:center}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#f5efe4;color:#191a24;border-radius:12px;padding:10px 16px;font-weight:700;font-size:14px;opacity:0;transition:all .25s;pointer-events:none;z-index:9}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#ffffff;color:#131312;border-radius:12px;padding:10px 16px;font-weight:700;font-size:14px;opacity:0;transition:all .25s;pointer-events:none;z-index:9}
 .toast.on{opacity:1;transform:translateX(-50%)}
 @media (max-width:640px){.wrap{padding:28px 16px 64px}.top .in{padding:0 16px}.ev{grid-template-columns:1fr}.ev .qr{display:none}}
+
+/* Beloglazov Event */
+:root{--hf:Archivo,Manrope,system-ui,sans-serif}
+h1,.h2,h3{text-transform:uppercase}
+h1,.h2,.hero h1{font-weight:500!important}
+h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
+.brand{gap:10px!important;color:#fff}
+.brand .pb-word{height:13px}
+.brand span{border-left:1px solid rgba(255,255,255,.18);padding-left:10px;font-size:12px!important;letter-spacing:.02em}
+.btn{border-radius:999px!important}
+.btn.gold:hover{background:#fff}
+.btn.ghost{background:transparent!important;border:1px solid rgba(255,255,255,.28)!important}
+.btn.ghost:hover{background:rgba(255,255,255,.08)!important}
+.k{color:var(--muted)!important}
+@media (max-width:560px){.brand .pb-word{height:11px}.brand span{display:none}}
+h1{font-size:clamp(28px,4.6vw,44px)!important}.ev h3{font-size:20px!important}.ev.tool{margin-bottom:16px;border-color:rgba(255,255,255,.22)}.ev .qmark{width:112px;display:grid;place-items:center;color:#fff;opacity:.9}.plan{color:#fff!important;border-color:rgba(255,255,255,.3)!important}
+@media (max-width:640px){.ev .qmark{display:none}}
 </style>
 </head>
 <body>
 <div class="top"><div class="in">
-  <a class="brand" href="../"><i>PB</i><b data-t="brand"></b></a><span class="sp"></span>
+  <a class="brand" href="../" aria-label="Beloglazov Event"><svg class="pb-mark" viewBox="0 0 100 100" width="30" height="30" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M0,50a50,50 0 1,0 100,0a50,50 0 1,0 -100,0Z M9.76,50a40.24,35.68 0 1,0 80.48,0a40.24,35.68 0 1,0 -80.48,0Z M14.25,50a35.75,31.27 0 1,0 71.5,0a35.75,31.27 0 1,0 -71.5,0Z M40.48,50a9.52,9.52 0 1,0 19.04,0a9.52,9.52 0 1,0 -19.04,0Z"/></svg><img class="pb-word" src="../assets/wordmark-white.png" alt="Beloglazov Event"></a><span class="sp"></span>
   <button class="out" id="out" hidden data-t="out"></button>
   <button class="lang" id="lang">EN</button>
 </div></div>
@@ -77,14 +96,14 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clam
       loginLead: 'Введите почту, на которую оформляли покупку, — пришлём ссылку для входа.', email: 'Email', send: 'Прислать ссылку',
       sent: 'Если такая покупка есть, письмо уже летит. Проверьте почту и папку «Спам».', loading: 'Загружаем…',
       pro: 'Host Pro', proOff: 'Подписка неактивна', event: 'Одно событие', newEv: '+ Новая игра', creating: 'Создаём…',
-      admin: 'Панель ведущего', guests: 'Ссылка для гостей', copied: 'Ссылка скопирована', created: 'Создана', until: 'до', guestsMax: 'до {n} гостей',
+      admin: 'Панель ведущего', quizT: 'Квиз о паре', quizD: 'Редактор вопросов, запуск по коду и итоги. Квизы сохраняются в аккаунте.', quizB: 'Открыть квиз', guests: 'Ссылка для гостей', copied: 'Ссылка скопирована', created: 'Создана', until: 'до', guestsMax: 'до {n} гостей',
       noCouple: 'Секретная миссия', empty: 'Игр пока нет.', buy: 'Тарифы', expired: 'срок закончился', err: 'Ошибка: ',
       proLead: 'Создавайте игру под каждое событие — все они будут здесь.', evLead: 'Ваша игра — ниже. Для нескольких событий подойдёт Host Pro.', getPro: 'Перейти на Host Pro' },
     en: { brand: 'Beloglazov', k: 'For hosts', h: 'My games', out: 'Sign out',
       loginLead: 'Enter the email you used at checkout — we’ll send you a sign-in link.', email: 'Email', send: 'Send link',
       sent: 'If there’s a purchase with this email, the message is on its way. Check your inbox and spam.', loading: 'Loading…',
       pro: 'Host Pro', proOff: 'Subscription inactive', event: 'One event', newEv: '+ New game', creating: 'Creating…',
-      admin: 'Host panel', guests: 'Guest link', copied: 'Link copied', created: 'Created', until: 'until', guestsMax: 'up to {n} guests',
+      admin: 'Host panel', quizT: 'Couple Quiz', quizD: 'Question editor, code-based launch and results. Quizzes are saved to your account.', quizB: 'Open the quiz', guests: 'Guest link', copied: 'Link copied', created: 'Created', until: 'until', guestsMax: 'up to {n} guests',
       noCouple: 'Secret Mission', empty: 'No games yet.', buy: 'Pricing', expired: 'expired', err: 'Error: ',
       proLead: 'Create a game for every event — they’ll all live here.', evLead: 'Your game is below. For several events, Host Pro is the better fit.', getPro: 'Upgrade to Host Pro' }
   };
@@ -133,6 +152,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clam
       '<span style="color:var(--muted);font-size:14px">' + esc(data.email) + '</span><span class="sp" style="flex:1"></span>' +
       (pro && data.active ? '<button class="btn gold" id="newEv">' + esc(T('newEv')) + '</button>' : '<a class="btn ghost" href="../#pricing">' + esc(pro ? T('buy') : T('getPro')) + '</a>') + '</div>' +
       '<p class="lead">' + esc(pro ? T('proLead') : T('evLead')) + '</p>';
+    h += '<div class="ev tool"><div><h3>' + esc(T('quizT')) + '</h3><div class="meta">' + esc(T('quizD')) + '</div><div class="acts"><a class="btn gold" href="../quiz/">' + esc(T('quizB')) + '</a></div></div><div class="qmark">' + (window.PB_BRAND ? PB_BRAND.mark(64) : '') + '</div></div>';
     if (!data.events.length) h += '<div class="empty">' + esc(T('empty')) + '</div>';
     else h += '<div class="list">' + data.events.map(function (ev, i) {
       var old = ev.exp && ev.exp < Date.now();
@@ -169,6 +189,7 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clam
   var q = new URLSearchParams(location.search), t = q.get('t');
   if (t) { store('set', t); try { history.replaceState(null, '', location.pathname); } catch (e) {} }
   token = store('get');
+  try { if (token && localStorage.getItem('pb_next') === 'quiz') { localStorage.removeItem('pb_next'); location.replace('../quiz/'); return; } } catch (e) {}
   paintStatic();
   if (token) load(); else login();
 })();
