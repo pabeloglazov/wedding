@@ -86,6 +86,24 @@ section{padding-top:80px}
 .pvdots{display:flex;gap:6px}.pvdots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2)}.pvdots i.on{background:var(--gold)}
 @media (max-width:560px){.pvcap{flex-direction:column;align-items:stretch;padding:14px 18px}.pvnav{justify-content:space-between}.pvstage{aspect-ratio:4/5}.pv .pvbox{max-height:calc(100dvh - 32px);overflow:auto}}
 /* сцены */
+.pj .subs{position:absolute;top:4.2%;right:4.6em;display:flex;gap:.4em;z-index:2}
+.pj .subs button{border:1px solid rgba(255,255,255,.14);background:rgba(20,21,29,.6);color:#a99c8e;font:inherit;font-size:.78em;font-weight:700;padding:.35em .9em;border-radius:99em;cursor:pointer}
+.pj .subs button.on{background:#e2cd92;color:#14151d;border-color:#e2cd92}
+.ph2{position:absolute;inset:0;padding:12% 4% 5%;display:flex;flex-direction:column;gap:1.2em;background:radial-gradient(ellipse at 50% 30%,#1d2030,#0e0f15 70%);animation:scIn .45s ease}
+.ph2 .hd{display:flex;align-items:baseline;gap:.8em}
+.ph2 .hd b{font-family:"Cormorant Garamond",Georgia,serif;font-size:2.6em;font-weight:600;color:#f5efe4;line-height:1}
+.ph2 .hd span{color:#a99c8e;font-size:.95em}
+.ph2 .live{display:inline-flex;align-items:center;gap:.4em;color:#e2cd92;font-size:.75em;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+.ph2 .live i{width:.6em;height:.6em;border-radius:50%;background:#e25c5c;animation:pulse 1.2s infinite}
+.ph2 .wall{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:1em;min-height:0}
+.ph2 figure{margin:0;border-radius:.9em;overflow:hidden;position:relative;opacity:0;transform:scale(.85) rotate(-2deg);transition:opacity .6s,transform .6s cubic-bezier(.2,1.2,.4,1);box-shadow:0 1em 2.4em rgba(0,0,0,.45)}
+.ph2 figure.in{opacity:1;transform:none}
+.ph2 figure.new{outline:.18em solid #e2cd92}
+.ph2 .pic{position:absolute;inset:0;display:grid;place-items:center;font-size:3.4em}
+.ph2 .pic:after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(0,0,0,.55))}
+.ph2 figcaption{position:absolute;left:.7em;right:.7em;bottom:.55em;color:#fff;font-size:.8em;font-weight:700;z-index:1;display:flex;justify-content:space-between}
+.ph2 figcaption small{opacity:.75;font-weight:600}
+
 .sc{position:absolute;inset:0;font-size:1.6cqw;animation:scIn .45s ease}
 @keyframes scIn{from{opacity:0;transform:scale(.985)}to{opacity:1}}
 .pj{display:grid;grid-template-columns:1.5fr 1fr;height:100%;color:#f5efe4;background:radial-gradient(ellipse at 30% 40%,#1d2030,#0e0f15 70%)}
@@ -170,6 +188,8 @@ section{padding-top:80px}
 @media (max-width:980px){.hero{grid-template-columns:1fr;gap:36px}.types{grid-template-columns:repeat(2,1fr)}.proof{grid-template-columns:repeat(2,1fr)}.host{grid-template-columns:1fr}}
 @media (max-width:560px){.types{grid-template-columns:1fr}.phone{width:250px}.hero{padding-top:36px}.proof b{font-size:44px}}
 @container (max-width:560px){
+ .pj .subs{top:auto;bottom:3%;right:3%}
+ .ph2{padding:14% 4% 12%}.ph2 .hd{flex-direction:column;gap:.2em}.ph2 .hd b{font-size:2.1em}.ph2 .wall{grid-template-columns:repeat(2,1fr)}.ph2 .pic{font-size:3em}
  .sc{font-size:3.3cqw}
  .pj{grid-template-columns:1fr;grid-template-rows:auto 1fr}
  .pj svg{grid-row:2}
@@ -243,7 +263,7 @@ section{padding-top:80px}
     <div class="final">
       <div class="h2" style="margin-top:0" data-t="finH"></div>
       <p data-t="finP"></p>
-      <div class="cta" style="justify-content:center"><a class="btn gold" href="https://pabeloglazov.com" target="_blank" rel="noopener" data-t="finBtn"></a><a class="btn ghost" href="../" data-t="all"></a></div>
+      <div class="cta" style="justify-content:center"><a class="btn gold" href="https://buy.stripe.com/6oU00j8bBeCS1xC4JW8IU0b" data-t="finBuy"></a><a class="btn ghost" href="../#pricing" data-t="finPlans"></a><a class="btn ghost" href="https://pabeloglazov.com" target="_blank" rel="noopener" data-t="finBtn"></a></div>
     </div>
   </section>
 </div>
@@ -283,7 +303,7 @@ section{padding-top:80px}
       h4h: 'Русский и английский', h4p: 'Каждый гость выбирает свой язык, миссии и интерфейс переводятся автоматически.',
       proofK: 'Первая свадьба с игрой', proofH: 'За полтора часа',
       p1: 'гостей сыграли', p2: 'новых знакомств', p3: 'миссий выполнено', p4: 'пожеланий и историй',
-      finH: 'Хотите эту игру на своё событие?', finP: 'Проведу её как ведущий или помогу запустить самостоятельно. Скоро — доступ по подписке.', finBtn: 'Связаться',
+      finH: 'Хотите эту игру на своё событие?', finP: 'Купите доступ на одно событие и проведите сами — или позовите меня ведущим.', finBtn: 'Позвать ведущего', finBuy: 'Купить на событие · $39', finPlans: 'Все тарифы',
       see: 'Смотреть пример →', mhH: 'Панель ведущего', mhP: 'Введите ключ ведущего — он есть у организатора игры.', mhPh: 'Ключ ведущего', cancel: 'Отмена', enter: 'Войти',
       foot: '© Павел Белоглазов · ведущий и автор игр' },
     en: { brand: 'Beloglazov', brandSub: 'games for celebrations', all: '← All games', kicker: 'An icebreaker game for guests', title: 'Secret Mission',
@@ -303,7 +323,7 @@ section{padding-top:80px}
       h4h: 'Russian and English', h4p: 'Every guest picks their language; missions and interface switch automatically.',
       proofK: 'First wedding with the game', proofH: 'In an hour and a half',
       p1: 'guests played', p2: 'new connections', p3: 'missions completed', p4: 'wishes & stories',
-      finH: 'Want this game at your event?', finP: 'I can host it for you or help you run it yourself. Subscription access is coming soon.', finBtn: 'Get in touch',
+      finH: 'Want this game at your event?', finP: 'Buy access for one event and run it yourself — or book me as your host.', finBtn: 'Book me as host', finBuy: 'Buy for one event · $39', finPlans: 'All plans',
       see: 'See it in action →', mhH: 'Host panel', mhP: 'Enter the host key — the game organizer has it.', mhPh: 'Host key', cancel: 'Cancel', enter: 'Open',
       foot: '© Pavel Beloglazov · host and game author' }
   };
@@ -328,7 +348,7 @@ section{padding-top:80px}
   var PV = { i: 0, t: [] };
   var PX = {
     ru: { names: ['Аня', 'Макс', 'Оля', 'Дима', 'Лиза', 'Артём', 'Катя', 'Игорь', 'Маша', 'Саша', 'Вера', 'Паша', 'Нина', 'Гоша'],
-      met: ' познакомился(ась) с ', pair: ' нашли друг друга по 🍩', done: ' выполнил(а) 5 миссий', live: 'Секретная миссия · в эфире',
+      met: ' познакомился(ась) с ', subA: 'Созвездие', subB: 'Фото гостей', phH: 'Фото гостей', phS: 'снимки появляются на экране сразу, как гость их сделал', phLive: 'в реальном времени', pair: ' нашли друг друга по 🍩', done: ' выполнил(а) 5 миссий', live: 'Секретная миссия · в эфире',
       sG: 'Гостей', sM: 'Знакомств', sT: 'Миссий', open: 'Игра открыта', tabs: ['Гости', 'Задания', 'Итоги'], online: 'Играют сейчас', guests: 'Гости', missions: 'Задания',
       mis: ['Знакомство с другой стороной', 'Найди того, кто играет на гитаре', 'Пара по символу', 'Общее фото'], nophone: 'без телефона',
       k: 'Лев & Наташа', noms: 'Номинации', top: 'Тройка лидеров', ms: 'мис.', nomL: [['🤝', 'Душа компании'], ['🏁', 'Первым прошёл'], ['📸', 'Главный фотограф']],
@@ -336,7 +356,7 @@ section{padding-top:80px}
       lgB: 'Каждый на своём языке', lgP: 'Гость выбирает язык в один тап — миссии, подсказки и кнопки переключаются сразу.',
       lgK: ['Миссия 2 · знакомство', 'Mission 2 · new acquaintance'], lgT: ['Узнай у кого-то со стороны невесты, где они познакомились', 'Ask someone from the bride’s side how they met the couple'], lgBtn: ['Засчитать', 'Submit'] },
     en: { names: ['Anna', 'Max', 'Olga', 'Dima', 'Liza', 'Art', 'Kate', 'Igor', 'Masha', 'Sasha', 'Vera', 'Pasha', 'Nina', 'George'],
-      met: ' met ', pair: ' found each other by 🍩', done: ' completed 5 missions', live: 'Secret Mission · live',
+      met: ' met ', subA: 'Constellation', subB: 'Guest photos', phH: 'Guest photos', phS: 'shots appear on screen the moment a guest takes them', phLive: 'live', pair: ' found each other by 🍩', done: ' completed 5 missions', live: 'Secret Mission · live',
       sG: 'Guests', sM: 'Connections', sT: 'Missions', open: 'Game is open', tabs: ['Guests', 'Missions', 'Results'], online: 'Playing now', guests: 'Guests', missions: 'Missions',
       mis: ['Meet the other side', 'Find someone who plays guitar', 'Emoji match', 'Group photo'], nophone: 'no phone',
       k: 'Lev & Natasha', noms: 'Awards', top: 'Top three', ms: 'mis.', nomL: [['🤝', 'Life of the party'], ['🏁', 'First to finish'], ['📸', 'Chief photographer']],
@@ -349,12 +369,34 @@ section{padding-top:80px}
   function stopPv() { PV.t.forEach(function (x) { clearTimeout(x); clearInterval(x); }); PV.t = []; }
   function count(el, to, ms) { var t0 = performance.now(); (function f(t) { var k = Math.min(1, (t - t0) / ms); el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1 && $('pv').classList.contains('on')) requestAnimationFrame(f); })(t0); }
   var SCENES = [
-    function (st, X) { // проектор
+    function (st, X, sub) { // проектор
+      sub = sub || 0;
+      function subsHtml() { return '<div class="subs"><button data-s="0"' + (sub ? '' : ' class="on"') + '>' + X.subA + '</button><button data-s="1"' + (sub ? ' class="on"' : '') + '>📸 ' + X.subB + '</button></div>'; }
+      function bindSubs() { [].forEach.call(st.querySelectorAll('.subs button'), function (b) { b.onclick = function (e) { e.stopPropagation(); stopPv(); SCENES[0](st, X, +b.dataset.s); }; }); }
+      if (sub === 1) {
+        var P = [['🥂', '#6b4a3a', '#d8a86a'], ['💐', '#3d4a3a', '#c9a0a8'], ['🎂', '#4a3a4f', '#e2cd92'], ['💃', '#2d3a55', '#c27078'], ['🕯️', '#3a2f28', '#e8b36a'], ['🎶', '#283a44', '#8fb9c9'], ['🌿', '#2f4235', '#a7ae86'], ['📸', '#44352d', '#d4b2ab']];
+        var hh = 20, mm = 41;
+        function fig(k) { var p = P[k % P.length], a = X.names[(k * 3) % X.names.length], b2 = X.names[(k * 3 + 5) % X.names.length]; mm += 2 + (k % 3); if (mm > 59) { mm -= 60; hh++; }
+          return '<figure><div class="pic" style="background:radial-gradient(circle at 35% 30%,' + p[2] + ',' + p[1] + ' 75%)">' + p[0] + '</div><figcaption><span>' + a + ' & ' + b2 + '</span><small>' + hh + ':' + (mm < 10 ? '0' : '') + mm + '</small></figcaption></figure>'; }
+        st.innerHTML = '<div class="sc pj"><div class="ph2"><div class="live"><i></i>' + X.phLive + '</div><div class="hd"><b>' + X.phH + '</b><span>' + X.phS + '</span></div><div class="wall" id="wall"></div></div>' + subsHtml() + '</div>';
+        bindSubs();
+        var wall = $('wall'), n = 0, max = 8;
+        function add() {
+          if (wall.children.length >= max) wall.removeChild(wall.lastChild);
+          [].forEach.call(wall.children, function (f) { f.classList.remove('new'); });
+          wall.insertAdjacentHTML('afterbegin', fig(n++)); var f = wall.firstChild;
+          requestAnimationFrame(function () { requestAnimationFrame(function () { f.classList.add('in', 'new'); }); });
+        }
+        for (var k = 0; k < 3; k++) add();
+        every(add, 1100);
+        later(function () { stopPv(); SCENES[0](st, X, 0); }, 9000);
+        return;
+      }
       var N = X.names.length, pts = [], seed = 7;
       function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
       for (var i = 0; i < N; i++) { var a = i / N * Math.PI * 2 + rnd() * .4, r = 18 + rnd() * 22; pts.push([50 + Math.cos(a) * r * 1.25, 50 + Math.sin(a) * r]); }
       var pairs = [[0,1],[2,3],[0,4],[5,6],[1,7],[8,9],[3,10],[11,12],[4,13],[6,9],[2,8],[7,12],[10,13],[5,11],[0,9],[1,3]];
-      st.innerHTML = '<div class="sc pj"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">' +
+      st.innerHTML = '<div class="sc pj">' + subsHtml() + '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">' +
         pairs.map(function (p) { return '<line x1="' + pts[p[0]][0] + '" y1="' + pts[p[0]][1] + '" x2="' + pts[p[1]][0] + '" y2="' + pts[p[1]][1] + '"/>'; }).join('') +
         pts.map(function (p) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="1.3"/>'; }).join('') + '</svg>' +
         '<div class="side"><div class="st"><b id="c1">0</b><span>' + X.sG + '</span></div><div class="st"><b id="c2">0</b><span>' + X.sM + '</span></div><div class="st"><b id="c3">0</b><span>' + X.sT + '</span></div></div>' +
@@ -369,6 +411,9 @@ section{padding-top:80px}
         later(function () { tk.textContent = msg; tk.style.opacity = 1; }, 300); k++;
       }
       step(); every(step, 1500);
+    
+      bindSubs();
+      later(function () { stopPv(); SCENES[0](st, X, 1); }, 9000);
     },
     function (st, X) { // панель ведущего
       var rows = [[X.names[0], 3], [X.names[1], 2], [X.names[6], 4], [X.names[3], 1]];
