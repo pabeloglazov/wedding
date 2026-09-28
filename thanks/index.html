@@ -33,6 +33,14 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clam
 .st b{font-family:"Cormorant Garamond",Georgia,serif;font-size:30px;color:var(--gold);line-height:1;font-weight:500;flex:none;width:26px}
 .st h4{margin:0 0 2px;color:var(--ink);font-size:16px}
 .st p{margin:0;color:var(--muted);font-size:14px}
+.ready{background:linear-gradient(160deg,#2b2d40,#1f2030);border:1px solid rgba(226,205,146,.4);border-radius:22px;padding:22px;margin-bottom:18px;text-align:left}
+.ready h3{margin:0 0 4px;color:var(--ink);font-size:18px}
+.ready p{margin:0 0 14px;color:var(--muted);font-size:14px}
+.ready .row{display:flex;gap:8px;flex-wrap:wrap}
+.ready .link{margin-top:12px;font-size:13px;color:var(--muted);word-break:break-all}
+.ready .link a{color:var(--gold)}
+.wait{color:var(--muted);font-size:14px;margin-bottom:18px}
+.wait.err{color:#e89a8a}
 .cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px}
 .btn{display:inline-flex;align-items:center;justify-content:center;border-radius:14px;padding:14px 22px;font-weight:700;font-size:15px;text-decoration:none}
 .btn.gold{background:linear-gradient(135deg,#e8d59e,#c9a86a);color:#191a24}
@@ -47,6 +55,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:24px}
   <div class="k" id="plan"></div>
   <h1 data-t="h"></h1>
   <p class="lead" data-t="lead"></p>
+  <div id="claim"></div>
   <div class="steps">
     <div class="st"><b>1</b><div><h4 data-t="s1h"></h4><p data-t="s1p"></p></div></div>
     <div class="st"><b>2</b><div><h4 data-t="s2h"></h4><p data-t="s2p"></p></div></div>
@@ -59,20 +68,27 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:24px}
 (function () {
   var I = {
     ru: { brand: 'Белоглазов', h: 'Спасибо! Оплата прошла', lead: 'Чек уже на вашей почте. Дальше — всё просто:',
-      s1h: 'Доступ придёт на почту', s1p: 'В течение часа пришлём ссылку на вашу панель ведущего и ключ — на адрес из чека.',
+      s1h: 'Ссылки продублированы на почту', s1p: 'Письмо с панелью ведущего и ссылкой «Мои игры» уже отправлено на адрес из чека.',
+      rh: 'Ваша игра готова', rp: 'Откройте панель ведущего: впишите имена пары, проверьте задания и нажмите «Открыть игру».', ra: 'Панель ведущего', rm: 'Мои игры', rg: 'Ссылка для гостей:',
+      wait: 'Проверяем оплату и создаём вашу игру…', err: 'Не получилось создать игру автоматически: ', errTail: ' Ничего страшного — оплата сохранена, я пришлю доступ вручную в течение часа.', retry: 'Попробовать ещё раз', mail: 'Письмо отправлено на ',
       s2h: 'Настройте игру', s2p: 'Имена, задания, язык и факты о гостях — всё в панели ведущего. Можно заранее проверить на двух телефонах.',
       s3h: 'Играйте', s3p: 'Выведите QR на экран — гости сканируют и начинают. Итоги и отчёт будут в конце вечера.',
       b1: 'Посмотреть игру', b2: 'Связаться со мной', foot: '© Павел Белоглазов · ведущий и автор игр',
       plans: { event: 'Одно событие · $39', 'pro-month': 'Host Pro · помесячно', 'pro-year': 'Host Pro · на год' }, plan0: 'Покупка' },
     en: { brand: 'Beloglazov', h: 'Thank you! Payment received', lead: 'Your receipt is in your inbox. Here’s what happens next:',
-      s1h: 'Access arrives by email', s1p: 'Within an hour we’ll send your host panel link and key to the email on the receipt.',
+      s1h: 'Links are in your inbox too', s1p: 'We’ve emailed your host panel and “My games” link to the address on the receipt.',
+      rh: 'Your game is ready', rp: 'Open the host panel: add the couple’s names, check the missions and press “Open the game”.', ra: 'Host panel', rm: 'My games', rg: 'Guest link:',
+      wait: 'Checking your payment and creating your game…', err: 'We couldn’t create your game automatically: ', errTail: ' Don’t worry — your payment is safe; I’ll send your access manually within an hour.', retry: 'Try again', mail: 'Email sent to ',
       s2h: 'Set up the game', s2p: 'Names, missions, language and guest facts — all in the host panel. Test it on two phones beforehand.',
       s3h: 'Play', s3p: 'Put the QR code on screen — guests scan and start. Results and a report are ready at the end of the night.',
       b1: 'See the game', b2: 'Contact me', foot: '© Pavel Beloglazov · host and game author',
       plans: { event: 'One event · $39', 'pro-month': 'Host Pro · monthly', 'pro-year': 'Host Pro · yearly' }, plan0: 'Purchase' }
   };
+  var API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec', SK = 'pb_claim_session', R = null, ERR = '';
   var q = new URLSearchParams(location.search), plan = q.get('plan') || '';
-  if (q.has('session_id')) { try { history.replaceState(null, '', location.pathname + '?plan=' + encodeURIComponent(plan)); } catch (e) {} }
+  var sid = q.get('session_id') || '';
+  if (sid) { try { sessionStorage.setItem(SK, sid); } catch (e) {} try { history.replaceState(null, '', location.pathname + '?plan=' + encodeURIComponent(plan)); } catch (e) {} }
+  else { try { sid = sessionStorage.getItem(SK) || ''; } catch (e) {} }
   var L = (function () { try { var s = localStorage.getItem('pb_lang'); if (s === 'ru' || s === 'en') return s; } catch (e) {} return /^(ru|uk|be|kk)/i.test(navigator.language || 'ru') ? 'ru' : 'en'; })();
   function paint() {
     var d = I[L]; document.documentElement.lang = L;
@@ -80,9 +96,41 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:24px}
     document.getElementById('plan').textContent = d.plans[plan] || d.plan0;
     document.getElementById('lang').textContent = L === 'ru' ? 'EN' : 'RU';
     document.title = d.h + ' · ' + d.brand;
+    paintClaim();
+  }
+  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function paintClaim() {
+    var d = I[L], el = document.getElementById('claim');
+    if (!sid) { el.innerHTML = ''; return; }
+    if (R) {
+      el.innerHTML = '<div class="ready"><h3>' + esc(d.rh) + '</h3><p>' + esc(d.rp) + '</p><div class="row">' +
+        '<a class="btn gold" target="_blank" rel="noopener" href="' + esc(R.adminUrl) + '">' + esc(d.ra) + '</a>' +
+        '<a class="btn ghost" href="' + esc(R.hostUrl.replace('https://game.pabeloglazov.com/', '../')) + '">' + esc(d.rm) + '</a></div>' +
+        '<div class="link">' + esc(d.rg) + ' <a target="_blank" rel="noopener" href="' + esc(R.playUrl) + '">' + esc(R.playUrl) + '</a></div>' +
+        '<div class="link">' + esc(d.mail) + esc(R.email) + '</div></div>';
+    } else if (ERR) {
+      el.innerHTML = '<div class="wait err">' + esc(d.err + ERR + d.errTail) + '</div><button class="btn ghost" id="retry" style="margin-bottom:18px">' + esc(d.retry) + '</button>';
+      document.getElementById('retry').onclick = claim;
+    } else el.innerHTML = '<div class="wait">' + esc(d.wait) + '</div>';
+  }
+  function claim(n) {
+    n = typeof n === 'number' ? n : 0; ERR = ''; paintClaim();
+    fetch(API, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'pfClaim', args: [sid, L] }) })
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        var j; try { j = JSON.parse(t); } catch (e) { if (n < 4) return setTimeout(function () { claim(n + 1); }, 2000); throw new Error('server'); }
+        if (!j.ok) {
+          var m = String(j.error || '').replace(/^(Exception|Error):\s*/i, '');
+          if (/не завершена|not complete/i.test(m) && n < 5) return setTimeout(function () { claim(n + 1); }, 4000);
+          throw new Error(m);
+        }
+        R = j.data; paintClaim();
+      })
+      .catch(function (e) { if (!e.message && n < 3) return setTimeout(function () { claim(n + 1); }, 2000); ERR = e.message || 'network'; paintClaim(); });
   }
   document.getElementById('lang').onclick = function () { L = L === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('pb_lang', L); } catch (e) {} paint(); };
   paint();
+  if (sid) claim(0);
 })();
 </script>
 </body>
