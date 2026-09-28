@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
 <style>
 :root{--bg:#14151d;--bg2:#1b1c27;--card:#212330;--card2:#2a2c3b;--line:rgba(255,255,255,.08);--ink:#f5efe4;--text:#e7dfd1;--muted:#a99c8e;--gold:#e2cd92;--gold2:#d8c28a;
   --a:#e07a5f;--b:#3d9a8b;--c:#d9a441;--d:#7b6fd6;--ok:#4caf7d;--bad:#d9665b;--cream:#f6f1e9;--cink:#2a2420;--cmuted:#86796c}
@@ -352,10 +355,49 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
         im.src = url;
       });
     }
-    return { get: get, put: put, gc: gc, load: load };
+    var pend = {};
+    function fetch(gid, id, kind, cb) {
+      if (!id || cache[id] || pend[id] || !NET.ok) return;
+      pend[id] = 1;
+      gref(gid, 'img/' + id + '/' + kind).on('value', function h(s) { var v = s.val(); if (!v) return; gref(gid, 'img/' + id + '/' + kind).off('value', h); cache[id] = v; delete pend[id]; if (cb) cb(); });
+    }
+    return { get: get, put: put, gc: gc, load: load, fetch: fetch };
   })();
   function picHtml(id, cls) { var d = IMG.get(id); if (!d) return ''; return '<div class="' + cls + '"><div class="bgb" style="background-image:url(' + d + ')"></div><img src="' + d + '" alt=""></div>'; }
   function ls(op, k, v) { try { if (op === 'get') return JSON.parse(localStorage.getItem(k) || 'null'); if (op === 'set') localStorage.setItem(k, JSON.stringify(v)); if (op === 'del') localStorage.removeItem(k); } catch (e) {} return null; }
+  /* ============ сеть: Firebase Realtime Database ============ */
+  var FB = { apiKey: 'AIzaSyADi9iG0ZtHg9zGBomUKpTpgaANStenR3Y', authDomain: 'beloglazov-games.firebaseapp.com', databaseURL: 'https://beloglazov-games-default-rtdb.firebaseio.com', projectId: 'beloglazov-games' };
+  var NET = { ok: false, uid: null, db: null, off: 0 };
+  function now() { return Date.now() + NET.off; }
+  var netReady = new Promise(function (res) {
+    try {
+      if (!window.firebase) return res(false);
+      firebase.initializeApp(FB);
+      var done = false, to = setTimeout(function () { if (!done) { done = true; res(false); } }, 10000);
+      firebase.auth().onAuthStateChanged(function (u) {
+        if (!u || done) return;
+        done = true; clearTimeout(to);
+        NET.uid = u.uid; NET.db = firebase.database(); NET.ok = true;
+        NET.db.ref('.info/serverTimeOffset').on('value', function (x) { NET.off = x.val() || 0; });
+        res(true);
+      });
+      firebase.auth().signInAnonymously().catch(function () { if (!done) { done = true; clearTimeout(to); res(false); } });
+    } catch (e) { res(false); }
+  });
+  function gref(gid, path) { return NET.db.ref('g/' + gid + (path ? '/' + path : '')); }
+  function TS() { return firebase.database.ServerValue.TIMESTAMP; }
+  function shrink(data, max, q) {
+    return new Promise(function (res) {
+      var im = new Image();
+      im.onload = function () { var k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', q)); };
+      im.onerror = function () { res(''); };
+      im.src = data;
+    });
+  }
+  var PARAMS = new URLSearchParams(location.search), GID = (PARAMS.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
+  function baseUrl() { return location.origin + location.pathname; }
+  function playLink(g) { return baseUrl() + '?view=play' + (g && g.net ? '&g=' + g.id : ''); }
+  function screenLink(g) { return baseUrl() + '?view=screen' + (g && g.net ? '&g=' + g.id : ''); }
   function plural(n, a, b, c) { var x = n % 10, y = n % 100; return x === 1 && y !== 11 ? a : x >= 2 && x <= 4 && (y < 10 || y >= 20) ? b : c; }
 
   /* ============ канал между вкладками ============ */
@@ -377,12 +419,14 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
   var G = null, botTimers = [], tick = null;
   function newGame() {
     var qs = CFG.qs.filter(function (q) { return (q.text.trim() || q.img) && q.opts.filter(function (o) { return o.trim(); }).length >= 2; });
-    G = { id: uid(), title: CFG.title, couple: CFG.couple, mode: CFG.mode, s: Object.assign({}, CFG.s), qs: JSON.parse(JSON.stringify(qs)),
+    endNet();
+    G = { id: (uid() + uid()).slice(0, 12), net: NET.ok, ts: Date.now(), title: CFG.title, couple: CFG.couple, mode: CFG.mode, s: Object.assign({}, CFG.s), qs: JSON.parse(JSON.stringify(qs)),
       phase: 'lobby', qi: -1, t0: 0, t1: 0, players: {}, ans: {}, prevRank: {}, ver: 0 };
+    if (G.net) startNet();
     publish();
     if (CFG.bots) addBots();
   }
-  function publish() { G.ver++; ls('set', KEY_LIVE, G); send({ type: 'state', g: G }); render(); }
+  function publish() { G.ver++; ls('set', KEY_LIVE, G); send({ type: 'state', g: G }); netPush(); render(); }
   function clearBots() { botTimers.forEach(clearTimeout); botTimers = []; }
   function addBots() {
     var names = G.s.teams ? TEAMS : BOTS;
@@ -394,19 +438,22 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
       }, 500 + i * 450 + Math.random() * 400));
     });
   }
-  function join(pid, name) {
+  function join(pid, name, net) {
     if (!G) return;
     name = String(name || '').trim().slice(0, 24) || 'Гость';
-    if (G.players[pid]) { G.players[pid].name = name; }
-    else G.players[pid] = { name: name, score: 0, streak: 0, best: 0, bot: false, gain: 0, ok: 0, times: [] };
+    if (G.players[pid]) { if (G.players[pid].name === name) return; G.players[pid].name = name; }
+    else G.players[pid] = { name: name, score: 0, streak: 0, best: 0, bot: false, net: !!net, gain: 0, ok: 0, times: [] };
     publish();
   }
-  function answer(pid, qi, opt) {
+  function answer(pid, qi, opt, ts) {
     if (!G || G.phase !== 'question' || qi !== G.qi || !G.players[pid]) return;
+    opt = +opt; if (!(opt >= 0 && opt <= 3) || !(G.qs[qi].opts[opt] || '').trim()) return;
     var a = G.ans[qi] || (G.ans[qi] = {});
     if (a[pid] && !G.s.change) return;
-    if (Date.now() > G.t1) return;
-    a[pid] = { o: opt, t: Date.now() - G.t0 };
+    if (a[pid] && a[pid].o === opt) return;
+    var at = ts || now();
+    if (at > G.t1 + 400) return;
+    a[pid] = { o: opt, t: Math.max(0, at - G.t0) };
     publish();
     maybeAutoReveal();
   }
@@ -415,7 +462,7 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
     G.phase = 'question'; G.qi = i;
     var q = G.qs[i];
     var dur = (q.time || G.s.time) * 1000;
-    G.t0 = Date.now() + 1200; G.t1 = G.t0 + dur;
+    G.t0 = now() + 1200; G.t1 = G.t0 + dur;
     G.ans[i] = {};
     Object.keys(G.players).forEach(function (id) {
       var p = G.players[id]; p.gain = 0;
@@ -460,7 +507,77 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
   function maybeAutoReveal() {
     if (!G || G.phase !== 'question') return;
     var n = Object.keys(G.players).length, a = Object.keys(G.ans[G.qi] || {}).length;
-    if (Date.now() >= G.t1 || (n > 0 && a >= n && !G.s.change)) reveal();
+    if (now() >= G.t1 + (G.net ? 700 : 0) || (n > 0 && a >= n && !G.s.change)) reveal();
+  }
+  /* ---------- сеть: ведущий ---------- */
+  var netSubs = [], lastCore = '', lastPk = '', scrTimer = null;
+  function pubQs(g) { return g.qs.map(function (q) { return { text: q.text || '', opts: q.opts.map(function (o) { return o || ''; }), img: q.img || '' }; }); }
+  function startNet() {
+    var gid = G.id;
+    try { localStorage.setItem('pbq_last_gid', gid); } catch (e) {}
+    lastCore = ''; lastPk = '';
+    gref(gid, 'meta').set({ host: NET.uid, t: TS() }).then(function () {
+      if (!G || G.id !== gid) return;
+      gref(gid, 'q').set(pubQs(G));
+      netPush(true);
+      uploadImgs(gid);
+    }).catch(function (e) { console.warn('quiz net', e); });
+    attachNet();
+  }
+  function attachNet() {
+    var gid = G.id, jr = gref(gid, 'join'), ar = gref(gid, 'ans');
+    var onJ = function (x) { var v = x.val(); if (v && G && G.id === gid) join(x.key, v.name, true); };
+    var onA = function (x) { var v = x.val(); if (!v || !G || G.id !== gid || G.phase !== 'question') return; var a = v[G.qi]; if (a) answer(x.key, G.qi, a.o, a.t); };
+    jr.on('child_added', onJ); jr.on('child_changed', onJ);
+    ar.on('child_added', onA); ar.on('child_changed', onA);
+    netSubs.push(function () { jr.off(); ar.off(); });
+  }
+  function endNet() {
+    netSubs.forEach(function (f) { f(); }); netSubs = [];
+    clearTimeout(scrTimer); scrTimer = null;
+    var last = null; try { last = localStorage.getItem('pbq_last_gid'); localStorage.removeItem('pbq_last_gid'); } catch (e) {}
+    if (NET.ok && last) gref(last).remove().catch(function () {});
+  }
+  function uploadImgs(gid) {
+    var ids = [];
+    G.qs.forEach(function (q) { if (q.img && ids.indexOf(q.img) < 0 && IMG.get(q.img)) ids.push(q.img); });
+    ids.reduce(function (pr, id) {
+      return pr.then(function () { var d = IMG.get(id); return shrink(d, 900, 0.72).then(function (ph) { if (!G || G.id !== gid) return; return gref(gid, 'img/' + id).set({ p: ph || d, s: d }); }); });
+    }, Promise.resolve()).catch(function (e) { console.warn('quiz img', e); });
+  }
+  function netPush(force) {
+    if (!G || !G.net || !NET.ok) return;
+    var gid = G.id, n = Object.keys(G.players).length, rev = G.phase === 'reveal' || G.phase === 'board' || G.phase === 'final';
+    var core = { id: gid, phase: G.phase, qi: G.qi, t0: G.t0, t1: G.t1, nq: G.qs.length, title: G.title || '', couple: G.couple || '', final: !!G.final,
+      s: { change: !!G.s.change, teams: !!G.s.teams, speed: !!G.s.speed }, ok: rev && G.qi >= 0 ? G.qs[G.qi].ok : -1, n: G.phase === 'lobby' ? 0 : n };
+    var ck = JSON.stringify(core), pk = G.phase + ':' + G.qi, changed = pk !== lastPk;
+    if (ck !== lastCore) { lastCore = ck; gref(gid, 'core').set(core); }
+    if (changed) { lastPk = pk; if (rev) pushScores(); }
+    if (force || changed) { clearTimeout(scrTimer); scrTimer = null; sendScr(); }
+    else if (!scrTimer) scrTimer = setTimeout(function () { scrTimer = null; sendScr(); }, 400);
+  }
+  function sendScr() {
+    if (!G || !G.net) return;
+    var rev = G.phase === 'reveal' || G.phase === 'board' || G.phase === 'final';
+    var v = JSON.parse(JSON.stringify(G));
+    v.qs = v.qs.map(function (q, i) { return { text: q.text || '', opts: q.opts.map(function (o) { return o || ''; }), img: q.img || '', ok: rev && i === G.qi ? q.ok : -1 }; });
+    var a = {}; if (G.qi >= 0) a['q' + G.qi] = G.ans[G.qi] || {}; v.ans = a;
+    Object.keys(v.players).forEach(function (k) { delete v.players[k].skill; });
+    gref(G.id, 'scr').set(v);
+  }
+  function pushScores() {
+    var upd = {}, r = ranked();
+    r.forEach(function (p, i) { if (!p.net) return; upd[p.id] = { qi: G.qi, score: p.score, gain: p.gain || 0, last: p.last || 'none', streak: p.streak || 0, ok: p.ok || 0, rank: i + 1, n: r.length }; });
+    if (Object.keys(upd).length) gref(G.id, 'sc').update(upd);
+  }
+  function fixScr(v) {
+    if (!v) return null;
+    v.players = v.players || {}; v.prevRank = v.prevRank || {};
+    Object.keys(v.players).forEach(function (k) { var p = v.players[k]; p.times = p.times || []; p.score = p.score || 0; });
+    var a = {}; if (v.ans && v.ans['q' + v.qi]) a[v.qi] = v.ans['q' + v.qi]; v.ans = a;
+    v.qs = (v.qs || []).map(function (q) { q = q || {}; return { text: q.text || '', opts: [0, 1, 2, 3].map(function (i) { return (q.opts && q.opts[i]) || ''; }), img: q.img || '', ok: q.ok == null ? -1 : q.ok }; });
+    v.s = v.s || {};
+    return v;
   }
   function rankMap() { var m = {}; ranked().forEach(function (p, i) { m[p.id] = i + 1; }); return m; }
   function ranked(g) {
@@ -494,7 +611,7 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
   }
 
   /* ============ отрисовка: экран проектора ============ */
-  var scrSig = '', qrUrl = location.origin + location.pathname + '?view=play';
+  var scrSig = '';
   function renderScreen(box, g) {
     if (!box) return;
     var n = g ? Object.keys(g.players).length : 0;
@@ -537,7 +654,7 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
         '</div><div class="noms">' + noms.map(function (x) { return '<div><i>' + x[0] + '</i><span>' + x[1] + '</span><b>' + esc(x[2]) + '</b></div>'; }).join('') + '</div></div>';
     }
     box.innerHTML = h;
-    if (g && g.phase === 'lobby') { var qe = box.querySelector('[data-qr]'); if (qe && window.QRCode) try { new QRCode(qe, { text: qrUrl, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {} }
+    if (g && g.phase === 'lobby') { var qe = box.querySelector('[data-qr]'); if (qe && window.QRCode) try { new QRCode(qe, { text: playLink(g), width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {} }
     if (g && g.phase === 'final') {
       var ds = box.querySelectorAll('.pod>div[data-h]');
       [2, 0, 1].forEach(function (j, k) { var d = ds[j]; if (!d) return; setTimeout(function () { d.classList.add('in'); d.querySelector('.b').style.height = (d.dataset.h / 24) + 'em'; }, 400 + k * 900); });
@@ -563,7 +680,7 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
   function updScreen(box, g) {
     if (!g || !box) return;
     if (g.phase === 'question') {
-      var rem = Math.max(0, g.t1 - Date.now()), dur = g.t1 - g.t0, pre = g.t0 - Date.now();
+      var rem = Math.max(0, g.t1 - now()), dur = g.t1 - g.t0, pre = g.t0 - now();
       var fg = box.querySelector('.ring .fg'), t = box.querySelector('#ringT');
       if (fg) { var f = pre > 0 ? 1 : rem / dur; fg.setAttribute('stroke-dashoffset', String(97.4 * (1 - f))); fg.style.stroke = f < 0.25 ? 'var(--bad)' : ''; }
       if (t) t.textContent = pre > 0 ? '' : Math.ceil(rem / 1000);
@@ -574,23 +691,24 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
   }
 
   /* ============ отрисовка: телефон гостя ============ */
-  var phSig = '';
+  var phSig = '', PHMSG = '', RG = null;
   function renderPhone(box, g, cl) {
     if (!box) return;
     var me = g && g.players[cl.pid];
-    var sig = !g ? 'none' : g.id + g.phase + g.qi + (me ? '1' : '0') + (g.phase === 'question' && g.ans[g.qi] && g.ans[g.qi][cl.pid] ? 'a' + g.ans[g.qi][cl.pid].o : '');
+    var sig = !g ? 'none' + (g === null ? PHMSG : '') : g.id + g.phase + g.qi + (me ? '1' + me.score + (me.last || '') : '0') + (g.phase === 'question' && g.ans[g.qi] && g.ans[g.qi][cl.pid] ? 'a' + g.ans[g.qi][cl.pid].o : '') + (g._img || '');
     if (sig === box.dataset.sig && box.firstChild) { updPhone(box, g, cl); return; }
     box.dataset.sig = sig;
     var h = '';
     if (!g) {
-      h = '<div class="pv"><div class="wait"><div class="spin"></div><div class="kk">Квиз о паре</div><p class="sub" style="margin:0">Игра ещё не началась.<br>Дождитесь ведущего.</p>' + (VIEW === 'play' ? '<div class="card" style="margin-top:18px;text-align:left;font-size:13px;line-height:1.45;color:var(--cmuted)"><b style="color:var(--cink)">Это демо-версия.</b> Пока телефон видит игру, только если открыт в том же браузере, где запущен пульт. Вход по QR с любого телефона появится в рабочей версии.</div>' : '') + '</div></div>';
+      var msg = PHMSG || 'Игра ещё не началась.<br>Дождитесь ведущего.';
+      h = '<div class="pv"><div class="wait">' + (PHMSG ? '<div class="big" style="font-size:44px">' + (/QR/.test(PHMSG) && !/завершена/.test(PHMSG) ? '📷' : /Спасибо/.test(PHMSG) ? '🎉' : '⚠️') + '</div>' : '<div class="spin"></div>') + '<div class="kk">Квиз о паре</div><p class="sub" style="margin:0">' + msg + '</p></div></div>';
     } else if (!me) {
       if (g.phase === 'final') h = '<div class="pv"><div class="wait"><div class="kk">' + esc(g.couple) + '</div><h2>Игра завершена</h2><p class="sub">Спасибо, что были с нами!</p></div></div>';
       else h = '<div class="pv"><div class="kk">' + esc(g.couple) + '</div><h2>' + esc(g.title) + '</h2><p class="sub">' + (g.s.teams ? 'Придумайте название команды' : 'Как вас зовут?') + '</p>' +
         '<input class="pin" id="pName" maxlength="24" autocomplete="off" placeholder="' + (g.s.teams ? 'Название команды' : 'Ваше имя') + '"><button class="pbtn" id="pJoin">Войти в игру</button>' +
         '<p class="sub" style="margin-top:14px;font-size:12px">Приложение не нужно — всё работает в браузере</p></div>';
     } else {
-      var rk = ranked(g).map(function (p) { return p.id; }).indexOf(cl.pid) + 1;
+      var rk = g._rank || ranked(g).map(function (p) { return p.id; }).indexOf(cl.pid) + 1, np = g._np || Object.keys(g.players).length;
       var head = '<div class="me"><span>' + esc(me.name) + '</span><span><b>' + me.score + '</b> очков</span></div>';
       if (g.phase === 'lobby') h = '<div class="pv">' + head + '<div class="wait"><div class="big">✓</div><h2>Вы в игре</h2><p class="sub">Смотрите на экран — скоро первый вопрос</p></div></div>';
       else if (g.phase === 'question') {
@@ -601,9 +719,10 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
           (picked >= 0 ? '<p class="sub" style="margin:12px 0 0">' + (g.s.change ? 'Ответ принят · можно поменять до конца таймера' : 'Ответ принят · ждём остальных') + '</p>' : '') + '</div>';
       } else if (g.phase === 'reveal') {
         var st = me.last || 'none', q2 = g.qs[g.qi];
-        h = '<div class="pv">' + head + '<div class="res ' + st + '"><b>' + (st === 'ok' ? 'Верно!' : st === 'bad' ? 'Мимо' : 'Не успели') + '</b>' +
+        if (st === 'wait') h = '<div class="pv">' + head + '<div class="wait"><div class="spin"></div><p class="sub">Подсчитываем очки…</p></div></div>';
+        else h = '<div class="pv">' + head + '<div class="res ' + st + '"><b>' + (st === 'ok' ? 'Верно!' : st === 'bad' ? 'Мимо' : 'Не успели') + '</b>' +
           (st === 'ok' ? '<div class="g">+' + me.gain + '</div>' + (me.streak >= 3 ? '<div>🔥 серия ' + me.streak + ' подряд</div>' : '') : '<div>Правильный ответ: ' + L[q2.ok] + ' — ' + esc(q2.opts[q2.ok]) + '</div>') + '</div>' +
-          '<div class="rank">Ваше место<br><b>' + rk + '</b> из ' + Object.keys(g.players).length + '</div></div>';
+          '<div class="rank">Ваше место<br><b>' + rk + '</b> из ' + np + '</div></div>';
       } else if (g.phase === 'board') h = '<div class="pv">' + head + '<div class="wait"><div class="big">' + rk + '</div><h2>место</h2><p class="sub">' + me.score + ' очков · смотрите на экран</p></div></div>';
       else if (g.phase === 'final') h = '<div class="pv">' + head + '<div class="wait"><div class="big">' + (rk <= 3 ? ['🥇', '🥈', '🥉'][rk - 1] : rk) + '</div><h2>' + (rk <= 3 ? 'Вы в тройке лидеров!' : rk + '-е место') + '</h2><p class="sub">' + me.score + ' очков · верных ответов: ' + me.ok + '</p></div></div>';
     }
@@ -614,7 +733,7 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
     if (pz) pz.onclick = function () { var z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = '<img src="' + pz.querySelector('img').src + '" alt="">'; z.onclick = function () { z.remove(); }; document.body.appendChild(z); };
     [].forEach.call(box.querySelectorAll('.ans button'), function (b) {
       b.onclick = function () {
-        var cur = G || LIVE; if (!cur || cur.phase !== 'question') return;
+        var cur = G || LIVE || (RG ? RG() : null); if (!cur || cur.phase !== 'question' || now() > cur.t1) return;
         var mine = cur.ans[cur.qi] && cur.ans[cur.qi][cl.pid];
         if (mine && !cur.s.change) return;
         cl.answer(cur.qi, +b.dataset.o);
@@ -626,12 +745,67 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
   function updPhone(box, g, cl) {
     if (!g || g.phase !== 'question') return;
     var t = box.querySelector('#ptm'); if (!t) return;
-    var dur = g.t1 - g.t0, rem = Math.max(0, g.t1 - Date.now());
-    t.style.width = (Date.now() < g.t0 ? 100 : rem / dur * 100) + '%';
+    var dur = g.t1 - g.t0, rem = Math.max(0, g.t1 - now());
+    t.style.width = (now() < g.t0 ? 100 : rem / dur * 100) + '%';
+  }
+
+  /* ============ экран и телефон через сеть (другие устройства) ============ */
+  function soloNet() {
+    document.body.classList.add(VIEW === 'screen' ? 'solo-screen' : 'solo-play');
+    document.title = VIEW === 'screen' ? 'Экран · Квиз о паре' : 'Квиз о паре';
+    var app = $('app');
+    if (VIEW === 'screen') app.innerHTML = '<div class="stage full" id="stg"></div><button class="btn ghost sm fsbtn" id="fs">⛶ На весь экран</button>';
+    else app.innerHTML = '<div id="ph"></div>';
+    if ($('fs')) $('fs').onclick = function () { var d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen || function () {}).call(d); };
+    var box = VIEW === 'screen' ? $('stg') : $('ph');
+    var C = null, Q = null, SC = null, J = null, MYA = null, gone = false, cl = null;
+    function redraw() { if (VIEW === 'screen') { scrSig = ''; renderScreen(box, LIVE); } else { box.dataset.sig = ''; draw(); } }
+    function draw() { if (VIEW === 'screen') renderScreen(box, LIVE); else renderPhone(box, RG(), cl); }
+    if (VIEW === 'play') { PHMSG = ''; draw0(); } else renderScreen(box, null);
+    function draw0() { box.innerHTML = '<div class="pv"><div class="wait"><div class="spin"></div><div class="kk">Квиз о паре</div><p class="sub" style="margin:0">Подключаемся к игре…</p></div></div>'; }
+    netReady.then(function (ok) {
+      if (!ok) { PHMSG = 'Не получилось подключиться. Проверьте интернет и обновите страницу.'; if (VIEW === 'play') { box.dataset.sig = ''; renderPhone(box, null, { pid: '' }); } else box.innerHTML = '<div class="sv center"><h1>Нет связи</h1><p class="muted" style="font-size:1.3em">Проверьте интернет и обновите страницу</p></div>'; return; }
+      gref(GID, 'meta').once('value').then(function (x) { if (!x.exists()) { gone = true; PHMSG = 'Игра не найдена или уже завершена.<br>Отсканируйте QR-код на экране ещё раз.'; if (VIEW === 'play') { box.dataset.sig = ''; renderPhone(box, null, { pid: '' }); } else box.innerHTML = '<div class="sv center"><h1>Игра не найдена</h1><p class="muted" style="font-size:1.3em">Откройте экран заново с пульта ведущего</p></div>'; } });
+      if (VIEW === 'screen') {
+        gref(GID, 'scr').on('value', function (x) {
+          LIVE = fixScr(x.val());
+          if (LIVE) LIVE.qs.forEach(function (q) { if (q.img) IMG.fetch(GID, q.img, 's', redraw); });
+          if (!LIVE && !gone) { box.innerHTML = '<div class="sv center"><div class="kk">Квиз о паре</div><h1>Игра завершена</h1></div>'; scrSig = 'gone'; return; }
+          draw();
+        });
+        setInterval(function () { if (LIVE) updScreen(box, LIVE); }, 200);
+        return;
+      }
+      var uidv = NET.uid;
+      cl = { pid: uidv, picked: {},
+        join: function (name) { name = String(name || '').trim().slice(0, 24); if (!name) return; gref(GID, 'join/' + uidv).set({ name: name, t: TS() }); J = { name: name }; box.dataset.sig = ''; draw(); },
+        answer: function (qi, o) { this.picked[qi] = o; gref(GID, 'ans/' + uidv + '/' + qi).set({ o: o, t: TS() }); } };
+      RG = function () {
+        if (!C || !Q || gone) return null;
+        var rev = C.phase !== 'lobby' && C.phase !== 'question';
+        var g = { id: C.id, phase: C.phase, qi: C.qi, t0: C.t0, t1: C.t1, s: C.s || {}, title: C.title, couple: C.couple, final: C.final, players: {}, ans: {},
+          qs: Q.map(function (q, i) { q = q || {}; return { text: q.text || '', opts: [0, 1, 2, 3].map(function (k) { return (q.opts && q.opts[k]) || ''; }), img: q.img || '', ok: i === C.qi ? C.ok : -1 }; }) };
+        var cur = SC && SC.qi === C.qi;
+        g._np = (cur && SC.n) || C.n; g._rank = cur ? SC.rank : (SC ? SC.rank : 0);
+        g._img = (g.qs[C.qi] && g.qs[C.qi].img && IMG.get(g.qs[C.qi].img)) ? 'i' : '';
+        if (J) g.players[uidv] = { name: J.name, score: SC ? SC.score : 0, gain: cur ? SC.gain : 0, last: rev && C.phase === 'reveal' ? (cur ? SC.last : 'wait') : (SC ? SC.last : 'none'), streak: SC ? SC.streak : 0, ok: SC ? SC.ok : 0, times: [] };
+        if (MYA && MYA[C.qi] && C.qi >= 0) { g.ans[C.qi] = {}; g.ans[C.qi][uidv] = MYA[C.qi]; }
+        return g;
+      };
+      var r = function (k) { return function (x) { var v = x.val(); if (k === 'C') { C = v; if (!v && Q) { gone = true; PHMSG = 'Игра завершена. Спасибо, что играли!'; } } else if (k === 'Q') { Q = v; if (Q) Q.forEach(function (q) { if (q && q.img) IMG.fetch(GID, q.img, 'p', function () { box.dataset.sig = ''; draw(); }); }); } else if (k === 'SC') SC = v; else if (k === 'J') J = v; else if (k === 'MYA') MYA = v; draw(); }; };
+      gref(GID, 'core').on('value', r('C'));
+      gref(GID, 'q').on('value', r('Q'));
+      gref(GID, 'sc/' + uidv).on('value', r('SC'));
+      gref(GID, 'join/' + uidv).on('value', r('J'));
+      gref(GID, 'ans/' + uidv).on('value', r('MYA'));
+      setInterval(function () { var g = RG(); if (g) updPhone(box, g, cl); }, 200);
+    });
   }
 
   /* ============ режим: только экран / только телефон ============ */
-  var LIVE = ls('get', KEY_LIVE);
+  var LIVE = GID ? null : ls('get', KEY_LIVE);
+  if ((VIEW === 'screen' || VIEW === 'play') && GID) { soloNet(); return; }
+  if (VIEW === 'play') PHMSG = 'Чтобы войти в игру, отсканируйте QR-код на экране';
   if (VIEW === 'screen' || VIEW === 'play') {
     document.body.classList.add(VIEW === 'screen' ? 'solo-screen' : 'solo-play');
     var client = VIEW === 'play' ? mkClient(false) : null;
@@ -656,7 +830,14 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
     else if (m.type === 'answer') answer(m.pid, m.qi, m.o);
     else if (m.type === 'hello') send({ type: 'state', g: G });
   });
-  ls('del', KEY_LIVE); send({ type: 'reset' });
+  (function () {
+    var saved = ls('get', KEY_LIVE);
+    if (saved && saved.net && saved.phase !== 'final' && Date.now() - (saved.ts || 0) < 6 * 3600e3) { G = saved; G.players = G.players || {}; G.ans = G.ans || {}; G.prevRank = G.prevRank || {}; }
+    else { ls('del', KEY_LIVE); send({ type: 'reset' }); }
+  })();
+  netReady.then(function (ok) {
+    if (G && G.net) { if (ok) { attachNet(); lastCore = ''; lastPk = ''; netPush(true); } render(); }
+  });
 
   function render() { if (G) renderLive(); else renderEditor(); }
 
@@ -784,7 +965,8 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
   function start() {
     var ok = CFG.qs.filter(function (q) { return (q.text.trim() || q.img) && q.opts.filter(function (o) { return o.trim(); }).length >= 2; });
     if (!ok.length) { alertBox('Добавьте хотя бы один вопрос с двумя вариантами'); return; }
-    newGame(); window.scrollTo(0, 0);
+    var b = $('bStart'); if (b) { b.disabled = true; b.textContent = 'Запускаем…'; }
+    netReady.then(function () { newGame(); window.scrollTo(0, 0); });
   }
   function alertBox(t) { var b = $('bSub'); if (b) { b.textContent = t; b.style.color = 'var(--bad)'; setTimeout(function () { b.style.color = ''; sum(); }, 2500); } }
   var liveBuilt = false;
@@ -801,12 +983,12 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
         '<div class="pane" data-p="scr"><h4>Экран для проектора <button class="btn ghost sm" id="bOpenScr2">Открыть отдельно ↗</button></h4><div class="stage" id="stg"></div></div>' +
         '<div class="pane ph" data-p="ph"><h4>Телефон гостя · играйте сами <button class="btn ghost sm" id="bOpenPh2">↗</button></h4><div class="phwrap"><div class="phone"><div class="scr" id="ph"></div></div></div></div></div>' +
         '<div class="mnext"><button class="btn gold next" id="bNextM" style="display:block"></button></div>';
-      var openS = function () { window.open('?view=screen', 'pbq_screen', 'width=1280,height=760'); };
-      var openP = function () { window.open('?view=play', '_blank'); };
+      var openS = function () { window.open(screenLink(G), 'pbq_screen', 'width=1280,height=760'); };
+      var openP = function () { window.open(playLink(G), '_blank'); };
       $('bOpenScr').onclick = openS; $('bOpenScr2').onclick = openS; $('bOpenPh').onclick = openP; $('bOpenPh2').onclick = openP;
-      $('bEdit').onclick = function () { clearBots(); G = null; liveBuilt = false; ls('del', KEY_LIVE); send({ type: 'reset' }); renderEditor(); window.scrollTo(0, 0); };
+      $('bEdit').onclick = function () { clearBots(); endNet(); G = null; liveBuilt = false; ls('del', KEY_LIVE); send({ type: 'reset' }); renderEditor(); window.scrollTo(0, 0); };
       $('bNext').onclick = next; $('bNextM').onclick = next;
-      $('bSkip').onclick = function () { if (G && G.phase === 'question') { G.t1 = Date.now(); reveal(); } };
+      $('bSkip').onclick = function () { if (G && G.phase === 'question') { G.t1 = now(); reveal(); } };
       $('bRestart').onclick = function () { clearBots(); newGame(); };
       [].forEach.call(document.querySelectorAll('#tabs button'), function (b) { b.onclick = function () { tab = b.dataset.t; paintTabs(); }; });
       paintTabs();
@@ -818,7 +1000,7 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
     var n = Object.keys(G.players).length, a = G.qi >= 0 ? Object.keys(G.ans[G.qi] || {}).length : 0;
     $('sP').textContent = n; $('sA').textContent = G.phase === 'question' || G.phase === 'reveal' ? a + '/' + n : '–';
     var q = G.qi >= 0 ? G.qs[G.qi] : null;
-    $('cur').innerHTML = G.phase === 'lobby' ? '<div class="k">Лобби</div><div class="q">Гости сканируют QR на экране. ' + (G.qs.length) + ' ' + plural(G.qs.length, 'вопрос', 'вопроса', 'вопросов') + ' готово.</div><div class="muted" style="font-size:13px">Нажмите «Начать игру», когда все войдут.</div>' :
+    $('cur').innerHTML = G.phase === 'lobby' ? '<div class="k">Лобби</div><div class="q">Гости сканируют QR на экране. ' + (G.qs.length) + ' ' + plural(G.qs.length, 'вопрос', 'вопроса', 'вопросов') + ' готово.</div><div class="muted" style="font-size:13px">Нажмите «Начать игру», когда все войдут.</div>' + (G.net ? '<div class="muted" style="font-size:12px;margin-top:8px;word-break:break-all">Экран для проектора с другого ноутбука: <a href="' + esc(screenLink(G)) + '" target="_blank" style="color:var(--gold)">' + esc(screenLink(G).replace(/^https?:\/\//, '')) + '</a></div>' : '<div class="muted" style="font-size:12px;margin-top:8px;color:var(--bad)">Нет связи с сервером — гости смогут войти только с этого устройства</div>') :
       G.phase === 'final' ? '<div class="k">Финал</div><div class="q">Победители на экране. Спасибо за игру!</div>' :
       '<div class="k">Вопрос ' + (G.qi + 1) + ' из ' + G.qs.length + (G.phase === 'board' ? ' · таблица' : '') + '</div><div class="q">' + esc(q.text) + '</div><div class="a">✓ ' + L[q.ok] + ' — ' + esc(q.opts[q.ok]) + '</div>';
     var ans = G.qi >= 0 ? (G.ans[G.qi] || {}) : {};
@@ -840,8 +1022,7 @@ body.solo-play .pv{min-height:100vh;min-height:100dvh;max-width:480px;margin:0 a
     maybeAutoReveal();
     updScreen($('stg'), G); updPhone($('ph'), G, me);
   }, 200);
-  window.addEventListener('beforeunload', function () { send({ type: 'reset' }); });
-  window.__quiz = { get g() { return G; }, next: next, cfg: function () { return CFG; } };
+  window.__quiz = { get g() { return G; }, next: next, cfg: function () { return CFG; }, net: NET };
   render();
 })();
 </script>
