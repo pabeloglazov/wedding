@@ -5,35 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Спасибо за покупку · Белоглазов</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#14151d">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#131312">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/brand.css">
+<script src="../assets/brand.js"></script>
 <style>
-:root{--bg:#14151d;--card:#212330;--line:rgba(255,255,255,.08);--ink:#f5efe4;--text:#e7dfd1;--muted:#a99c8e;--gold:#e2cd92;--gold2:#d8c28a}
+:root{--bg:#131312;--card:#1c1c1b;--line:rgba(255,255,255,.1);--ink:#ffffff;--text:#e8e8e6;--muted:#a3a3a3;--gold:#f2efe9;--gold2:#d9d6d0}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Manrope,system-ui,sans-serif;line-height:1.55}
 body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
 .top{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
-.brand i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#e2cd92,#8a6a35);display:grid;place-items:center;font-style:normal;color:#14151d;font-weight:800;font-size:14px}
-.brand b{font-family:"Cormorant Garamond",Georgia,serif;font-size:22px;font-weight:600;color:var(--ink)}
+.brand i{width:30px;height:30px;border-radius:9px;background:#f2efe9;display:grid;place-items:center;font-style:normal;color:#131312;font-weight:800;font-size:14px}
+.brand b{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:22px;font-weight:600;color:var(--ink)}
 .lang{border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:800;font-size:12px;width:40px;height:40px;border-radius:50%;cursor:pointer}
 main{flex:1;display:grid;place-items:center;padding:40px 16px;position:relative;overflow:hidden}
-main:before{content:"";position:absolute;left:50%;top:0;width:800px;height:420px;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(226,205,146,.16),rgba(20,21,29,0) 65%);pointer-events:none}
+main:before{content:"";position:absolute;left:50%;top:0;width:800px;height:420px;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(242,239,233,.16),rgba(19,19,18,0) 65%);pointer-events:none}
 .box{position:relative;max-width:560px;width:100%;text-align:center}
-.ok{width:76px;height:76px;border-radius:50%;margin:0 auto 22px;display:grid;place-items:center;font-size:34px;background:linear-gradient(135deg,#e8d59e,#c9a86a);color:#191a24;box-shadow:0 16px 40px rgba(201,168,106,.3);animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+.ok{width:76px;height:76px;border-radius:50%;margin:0 auto 22px;display:grid;place-items:center;font-size:34px;background:#f2efe9;color:#131312;box-shadow:0 16px 40px rgba(242,239,233,.3);animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
 @keyframes pop{from{transform:scale(.4);opacity:0}}
 .k{color:var(--gold2);letter-spacing:.24em;text-transform:uppercase;font-weight:700;font-size:12px}
-h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clamp(40px,7vw,60px);line-height:1.02;margin:10px 0 12px;color:var(--ink)}
+h1{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-weight:600;font-size:clamp(40px,7vw,60px);line-height:1.02;margin:10px 0 12px;color:var(--ink)}
 .lead{color:var(--muted);font-size:17px;margin:0 0 28px}
 .steps{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:8px 22px;text-align:left}
 .st{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
 .st:last-child{border:0}
-.st b{font-family:"Cormorant Garamond",Georgia,serif;font-size:30px;color:var(--gold);line-height:1;font-weight:500;flex:none;width:26px}
+.st b{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:30px;color:var(--gold);line-height:1;font-weight:500;flex:none;width:26px}
 .st h4{margin:0 0 2px;color:var(--ink);font-size:16px}
 .st p{margin:0;color:var(--muted);font-size:14px}
-.ready{background:linear-gradient(160deg,#2b2d40,#1f2030);border:1px solid rgba(226,205,146,.4);border-radius:22px;padding:22px;margin-bottom:18px;text-align:left}
+.ready{background:#222221;border:1px solid rgba(242,239,233,.4);border-radius:22px;padding:22px;margin-bottom:18px;text-align:left}
 .ready h3{margin:0 0 4px;color:var(--ink);font-size:18px}
 .ready p{margin:0 0 14px;color:var(--muted);font-size:14px}
 .ready .row{display:flex;gap:8px;flex-wrap:wrap}
@@ -43,13 +45,29 @@ h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:clam
 .wait.err{color:#e89a8a}
 .cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px}
 .btn{display:inline-flex;align-items:center;justify-content:center;border-radius:14px;padding:14px 22px;font-weight:700;font-size:15px;text-decoration:none}
-.btn.gold{background:linear-gradient(135deg,#e8d59e,#c9a86a);color:#191a24}
+.btn.gold{background:#f2efe9;color:#131312}
 .btn.ghost{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line)}
 footer{text-align:center;color:var(--muted);font-size:13px;padding:24px}
+
+/* Beloglazov Event */
+:root{--hf:Archivo,Manrope,system-ui,sans-serif}
+h1,.h2,h3{text-transform:uppercase}
+h1,.h2,.hero h1{font-weight:500!important}
+h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
+.brand{gap:10px!important;color:#fff}
+.brand .pb-word{height:13px}
+.brand span{border-left:1px solid rgba(255,255,255,.18);padding-left:10px;font-size:12px!important;letter-spacing:.02em}
+.btn{border-radius:999px!important}
+.btn.gold:hover{background:#fff}
+.btn.ghost{background:transparent!important;border:1px solid rgba(255,255,255,.28)!important}
+.btn.ghost:hover{background:rgba(255,255,255,.08)!important}
+.k{color:var(--muted)!important}
+@media (max-width:560px){.brand .pb-word{height:11px}.brand span{display:none}}
+h1{font-size:clamp(30px,5.4vw,46px)!important}.st b{font-size:24px!important}
 </style>
 </head>
 <body>
-<div class="top"><a class="brand" href="../"><i>PB</i><b data-t="brand"></b></a><button class="lang" id="lang">EN</button></div>
+<div class="top"><a class="brand" href="../" aria-label="Beloglazov Event"><svg class="pb-mark" viewBox="0 0 100 100" width="30" height="30" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M0,50a50,50 0 1,0 100,0a50,50 0 1,0 -100,0Z M9.76,50a40.24,35.68 0 1,0 80.48,0a40.24,35.68 0 1,0 -80.48,0Z M14.25,50a35.75,31.27 0 1,0 71.5,0a35.75,31.27 0 1,0 -71.5,0Z M40.48,50a9.52,9.52 0 1,0 19.04,0a9.52,9.52 0 1,0 -19.04,0Z"/></svg><img class="pb-word" src="../assets/wordmark-white.png" alt="Beloglazov Event"></a><button class="lang" id="lang">EN</button></div>
 <main><div class="box">
   <div class="ok">✓</div>
   <div class="k" id="plan"></div>
