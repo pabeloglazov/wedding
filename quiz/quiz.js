@@ -777,6 +777,19 @@ function buildScreen(box, g) {
   }
   if (g && (g.phase === 'lobby' || g.phase === 'final' || g.phase === 'intro')) h += BRAND();
   box.innerHTML = h;
+  if (g && g.phase === 'lobby') {
+    const jn = box.querySelector('.join');
+    if (jn) jn.onclick = e => {
+      e.stopPropagation(); if (box.querySelector('.qrzoom')) return;
+      const lc = box.querySelector('#lcode b'), z = document.createElement('div');
+      z.className = 'qrzoom';
+      z.innerHTML = `<div class="qz"><div class="qr" id="zqr"></div><div class="jurl">${esc(SHORT.replace(/^https?:\/\//, ''))}</div><div class="jcode"><span>код</span><b>${lc ? lc.textContent : ''}</b></div></div>`;
+      box.querySelector('.sv').appendChild(z); qr(z.querySelector('#zqr'), playLink(g), 720);
+      const close = () => { z.classList.add('out'); setTimeout(() => z.remove(), 220); document.removeEventListener('keydown', esc1); };
+      const esc1 = ev => { if (ev.key === 'Escape') close(); };
+      z.onclick = close; document.addEventListener('keydown', esc1);
+    };
+  }
   if (g && g.phase === 'lobby') { qr(box.querySelector('#lqr'), playLink(g)); if (g.wifi) qr(box.querySelector('#wq'), `WIFI:T:${g.wifi.pass ? 'WPA' : 'nopass'};S:${g.wifi.ssid.replace(/([\\;,:"])/g, '\\$1')};P:${(g.wifi.pass || '').replace(/([\\;,:"])/g, '\\$1')};;`, 256); }
   if (g && g.phase === 'final') {
     const cols = [...box.querySelectorAll('.pod>div[data-h]')];
