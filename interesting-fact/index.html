@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Интересный факт · Beloglazov Event</title>
+<meta name="description" content="Игра для свадьбы: на экране — интересный факт о госте, гости угадывают с телефонов, о ком он. Пара присылает факты по ссылке.">
+<meta name="theme-color" content="#131312">
+<meta property="og:title" content="Интересный факт · Beloglazov Event">
+<meta property="og:description" content="Гости угадывают, о ком интересный факт">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/brand.css">
+<script src="../assets/brand.js"></script>
+<script src="../assets/examples.js"></script>
+<style>
+:root{--bg:#131312;--bg2:#181817;--card:#1c1c1b;--card2:#262625;--line:rgba(255,255,255,.1);--ink:#ffffff;--text:#e8e8e6;--muted:#a3a3a3;--gold:#f2efe9;--gold2:#d9d6d0;--acc:#bdbab4}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.55;overflow-x:clip}
+a{color:inherit}
+.serif{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.top{position:sticky;top:0;z-index:10;background:rgba(19,19,18,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
+.brand i{width:30px;height:30px;border-radius:9px;background:#f2efe9;display:grid;place-items:center;font-style:normal;color:#131312;font-weight:800;font-size:14px}
+.brand b{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:.2px}
+.brand span{color:var(--muted);font-size:13px}
+.nav{display:flex;gap:4px;margin-left:auto;align-items:center}
+.nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:14px;padding:8px 12px;border-radius:999px}
+.nav a:hover,.nav a.on{color:var(--ink);background:rgba(255,255,255,.06)}
+.lang{border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:800;font-size:12px;letter-spacing:.06em;width:40px;height:40px;border-radius:50%;cursor:pointer;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:14px;padding:14px 22px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;transition:transform .15s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:#f2efe9;color:#131312}
+.btn.ghost{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:rgba(255,255,255,.1)}
+.btn[disabled]{opacity:.45;cursor:default}
+.k{color:var(--gold2);letter-spacing:.24em;text-transform:uppercase;font-weight:700;font-size:12px}
+.chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--muted);font-weight:600}
+footer{border-top:1px solid var(--line);margin-top:80px;padding:32px 0 48px;color:var(--muted);font-size:13px}
+footer .wrap{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
+@media (max-width:760px){.nav a:not(.keep){display:none}.brand span{display:none}.wrap{padding:0 16px}}
+
+.back{color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
+.back:hover{color:var(--ink)}
+.hero{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:center;padding:64px 0 24px;position:relative}
+.hero:before{content:"";position:absolute;right:-10%;top:-10%;width:720px;height:520px;background:radial-gradient(ellipse at center,rgba(242,239,233,.14),rgba(19,19,18,0) 62%);pointer-events:none}
+.hero h1{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-weight:600;font-size:clamp(46px,7vw,84px);line-height:1;margin:12px 0 16px;color:var(--ink)}
+.hero p.lead{color:var(--muted);font-size:18px;max-width:540px;margin:0}
+.facts{display:flex;gap:18px;flex-wrap:wrap;margin:22px 0 28px;color:var(--text);font-size:14px}
+.facts span{display:flex;gap:8px;align-items:center}
+.cta{display:flex;gap:10px;flex-wrap:wrap}
+.phone{justify-self:center;width:300px;aspect-ratio:9/18.5;border-radius:44px;background:#0d0d0c;border:1px solid rgba(255,255,255,.12);box-shadow:0 40px 90px rgba(0,0,0,.5),inset 0 0 0 8px #131312;padding:22px 16px;position:relative;transform:rotate(3deg)}
+.phone:before{content:"";position:absolute;top:14px;left:50%;width:84px;height:22px;border-radius:12px;background:#0b0b10;transform:translateX(-50%)}
+.scr{background:#f6f1e9;border-radius:30px;height:100%;padding:34px 14px 14px;color:#2a2420;overflow:hidden;font-size:12px}
+.scr .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.scr .nm{font-weight:800;font-size:14px}.scr .dots{display:flex;gap:4px;margin-top:4px}.scr .dots i{width:7px;height:7px;border-radius:50%;background:#e8dfd2}.scr .dots i.on{background:#bdbab4}
+.scr .code{border:1.5px solid #bdbab4;border-radius:10px;padding:3px 8px;text-align:center;font-weight:800;font-size:15px;letter-spacing:.1em}
+.scr .code small{display:block;font-size:7px;color:#86796c;letter-spacing:.12em;text-transform:uppercase}
+.scr .card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(60,40,20,.08);margin-bottom:10px}
+.scr .kk{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#bdbab4;font-weight:800}
+.scr .task{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:20px;line-height:1.15;font-weight:600;margin-top:6px}
+.scr .emo{font-size:58px;text-align:center;margin:8px 0 2px}
+.scr .btnm{background:#bdbab4;color:#fff;border-radius:10px;text-align:center;padding:10px;font-weight:800;margin-top:8px}
+section{padding-top:80px}
+.h2{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-weight:600;font-size:clamp(34px,4.6vw,48px);color:var(--ink);margin:10px 0 28px;line-height:1.05}
+.types{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.type{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px}
+.type i{font-style:normal;font-size:34px}
+.type h4{margin:12px 0 6px;color:var(--ink);font-size:17px}
+.type p{margin:0;color:var(--muted);font-size:14px}
+.host{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.hf{background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;gap:16px}
+.hf{cursor:pointer;transition:border-color .2s,background .2s,transform .2s;position:relative;text-align:left;font:inherit;color:inherit;width:100%}
+.hf:hover{border-color:rgba(242,239,233,.35);background:#20201f;transform:translateY(-2px)}
+.hf:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+.hf .see{display:inline-block;margin-top:8px;color:var(--gold2);font-size:13px;font-weight:700}
+.pv .pvbox{position:relative;background:var(--card);border:1px solid var(--line);border-radius:24px;width:100%;max-width:880px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.5)}
+.pvx{position:absolute;top:12px;right:12px;z-index:3;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.pvstage{container-type:inline-size;aspect-ratio:16/9;position:relative;overflow:hidden;background:#0d0d0c}
+.pvcap{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:18px 22px}
+.pvcap h3{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:26px;margin:0;color:var(--ink);font-weight:600;line-height:1.1}
+.pvcap p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.pvnav{display:flex;align-items:center;gap:8px;flex:none}
+.pvnav button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);font-size:20px;cursor:pointer}
+.pvnav button:hover{background:rgba(255,255,255,.08)}
+.pvdots{display:flex;gap:6px}.pvdots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2)}.pvdots i.on{background:var(--gold)}
+@media (max-width:560px){.pvcap{flex-direction:column;align-items:stretch;padding:14px 18px}.pvnav{justify-content:space-between}.pvstage{aspect-ratio:4/5}.pv .pvbox{max-height:calc(100dvh - 32px);overflow:auto}}
+/* сцены */
+.pj .phs{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.pj-ph{position:absolute;top:17%;height:54%;aspect-ratio:3/4;margin:0;border-radius:1.1em;overflow:hidden;background:#1d1f2c;box-shadow:0 1.6em 3.6em rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06);opacity:0;animation:phLife var(--dur) ease-in-out forwards}
+.pj-ph.l{left:5%}.pj-ph.r{left:33%;top:26%}
+.pj-ph .pic{position:absolute;inset:0;display:grid;place-items:center;animation:phZoom var(--dur) linear forwards}
+.pj-ph .pic span{font-size:5.4em;filter:drop-shadow(0 .3em .5em rgba(0,0,0,.3))}
+.pj-ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:2.6em .9em .8em;background:linear-gradient(rgba(8,8,8,0),rgba(8,8,8,.72));font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-style:italic;font-size:1.25em;color:#ffffff}
+@keyframes phLife{0%{opacity:0;filter:blur(12px);transform:translateY(2em) rotate(var(--r)) scale(.93)}10%{opacity:1;filter:blur(0);transform:translateY(0) rotate(var(--r)) scale(1)}86%{opacity:1;filter:blur(0);transform:translateY(-1.6em) rotate(calc(var(--r) * .6)) scale(1)}100%{opacity:0;filter:blur(10px);transform:translateY(-3em) rotate(calc(var(--r) * .4)) scale(1.03)}}
+@keyframes phZoom{from{transform:scale(1.12)}to{transform:scale(1)}}
+
+.pj .subs{position:absolute;top:4.2%;right:4.6em;display:flex;gap:.4em;z-index:2}
+.pj .subs button{border:1px solid rgba(255,255,255,.14);background:rgba(19,19,18,.6);color:#a3a3a3;font:inherit;font-size:.78em;font-weight:700;padding:.35em .9em;border-radius:99em;cursor:pointer}
+.pj .subs button.on{background:#f2efe9;color:#131312;border-color:#f2efe9}
+.ph2{position:absolute;inset:0;padding:12% 4% 5%;display:flex;flex-direction:column;gap:1.2em;background:radial-gradient(ellipse at 50% 30%,#1e1e1d,#0d0d0c 70%);animation:scIn .45s ease}
+.ph2 .hd{display:flex;align-items:baseline;gap:.8em}
+.ph2 .hd b{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:2.6em;font-weight:600;color:#ffffff;line-height:1}
+.ph2 .hd span{color:#a3a3a3;font-size:.95em}
+.ph2 .live{display:inline-flex;align-items:center;gap:.4em;color:#f2efe9;font-size:.75em;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+.ph2 .live i{width:.6em;height:.6em;border-radius:50%;background:#e25c5c;animation:pulse 1.2s infinite}
+.ph2 .wall{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:1em;min-height:0}
+.ph2 figure{margin:0;border-radius:.9em;overflow:hidden;position:relative;opacity:0;transform:scale(.85) rotate(-2deg);transition:opacity .6s,transform .6s cubic-bezier(.2,1.2,.4,1);box-shadow:0 1em 2.4em rgba(0,0,0,.45)}
+.ph2 figure.in{opacity:1;transform:none}
+.ph2 figure.new{outline:.18em solid #f2efe9}
+.ph2 .pic{position:absolute;inset:0;display:grid;place-items:center;font-size:3.4em}
+.ph2 .pic:after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(0,0,0,.55))}
+.ph2 figcaption{position:absolute;left:.7em;right:.7em;bottom:.55em;color:#fff;font-size:.8em;font-weight:700;z-index:1;display:flex;justify-content:space-between}
+.ph2 figcaption small{opacity:.75;font-weight:600}
+
+.sc{position:absolute;inset:0;font-size:1.6cqw;animation:scIn .45s ease}
+@keyframes scIn{from{opacity:0;transform:scale(.985)}to{opacity:1}}
+.pj{display:grid;grid-template-columns:1.5fr 1fr;height:100%;color:#ffffff;background:radial-gradient(ellipse at 30% 40%,#1e1e1d,#0d0d0c 70%)}
+.pj svg{width:100%;height:100%}
+.pj line{stroke:#f2efe9;stroke-width:.25;opacity:0;transition:opacity .8s}
+.pj line.on{opacity:.55}
+.pj circle{fill:#ffffff;opacity:.35;transition:opacity .6s,fill .6s}
+.pj circle.on{opacity:1;fill:#f2efe9}
+.pj .side{display:flex;flex-direction:column;justify-content:center;gap:1.6em;padding:0 3em 0 0}
+.pj .st b{display:block;font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:4.6em;font-weight:500;color:#f2efe9;line-height:1}
+.pj .st span{font-size:.8em;letter-spacing:.18em;text-transform:uppercase;color:#a3a3a3;font-weight:700}
+.pj .tk{position:absolute;left:3%;bottom:5%;right:40%;font-size:1.05em;color:#e8e8e6;display:flex;gap:.6em;align-items:center}
+.pj .tk i{width:.55em;height:.55em;border-radius:50%;background:#f2efe9;flex:none;animation:pulse 1.4s infinite}
+.pj .tk span{transition:opacity .35s}
+.pj .ttl{position:absolute;left:3%;top:5%;font-size:.8em;letter-spacing:.24em;text-transform:uppercase;color:#d9d6d0;font-weight:700}
+@keyframes pulse{50%{opacity:.3}}
+.hp{height:100%;background:#f4f1ec;color:#231e1a;display:flex;flex-direction:column;font-size:1.76cqw}
+.hp .bar{display:flex;align-items:center;gap:1.2em;padding:.8em 4.2em .8em 1.6em;background:#fff;border-bottom:1px solid #eee5d8}
+.hp .bar b{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:1.5em}
+.hp .tabs{display:flex;gap:.4em;margin-left:auto}
+.hp .tabs span{padding:.35em .9em;border-radius:99em;font-size:.8em;font-weight:700;color:#8a7e72}.hp .tabs span.on{background:#1c1c1b;color:#fff}
+.hp .tg{display:flex;align-items:center;gap:.6em;font-size:.85em;font-weight:700}
+.hp .sw{width:2.6em;height:1.5em;border-radius:99em;background:#d9d0c3;position:relative;transition:background .3s}
+.hp .sw:after{content:"";position:absolute;top:.2em;left:.2em;width:1.1em;height:1.1em;border-radius:50%;background:#fff;transition:transform .3s}
+.hp .sw.on{background:#3aa67a}.hp .sw.on:after{transform:translateX(1.1em)}
+.hp .body{flex:1;padding:1em 1.6em;display:grid;grid-template-columns:1fr 1.6fr;gap:1.2em;min-height:0}
+.hp .cardw{background:#fff;border-radius:1em;padding:1em 1.2em;overflow:hidden}
+.hp h5{margin:0 0 .6em;font-size:.72em;letter-spacing:.14em;text-transform:uppercase;color:#8a7e72}
+.hp .big{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:2.4em;line-height:1;color:#8a8884}
+.hp .gr{display:flex;align-items:center;gap:.8em;padding:.45em 0;border-bottom:1px solid #f0e9de;font-size:.85em;transition:background .4s}
+.hp .gr.new{animation:rowIn .6s ease;background:#fbf4e4}
+@keyframes rowIn{from{opacity:0;transform:translateY(-.6em)}}
+.hp .gr b{flex:1}.hp .gr small{color:#8a7e72}
+.hp .dots{display:flex;gap:.25em}.hp .dots i{width:.55em;height:.55em;border-radius:50%;background:#e8dfd2;transition:background .4s}.hp .dots i.on{background:#bdbab4}
+.hp .ms{display:flex;justify-content:space-between;align-items:center;gap:.8em;padding:.35em 0;font-size:.78em;white-space:nowrap;border-bottom:1px solid #f0e9de}
+.hp .ms .sw{font-size:.8em}
+.rs{height:100%;background:#131312;color:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 5%}
+.rs .kk{font-size:.8em;letter-spacing:.24em;text-transform:uppercase;color:#d9d6d0;font-weight:700}
+.rs h4{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-weight:600;font-size:3.4em;margin:.2em 0 .5em;line-height:1}
+.rs .pod{display:grid;grid-template-columns:repeat(3,11em);gap:1em;align-items:end;height:13em}
+.rs .pod>div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;opacity:0;transform:translateY(1em);transition:all .6s}
+.rs .pod>div.in{opacity:1;transform:none}
+.rs .pod .nm{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:1.7em;font-weight:600}
+.rs .pod .ps{font-size:.75em;color:#a3a3a3;margin-bottom:.5em}
+.rs .pod .b{width:100%;height:0;border-radius:.6em .6em 0 0;background:linear-gradient(#f2efe9,#8a8884);color:#131312;font-weight:800;font-size:1.6em;display:flex;align-items:flex-start;justify-content:center;padding-top:.2em;transition:height 1s cubic-bezier(.2,.8,.2,1)}
+.rs .noms{display:grid;grid-template-columns:repeat(3,1fr);gap:1em;width:100%}
+.rs .nom{background:#1c1c1b;border:1px solid rgba(255,255,255,.08);border-radius:1em;padding:1.2em;opacity:0;transform:translateY(1em);transition:all .6s}
+.rs .nom.in{opacity:1;transform:none}
+.rs .nom i{font-style:normal;font-size:2.2em}.rs .nom span{display:block;font-size:.72em;letter-spacing:.14em;text-transform:uppercase;color:#a3a3a3;font-weight:700;margin:.4em 0}
+.rs .nom b{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:1.8em;font-weight:600}
+.rs q{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-style:italic;font-size:2.6em;line-height:1.2;max-width:22em;quotes:none;transition:opacity .4s}
+.rs .who{color:#a3a3a3;margin-top:.8em;font-size:1.1em;transition:opacity .4s}
+.lg{height:100%;display:flex;align-items:center;justify-content:center;gap:5%;background:radial-gradient(ellipse at 50% 40%,#232322,#0d0d0c 70%)}
+.lg .ph{width:22%;aspect-ratio:9/18.5;border-radius:2.4em;background:#0d0d0c;border:1px solid rgba(255,255,255,.14);padding:1em .8em;box-shadow:0 2em 4em rgba(0,0,0,.5)}
+.lg .sc2{background:#f6f1e9;border-radius:1.6em;height:100%;padding:1.8em .9em .9em;color:#2a2420;font-size:.9em;display:flex;flex-direction:column;gap:.7em}
+.lg .pill{display:flex;align-self:flex-end;border:1px solid #d9cdbb;border-radius:99em;overflow:hidden;font-size:.75em;font-weight:800}
+.lg .pill span{padding:.2em .7em;transition:all .3s}.lg .pill span.on{background:#1c1c1b;color:#fff}
+.lg .c{background:#fff;border-radius:1em;padding:.9em;box-shadow:0 .4em 1em rgba(60,40,20,.08);transition:opacity .35s}
+.lg .kk{font-size:.62em;letter-spacing:.14em;text-transform:uppercase;color:#bdbab4;font-weight:800}
+.lg .t{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:1.35em;line-height:1.15;font-weight:600;margin-top:.3em}
+.lg .bt{background:#bdbab4;color:#fff;border-radius:.7em;text-align:center;padding:.6em;font-weight:800;font-size:.85em;margin-top:auto;transition:opacity .35s}
+.lg .cap{color:#e8e8e6;max-width:30%;font-size:1.4em;line-height:1.35}
+.lg .cap b{display:block;font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:2em;color:#f2efe9;font-weight:600;line-height:1.05;margin-bottom:.3em}
+
+.hf i{font-style:normal;font-size:28px;flex:none}
+.hf h4{margin:0 0 4px;color:var(--ink);font-size:17px}
+.hf p{margin:0;color:var(--muted);font-size:14px}
+.proof{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center}
+.proof div{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 12px}
+.proof b{display:block;font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-weight:500;font-size:56px;color:var(--gold);line-height:1}
+.proof span{display:block;margin-top:8px;color:var(--muted);font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.final{text-align:center;background:#1c1c1b;border:1px solid rgba(242,239,233,.18);border-radius:28px;padding:48px 24px}
+.final p{color:var(--muted);max-width:560px;margin:0 auto 22px}
+.modal{position:fixed;inset:0;background:rgba(8,8,8,.7);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal.on{display:flex}
+.box{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px;width:100%;max-width:420px}
+.box h3{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:30px;margin:0 0 6px;color:var(--ink);font-weight:600}
+.box p{color:var(--muted);margin:0 0 16px;font-size:14px}
+.box input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--ink);font:inherit;font-size:16px;outline:none;margin-bottom:12px}
+.box input:focus{border-color:var(--gold2)}
+.box .row{display:flex;gap:8px}.box .row .btn{flex:1}
+@media (max-width:980px){.hero{grid-template-columns:1fr;gap:36px}.types{grid-template-columns:repeat(2,1fr)}.proof{grid-template-columns:repeat(2,1fr)}.host{grid-template-columns:1fr}}
+@media (max-width:560px){.types{grid-template-columns:1fr}.phone{width:250px}.hero{padding-top:36px}.proof b{font-size:44px}}
+@container (max-width:560px){
+ .pj-ph{top:30%;height:44%}.pj-ph.l{left:6%}.pj-ph.r{left:auto;right:6%;top:40%}
+ .pj .subs{top:auto;bottom:3%;right:3%}
+ .ph2{padding:14% 4% 12%}.ph2 .hd{flex-direction:column;gap:.2em}.ph2 .hd b{font-size:2.1em}.ph2 .wall{grid-template-columns:repeat(2,1fr)}.ph2 .pic{font-size:3em}
+ .sc{font-size:3.3cqw}
+ .pj{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+ .pj svg{grid-row:2}
+ .pj .side{grid-row:1;flex-direction:row;justify-content:space-around;padding:3.2em 1em 0;gap:1em}
+ .pj .st{text-align:center}.pj .st b{font-size:3em}.pj .st span{font-size:.62em}
+ .pj .tk{right:3%;font-size:.95em}
+ .hp{font-size:3.3cqw}.hp .tabs{display:none}.hp .bar{padding:.8em 3.4em .8em 1.2em}
+ .hp .body{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding:1em 1.2em}
+ .hp .body>div:first-child .cardw:last-child{display:none}
+ .rs h4{font-size:2.4em}.rs .pod{grid-template-columns:repeat(3,1fr);width:100%;height:14em}
+ .rs .noms{grid-template-columns:1fr;gap:.7em}.rs .nom{display:flex;align-items:center;gap:.8em;padding:.8em 1em;text-align:left}.rs .nom i{font-size:1.8em}.rs .nom span{margin:0;flex:1}.rs .nom b{font-size:1.5em}
+ .rs q{font-size:1.9em}
+ .lg .ph{width:auto;height:86%}.lg .cap{display:none}
+}
+
+/* Beloglazov Event */
+:root{--hf:Archivo,Manrope,system-ui,sans-serif}
+h1,.h2,h3{text-transform:uppercase}
+h1,.h2,.hero h1{font-weight:500!important}
+h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
+.brand{gap:10px!important;color:#fff}
+.brand .pb-word{height:13px}
+.brand span{border-left:1px solid rgba(255,255,255,.18);padding-left:10px;font-size:12px!important;letter-spacing:.02em}
+.btn{border-radius:999px!important}
+.btn.gold:hover{background:#fff}
+.btn.ghost{background:transparent!important;border:1px solid rgba(255,255,255,.28)!important}
+.btn.ghost:hover{background:rgba(255,255,255,.08)!important}
+.k{color:var(--muted)!important}
+@media (max-width:560px){.brand .pb-word{height:11px}.brand span{display:none}}
+.hero h1{font-size:clamp(36px,6vw,72px)!important}.h2{font-size:clamp(26px,3.6vw,40px)!important}.proof b{font-size:44px!important}.box h3,.pvcap h3{font-size:22px!important}
+
+
+/* ===== примеры ===== */
+.type.ex{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer;display:flex;flex-direction:column;transition:border-color .2s,background .2s,transform .2s}
+.type.ex:hover{border-color:rgba(242,239,233,.35);background:#20201f;transform:translateY(-2px)}
+.type.ex:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+.type.ex p{flex:1}
+.type .see{display:inline-block;margin-top:12px;color:var(--gold2);font-size:13px;font-weight:700}
+.qx{position:absolute;inset:0;padding:4.2% 4.6%;display:flex;flex-direction:column;color:#fff;background:radial-gradient(ellipse at 50% 18%,#262625,#0b0b0a 72%);font-family:Manrope,system-ui,sans-serif}
+.qx .sk{padding-right:5.5cqw;font-size:1.6cqw;letter-spacing:.2em;text-transform:uppercase;color:#a3a3a3;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.qx .sk b{color:#fff;font-weight:800}
+.qx .sq{font-family:var(--hf);font-stretch:125%;text-transform:uppercase;font-size:3.9cqw;line-height:1.05;font-weight:600;margin:1.6cqw 0 1.4cqw;animation:qxUp .5s ease both}
+.qx .tb{height:.7cqw;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:2cqw}
+.qx .tb i{display:block;height:100%;width:100%;background:#f2efe9;border-radius:9px;transition:width linear}
+.qx .st{display:grid;grid-template-columns:1fr 1fr;gap:1.5cqw;flex:1}
+.qx .t{border-radius:1.6cqw;padding:1.4cqw 1.8cqw;display:flex;align-items:center;gap:1.4cqw;position:relative;overflow:hidden;font-weight:800;font-size:2.3cqw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);animation:qxUp .45s ease both;transition:opacity .5s,box-shadow .4s}
+.qx .t .f{position:absolute;inset:0;right:auto;width:100%;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.qx .t>*:not(.f){position:relative}
+.qx .t .l{width:3.4cqw;height:3.4cqw;border-radius:1cqw;display:grid;place-items:center;background:rgba(0,0,0,.25);font-size:1.8cqw;flex:none}
+.qx .t .p{margin-left:auto;font-size:2.5cqw;opacity:0;transition:opacity .4s}
+.qx.rv .t .p{opacity:1}
+.qx.rv .t.no{opacity:.35}
+.qx.rv .t.ok{box-shadow:0 0 0 .45cqw #fff inset}
+.qx .ta .f{background:#e07a5f}.qx .tb2 .f{background:#3d9a8b}.qx .tc .f{background:#d9a441}.qx .td .f{background:#7b6fd6}
+.qx .toast{position:absolute;left:50%;bottom:4%;transform:translate(-50%,1.5cqw);opacity:0;background:#f2efe9;color:#131312;border-radius:99em;padding:1cqw 2.4cqw;font-weight:800;font-size:1.9cqw;white-space:nowrap;transition:all .45s cubic-bezier(.2,1.2,.4,1);box-shadow:0 1.4cqw 3cqw rgba(0,0,0,.4)}
+.qx .toast.on{opacity:1;transform:translate(-50%,0)}
+.qx .badge{align-self:flex-start;display:inline-flex;align-items:center;gap:.8cqw;border:1px solid rgba(255,255,255,.2);border-radius:99em;padding:.6cqw 1.6cqw;font-size:1.7cqw;font-weight:800;color:#d9d6d0;opacity:0;transform:scale(.9);transition:all .4s cubic-bezier(.2,1.2,.4,1)}
+.qx .badge.on{opacity:1;transform:none}
+.qx .badge.done{background:#f2efe9;color:#131312;border-color:#f2efe9}
+.qx .cpl{display:flex;gap:1.2cqw;margin-bottom:1.6cqw}
+.qx .ph{width:15cqw;border-radius:1.8cqw;background:#1b1b1a;border:.25cqw solid #333;padding:1cqw;display:flex;flex-direction:column;gap:.8cqw;font-size:1.3cqw;font-weight:800;animation:qxUp .5s ease both}
+.qx .ph small{color:#a3a3a3;font-size:1.1cqw;letter-spacing:.14em;text-transform:uppercase}
+.qx .ph span{border-radius:.8cqw;padding:.7cqw;background:rgba(255,255,255,.08);transition:background .3s,color .3s}
+.qx .ph span.pick{background:#f2efe9;color:#131312}
+.qx .gs{display:flex;flex-wrap:wrap;gap:1.2cqw;align-content:flex-start;flex:1}
+.qx .g{display:flex;align-items:center;gap:1cqw;border-radius:99em;padding:.9cqw 1.8cqw;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-weight:800;font-size:2.1cqw;animation:qxPop .4s cubic-bezier(.2,1.3,.4,1) both;transition:all .5s}
+.qx .g b{font-family:var(--hf);font-stretch:125%;font-size:2.4cqw;font-weight:600}
+.qx .g em{font-style:normal;color:#131312;background:#f2efe9;border-radius:99em;padding:.2cqw 1cqw;font-size:1.6cqw;display:none}
+.qx.rv .g.far{opacity:.3}
+.qx.rv .g.win{background:#f2efe9;color:#131312;border-color:#f2efe9}.qx.rv .g.win em{display:inline-block;background:#131312;color:#f2efe9}
+.qx .ans{display:flex;align-items:baseline;gap:1.4cqw;margin-top:1.4cqw;opacity:0;transform:translateY(1cqw);transition:all .5s}
+.qx .ans.on{opacity:1;transform:none}
+.qx .ans small{font-size:1.7cqw;letter-spacing:.18em;text-transform:uppercase;color:#a3a3a3;font-weight:800}
+.qx .ans b{font-family:var(--hf);font-stretch:125%;font-size:6.5cqw;font-weight:500;line-height:1}
+.qx .pw{display:grid;grid-template-columns:1fr 1.25fr;gap:2.2cqw;flex:1;min-height:0}
+.qx .pic{border-radius:1.8cqw;background:linear-gradient(150deg,#d8b4a0,#8a6a5c);display:grid;place-items:center;position:relative;overflow:hidden;animation:qxZoom 9s ease-out both;box-shadow:0 1.4cqw 3cqw rgba(0,0,0,.45)}
+.qx .pic span{font-size:12cqw;filter:drop-shadow(0 1cqw 1.5cqw rgba(0,0,0,.3))}
+.qx .pic i{position:absolute;left:1.4cqw;bottom:1.2cqw;font-style:normal;font-size:1.4cqw;font-weight:800;letter-spacing:.14em;text-transform:uppercase;background:rgba(0,0,0,.35);border-radius:99em;padding:.4cqw 1.2cqw}
+.qx .pw .st{grid-template-columns:1fr}
+@keyframes qxUp{from{opacity:0;transform:translateY(1.2cqw)}}
+@keyframes qxPop{from{opacity:0;transform:scale(.6)}}
+@keyframes qxZoom{from{transform:scale(1.06)}}
+
+/* факт: сцены */
+.qx .pw{grid-template-columns:1.3fr 1fr}
+.qx .hc{perspective:60cqw;display:flex}
+.qx .hc.off{visibility:visible}
+.qx .hin{position:relative;flex:1;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.2,.8,.2,1)}
+.qx .hc.on .hin{transform:rotateY(180deg)}
+.qx .hb,.qx .hf2{position:absolute;inset:0;border-radius:1.8cqw;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.qx .hb{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw}
+.qx .hb span{font-family:var(--hf);font-stretch:125%;font-size:12cqw;line-height:1;color:#f2efe9}
+.qx .hb em{font-style:normal;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#a3a3a3;font-size:1.5cqw}
+.qx .hf2{transform:rotateY(180deg);background:linear-gradient(150deg,#d8b4a0,#8a6a5c);display:flex;flex-direction:column}
+.qx .hp2{flex:1;display:grid;place-items:center;font-size:11cqw}
+.qx .hn2{padding:1.2cqw 1.6cqw;background:rgba(11,11,10,.75)}
+.qx .hn2 small{display:block;color:#a3a3a3;font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:1.2cqw}
+.qx .hn2 b{font-family:var(--hf);font-stretch:125%;text-transform:uppercase;font-size:3.6cqw;font-weight:600;line-height:1}
+.qx .pw .st{grid-template-columns:1fr}
+.qx.fx2{flex-direction:row;gap:4cqw;align-items:center}
+.qx .fphone{width:44%;align-self:stretch;background:#1c1c1b;border:1px solid rgba(255,255,255,.12);border-radius:2.4cqw;padding:2.4cqw;display:flex;flex-direction:column;gap:1.4cqw}
+.qx .fk2{font-family:var(--hf);font-stretch:125%;text-transform:uppercase;font-size:2.2cqw;font-weight:600;line-height:1.1}
+.qx .frow2{display:flex;gap:1.4cqw;align-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:1.4cqw;padding:1.2cqw;animation:qxUp .4s ease both}
+.qx .fav2{width:5cqw;height:5cqw;border-radius:1.2cqw;background:rgba(255,255,255,.08);display:grid;place-items:center;font-size:2.6cqw;flex:none}
+.qx .frow2 b{display:block;font-size:1.9cqw;min-height:2.4cqw}
+.qx .frow2 span{display:block;font-size:1.6cqw;color:#bdbab4;min-height:2cqw}
+.qx .fsv{margin-top:auto;font-size:1.5cqw;font-weight:800;color:#a3a3a3;opacity:0;transition:opacity .4s}.qx .fsv.on{opacity:1}
+.qx .fside{flex:1;display:flex;flex-direction:column;gap:2cqw}
+.qx .fbig b{font-family:var(--hf);font-stretch:125%;font-size:14cqw;font-weight:500;line-height:1;color:#f2efe9}
+.qx .fbig span{display:block;font-size:2cqw;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#a3a3a3}
+.qx .lbx{display:flex;flex-direction:column;gap:1.2cqw;margin-top:1cqw}
+.qx .lrow{display:grid;grid-template-columns:4cqw 16cqw 1fr 10cqw;align-items:center;gap:1.6cqw;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:1.4cqw;padding:1.2cqw 1.8cqw;font-weight:800;font-size:2.2cqw;animation:qxUp .45s ease both}
+.qx .lrow .pl{font-family:var(--hf);font-stretch:125%;color:#a3a3a3}
+.qx .lrow:first-child{background:#f2efe9;color:#131312}.qx .lrow:first-child .pl{color:#131312}
+.qx .bar2{height:.9cqw;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden}.qx .lrow:first-child .bar2{background:rgba(0,0,0,.12)}
+.qx .bar2 i{display:block;height:100%;border-radius:9px;background:currentColor;opacity:.7;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.qx .lrow b{text-align:right;font-family:var(--hf);font-stretch:125%;font-weight:600}
+/* ===== квиз ===== */
+.scr.qz{background:#141413;color:#fff;padding:34px 12px 12px;display:flex;flex-direction:column;gap:8px;font-family:Manrope,system-ui,sans-serif}
+.qz .row{margin-bottom:2px}
+.qz .nm{color:#fff}.qz .pts{font-weight:800;font-size:13px;color:#a3a3a3}.qz .pts b{color:#fff}
+.qz .qk{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:#a3a3a3;font-weight:800}
+.qz .qt{font-family:var(--hf);font-stretch:125%;text-transform:uppercase;font-size:17px;line-height:1.08;font-weight:600;letter-spacing:-.01em}
+.qz .bar{height:5px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}.qz .bar i{display:block;height:100%;width:62%;background:#f2efe9;border-radius:9px;animation:qbar 9s linear infinite}
+@keyframes qbar{from{width:100%}to{width:0}}
+.qz .tiles{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:1;margin-top:2px}
+.qz .tl{border-radius:14px;padding:10px;display:flex;flex-direction:column;justify-content:space-between;font-weight:800;font-size:12.5px;line-height:1.2;color:#fff;min-height:74px;position:relative}
+.qz .tl span{width:22px;height:22px;border-radius:7px;background:rgba(0,0,0,.18);display:grid;place-items:center;font-size:11px}
+.qz .tl.sel{box-shadow:0 0 0 3px #fff inset}
+.qz .note{text-align:center;color:#a3a3a3;font-size:10.5px;font-weight:700}
+.ta{background:#e07a5f}.tb{background:#3d9a8b}.tc{background:#d9a441}.td{background:#7b6fd6}
+.steps4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:st}
+.steps4 .type{position:relative}
+.steps4 .type b{display:block;font-family:var(--hf);font-stretch:125%;font-size:30px;font-weight:500;color:var(--gold);line-height:1;margin-bottom:10px}
+.show{display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:center}
+.stagex{aspect-ratio:16/9;border-radius:22px;background:radial-gradient(ellipse at 50% 18%,#262625,#0b0b0a 72%);border:1px solid rgba(255,255,255,.1);padding:4.2% 4.6%;display:flex;flex-direction:column;container-type:inline-size;color:#fff;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+.stagex .sk{font-size:1.7cqw;letter-spacing:.2em;text-transform:uppercase;color:#a3a3a3;font-weight:800;display:flex;justify-content:space-between}
+.stagex .sq{font-family:var(--hf);font-stretch:125%;text-transform:uppercase;font-size:4.2cqw;line-height:1.05;font-weight:600;margin:2.2cqw 0 2.6cqw}
+.stagex .st{display:grid;grid-template-columns:1fr 1fr;gap:1.6cqw;flex:1}
+.stagex .t{border-radius:1.6cqw;padding:1.6cqw 2cqw;display:flex;align-items:center;gap:1.4cqw;position:relative;overflow:hidden;font-weight:800;font-size:2.3cqw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+.stagex .t .f{position:absolute;inset:0;right:auto;opacity:.75}
+.stagex .t.ok .f{opacity:1}
+.stagex .t>*:not(.f){position:relative}
+.stagex .t .l{width:3.4cqw;height:3.4cqw;border-radius:1cqw;display:grid;place-items:center;background:rgba(0,0,0,.25);font-size:1.8cqw;flex:none}
+.stagex .t .p{margin-left:auto;font-size:2.6cqw}
+.stagex .t.no{opacity:.38}
+.stagex .t.ok{box-shadow:0 0 0 .45cqw #fff inset}
+.bul{list-style:none;padding:0;margin:0;display:grid;gap:14px}
+.bul li{display:flex;gap:14px;align-items:flex-start}
+.bul li i{font-style:normal;font-size:24px;flex:none;width:34px}
+.bul li b{display:block;color:var(--ink);font-size:16px;margin-bottom:2px}
+.bul li span{color:var(--muted);font-size:14px}
+.faq{display:grid;gap:10px}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 20px}
+.faq summary{cursor:pointer;font-weight:700;color:var(--ink);list-style:none;display:flex;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary:after{content:"+";color:var(--muted);font-weight:500;font-size:20px;line-height:1}
+.faq details[open] summary:after{content:"−"}
+.faq p{margin:10px 0 0;color:var(--muted);font-size:14.5px;line-height:1.55}
+.price3{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 0 22px}
+.price3 span{border:1px solid var(--line);border-radius:999px;padding:6px 14px;color:var(--text);font-size:14px}
+.price3 b{color:var(--ink)}
+@media (max-width:980px){.steps4{grid-template-columns:1fr 1fr}.show{grid-template-columns:1fr}}
+@media (max-width:640px){.steps4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <a class="brand" href="../" aria-label="Beloglazov Event"><svg class="pb-mark" viewBox="0 0 100 100" width="30" height="30" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M0,50a50,50 0 1,0 100,0a50,50 0 1,0 -100,0Z M9.76,50a40.24,35.68 0 1,0 80.48,0a40.24,35.68 0 1,0 -80.48,0Z M14.25,50a35.75,31.27 0 1,0 71.5,0a35.75,31.27 0 1,0 -71.5,0Z M40.48,50a9.52,9.52 0 1,0 19.04,0a9.52,9.52 0 1,0 -19.04,0Z"/></svg><img class="pb-word" src="../assets/wordmark-white.png" alt="Beloglazov Event"><span data-t="brandSub"></span></a>
+  <nav class="nav"><a class="back keep" href="../" data-t="all"></a></nav>
+  <button class="lang" id="lang">EN</button>
+</div></div>
+
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="k" data-t="kicker"></div>
+      <h1 data-t="title"></h1>
+      <p class="lead" data-t="lead"></p>
+      <div class="facts"><span data-t="f1"></span><span data-t="f2"></span><span data-t="f3"></span><span data-t="f4"></span></div>
+      <div class="cta"><a class="btn gold" href="../fact/" data-t="make"></a><a class="btn ghost" href="../q/" data-t="play"></a><a class="btn ghost" href="../fact/?demo=1" data-t="demo"></a></div>
+    </div>
+    <div class="phone"><div class="scr qz">
+      <div class="row"><div class="nm" data-t="mName"></div><div class="pts"><b>1 240</b> <span data-t="mPts"></span></div></div>
+      <div class="qk" data-t="mK"></div>
+      <div class="qt" data-t="mQ"></div>
+      <div class="bar"><i></i></div>
+      <div class="tiles">
+        <div class="tl ta"><span>A</span><div data-t="mA"></div></div>
+        <div class="tl tb sel"><span>B</span><div data-t="mB"></div></div>
+        <div class="tl tc"><span>C</span><div data-t="mC"></div></div>
+        <div class="tl td"><span>D</span><div data-t="mD"></div></div>
+      </div>
+      <div class="note" data-t="mNote"></div>
+    </div></div>
+  </div>
+
+  <section>
+    <div class="k" data-t="howK"></div>
+    <div class="h2" data-t="howH"></div>
+    <div class="steps4">
+      <div class="type"><b>01</b><h4 data-t="s1h"></h4><p data-t="s1p"></p></div>
+      <div class="type"><b>02</b><h4 data-t="s2h"></h4><p data-t="s2p"></p></div>
+      <div class="type"><b>03</b><h4 data-t="s3h"></h4><p data-t="s3p"></p></div>
+      <div class="type"><b>04</b><h4 data-t="s4h"></h4><p data-t="s4p"></p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="k" data-t="typesK"></div>
+    <div class="h2" data-t="typesH"></div>
+    <div class="types">
+      <button type="button" class="type ex" data-ex="0"><i>📝</i><h4 data-t="t1h"></h4><p data-t="t1p"></p><span class="see" data-t="see"></span></button>
+      <button type="button" class="type ex" data-ex="1"><i>💡</i><h4 data-t="t2h"></h4><p data-t="t2p"></p><span class="see" data-t="see"></span></button>
+      <button type="button" class="type ex" data-ex="2"><i>🙋</i><h4 data-t="t3h"></h4><p data-t="t3p"></p><span class="see" data-t="see"></span></button>
+      <button type="button" class="type ex" data-ex="3"><i>🏆</i><h4 data-t="t4h"></h4><p data-t="t4p"></p><span class="see" data-t="see"></span></button>
+    </div>
+  </section>
+
+  <section>
+    <div class="k" data-t="scrK"></div>
+    <div class="h2" data-t="scrH"></div>
+    <div class="show">
+      <div class="stagex" aria-hidden="true">
+        <div class="sk"><span data-t="xK"></span><span>💡</span></div>
+        <div class="sq" data-t="xQ"></div>
+        <div class="st">
+          <div class="t no"><i class="f ta" style="width:18%"></i><span class="l">A</span><span data-t="xA"></span><span class="p">18%</span></div>
+          <div class="t ok"><i class="f tb" style="width:54%"></i><span class="l">B</span><span data-t="xB"></span><span class="p">54%</span></div>
+          <div class="t no"><i class="f tc" style="width:11%"></i><span class="l">C</span><span data-t="xC"></span><span class="p">11%</span></div>
+          <div class="t no"><i class="f td" style="width:17%"></i><span class="l">D</span><span data-t="xD"></span><span class="p">17%</span></div>
+        </div>
+      </div>
+      <ul class="bul">
+        <li><i>📊</i><div><b data-t="b1h"></b><span data-t="b1p"></span></div></li>
+        <li><i>🙋</i><div><b data-t="b2h"></b><span data-t="b2p"></span></div></li>
+        <li><i>🏆</i><div><b data-t="b3h"></b><span data-t="b3p"></span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="k" data-t="hostK"></div>
+    <div class="h2" data-t="hostH"></div>
+    <div class="host">
+      <div class="hf"><i>⏸</i><div><h4 data-t="h1h"></h4><p data-t="h1p"></p></div></div>
+      <div class="hf"><i>📷</i><div><h4 data-t="h2h"></h4><p data-t="h2p"></p></div></div>
+      <div class="hf"><i>👥</i><div><h4 data-t="h3h"></h4><p data-t="h3p"></p></div></div>
+      <div class="hf"><i>💌</i><div><h4 data-t="h4h"></h4><p data-t="h4p"></p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="k" data-t="faqK"></div>
+    <div class="h2" data-t="faqH"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section>
+    <div class="final">
+      <div class="h2" style="margin-top:0" data-t="finH"></div>
+      <p data-t="finP"></p>
+      <div class="cta" style="justify-content:center"><a class="btn gold" href="../fact/?demo=1" data-t="finTry"></a><a class="btn ghost" href="../#pricing" data-t="finPlans"></a><a class="btn ghost" href="https://pabeloglazov.com" target="_blank" rel="noopener" data-t="finHost"></a></div>
+    </div>
+  </section>
+</div>
+
+<footer><div class="wrap"><span data-t="foot"></span><a href="https://pabeloglazov.com" target="_blank" rel="noopener">pabeloglazov.com</a></div></footer>
+
+<script>
+(function () {
+  var I = {
+    ru: { brandSub: 'игры для праздников', all: '← Все игры', kicker: 'Игра для свадьбы и праздника', title: 'Интересный факт',
+      lead: 'Пара присылает имена гостей и удивительные факты о них. На большом экране появляется факт — гости угадывают с телефонов, о ком он, а потом герой встаёт под аплодисменты.',
+      f1: '👥 любое число гостей', f2: '⏱ 30–60 минут', f3: '📱 без приложений', f4: '📷 фото героев',
+      make: 'Собрать игру', play: 'Я гость — ввести код', demo: 'Демо',
+      mName: 'Оля', mPts: 'очков', mK: 'Факт 3 из 12 · кто это?', mQ: 'Прыгал с парашютом на своё 30-летие', mA: 'Дима', mB: 'Игорь', mC: 'Саша', mD: 'Паша', mNote: 'Ответ принят',
+      howK: 'Как это работает', howH: 'Четыре шага до игры',
+      s1h: 'Ссылка для пары', s1p: 'Создайте игру и отправьте паре ссылку на простую анкету.',
+      s2h: 'Пара пишет факты', s2p: 'Имя гостя и что-то удивительное о нём. Фото — по желанию.',
+      s3h: 'Гости угадывают', s3p: 'Факт на экране, четыре имени на телефоне. Очки за верный и быстрый ответ.',
+      s4h: 'Герой встаёт', s4p: 'На экране — фото и имя. Зал аплодирует, ведущий даёт герою микрофон.',
+      typesK: 'Посмотрите, как это выглядит', typesH: 'Примеры',
+      see: 'Смотреть пример →',
+      t1h: 'Анкета для пары', t1p: 'Пара вписывает гостей и факты о них с телефона — всё сохраняется само.',
+      t2h: 'Факт на экране', t2p: 'Зал читает факт, гости выбирают имя на телефонах, счётчик ответов растёт.',
+      t3h: 'Кто это?', t3p: 'Проценты по вариантам — и карточка переворачивается: фото и имя героя.',
+      t4h: 'Лидеры и финал', t4p: 'Таблица лидеров по ходу вечера и пьедестал в конце.',
+      scrK: 'На большом экране', scrH: 'Весь зал угадывает вместе',
+      xK: 'Факт 5 из 12', xQ: 'Знает жениха с первого класса', xA: 'Оля', xB: 'Катя', xC: 'Маша', xD: 'Вера',
+      b1h: 'Живые проценты', b1p: 'Пока идёт таймер, видно, за кого голосует зал. Потом правильный ответ подсвечивается.',
+      b2h: 'Карточка героя', b2p: 'После ответа карточка переворачивается: фото и имя. Самый тёплый момент игры.',
+      b3h: 'Пьедестал и номинации', b3p: 'Третье, второе, первое место с музыкой и номинации в финале.',
+      hostK: 'Для ведущего', hostH: 'Удобно провести',
+      h1h: 'Частями за вечер', h1p: 'Выводите по 3–4 факта между блоками банкета — очки копятся весь вечер.',
+      h2h: 'Фото по желанию', h2p: 'Нет фото — на карточке будет красивая буква имени. Есть — ещё лучше.',
+      h3h: 'Команды и столы', h3p: 'Каждый сам за себя, командами или по столам — как удобнее залу.',
+      h4h: 'Итоги на память', h4p: 'После игры пара получает страницу с победителями.',
+      faqK: 'Вопросы', faqH: 'Частые вопросы',
+      faq: [['Сколько фактов нужно?', 'Хватает 10–20. Можно больше и выводить их частями за вечер.'],
+        ['Нужно ли гостям что-то устанавливать?', 'Нет. Гости сканируют QR или открывают game.pabeloglazov.com/q и вводят код — всё работает в браузере телефона.'],
+        ['Откуда берутся неправильные варианты?', 'Система сама берёт имена других гостей из анкеты, поэтому угадывать интересно, а готовить ничего не нужно.'],
+        ['Что если героя нет в зале?', 'Ведущий просто переходит к следующему факту. Факты можно убрать или поправить до игры.']],
+      finH: 'Проведите «Интересный факт» на своём празднике', finP: 'Попробуйте бесплатно — демо-игра на 1 час, до 3 телефонов. Понравится — выберите тариф.',
+      finTry: 'Попробовать бесплатно', finPlans: 'Все тарифы', finHost: 'Позвать ведущего',
+      foot: '© Павел Белоглазов · ведущий и автор игр' },
+    en: { brandSub: 'games for celebrations', all: '← All games', kicker: 'A game for weddings and parties', title: 'Interesting Fact',
+      lead: 'The couple sends guests’ names and surprising facts about them. A fact appears on the big screen, guests guess who it is from their phones — then the hero stands up to applause.',
+      f1: '👥 any number of guests', f2: '⏱ 30–60 min', f3: '📱 no apps', f4: '📷 hero photos',
+      make: 'Build a game', play: 'I’m a guest — enter code', demo: 'Demo',
+      mName: 'Olga', mPts: 'points', mK: 'Fact 3 of 12 · who is it?', mQ: 'Went skydiving on their 30th birthday', mA: 'Dima', mB: 'Igor', mC: 'Sasha', mD: 'Pasha', mNote: 'Answer received',
+      howK: 'How it works', howH: 'Four steps to the game',
+      s1h: 'A link for the couple', s1p: 'Create a game and send the couple a link to a simple form.',
+      s2h: 'The couple writes facts', s2p: 'A guest’s name and something surprising about them. Photo optional.',
+      s3h: 'Guests guess', s3p: 'The fact on screen, four names on the phone. Points for right and fast answers.',
+      s4h: 'The hero stands up', s4p: 'Photo and name on screen. The room applauds, the host hands over the mic.',
+      typesK: 'See how it looks', typesH: 'Examples',
+      see: 'See an example →',
+      t1h: 'Couple’s form', t1p: 'The couple adds guests and facts from their phone — everything saves itself.',
+      t2h: 'Fact on screen', t2p: 'The room reads the fact, guests pick a name on their phones, the answer counter grows.',
+      t3h: 'Who is it?', t3p: 'Percentages per option — then the card flips: the hero’s photo and name.',
+      t4h: 'Leaders and finale', t4p: 'A leaderboard through the night and a podium at the end.',
+      scrK: 'On the big screen', scrH: 'The whole room guesses together',
+      xK: 'Fact 5 of 12', xQ: 'Has known the groom since first grade', xA: 'Olga', xB: 'Kate', xC: 'Masha', xD: 'Vera',
+      b1h: 'Live percentages', b1p: 'While the timer runs you see how the room votes. Then the right answer lights up.',
+      b2h: 'The hero card', b2p: 'After the answer the card flips: photo and name. The warmest moment of the game.',
+      b3h: 'Podium and awards', b3p: 'Third, second, first place with music, plus awards at the end.',
+      hostK: 'For the host', hostH: 'Easy to run',
+      h1h: 'In parts through the night', h1p: 'Show 3–4 facts between parts of the program — points add up all night.',
+      h2h: 'Photos optional', h2p: 'No photo — the card shows a nice initial. With a photo — even better.',
+      h3h: 'Teams and tables', h3p: 'Everyone for themselves, in teams or by tables — whatever suits the room.',
+      h4h: 'Keepsake results', h4p: 'After the game the couple gets a page with the winners.',
+      faqK: 'Questions', faqH: 'FAQ',
+      faq: [['How many facts do we need?', '10–20 is plenty. You can add more and show them in parts through the night.'],
+        ['Do guests need to install anything?', 'No. Guests scan the QR or open game.pabeloglazov.com/q and enter the code — it all runs in the phone browser.'],
+        ['Where do the wrong options come from?', 'The game picks other guests’ names from the form, so guessing is fun and there’s nothing to prepare.'],
+        ['What if the hero isn’t in the room?', 'The host just moves on to the next fact. Facts can be removed or edited before the game.']],
+      finH: 'Run “Interesting Fact” at your celebration', finP: 'Try it free — a 1-hour demo game for up to 3 phones. Like it? Pick a plan.',
+      finTry: 'Try it free', finPlans: 'All plans', finHost: 'Book a host',
+      foot: '© Pavel Beloglazov · host and game author' }
+  };
+  var L = (function () { try { var s = localStorage.getItem('pb_lang'); if (s === 'ru' || s === 'en') return s; } catch (e) {} return /^(ru|uk|be|kk)/i.test(navigator.language || 'ru') ? 'ru' : 'en'; })();
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function paint() {
+    var d = I[L]; document.documentElement.lang = L;
+    [].forEach.call(document.querySelectorAll('[data-t]'), function (el) { el.textContent = d[el.dataset.t]; });
+    [].forEach.call(document.querySelectorAll('[data-h]'), function (el) { el.innerHTML = d[el.dataset.h]; });
+    document.getElementById('faq').innerHTML = d.faq.map(function (x, i) { return '<details><summary>' + esc(x[0]) + '</summary><p>' + esc(x[1]) + '</p></details>'; }).join('');
+    document.getElementById('lang').textContent = L === 'ru' ? 'EN' : 'RU';
+    document.title = (L === 'ru' ? 'Интересный факт' : 'Interesting Fact') + ' · Beloglazov Event';
+  }
+
+  /* ===== примеры (живые сцены) ===== */
+  var EXD = {
+    ru: { c: 'Аня & Макс', q: 'Знает жениха с первого класса — сидели за одной партой', o: ['Оля', 'Катя', 'Маша', 'Вера'], hero: 'Катя', stand: 'Катя, встаньте! 👏', fk: 'Факт', of: 'из', ans: 'ответили', who: 'Кто это?', it: 'Это',
+      form: 'Интересные факты о гостях', guest: 'Гость', rows: [['Оля', 'Прыгала с парашютом на своё 30-летие'], ['Катя', 'Знает жениха с первого класса'], ['Игорь', 'Выиграл конкурс по поеданию пельменей']], saved: '✓ Сохранено', total: 'фактов',
+      lb: 'Таблица лидеров', names: ['Оля', 'Дима', 'Катя', 'Игорь', 'Маша'], pts: 'очков' },
+    en: { c: 'Anna & Max', q: 'Has known the groom since first grade — they shared a desk', o: ['Olga', 'Kate', 'Masha', 'Vera'], hero: 'Kate', stand: 'Kate, stand up! 👏', fk: 'Fact', of: 'of', ans: 'answered', who: 'Who is it?', it: 'It’s',
+      form: 'Interesting facts about guests', guest: 'Guest', rows: [['Olga', 'Went skydiving on her 30th birthday'], ['Kate', 'Has known the groom since first grade'], ['Igor', 'Won a dumpling-eating contest']], saved: '✓ Saved', total: 'facts',
+      lb: 'Leaderboard', names: ['Olga', 'Dima', 'Kate', 'Igor', 'Masha'], pts: 'pts' }
+  };
+  var CLS = ['ta', 'tb2', 'tc', 'td'], LET = ['A', 'B', 'C', 'D'];
+  function head(X, n) { return '<div class="sk"><span>' + esc(X.c) + '</span><span>' + X.fk + ' ' + n + ' ' + X.of + ' 12 · <b class="cnt">0</b> ' + X.ans + '</span></div>'; }
+  function tiles(opts) { return opts.map(function (t, i) { return '<div class="t ' + CLS[i] + '" style="animation-delay:' + (.15 + i * .08) + 's"><span class="f"></span><span class="l">' + LET[i] + '</span><span>' + esc(t) + '</span><span class="p"></span></div>'; }).join(''); }
+  function timer(root, api, ms) { var b = root.querySelector('.tb i'); api.later(function () { b.style.transitionDuration = ms + 'ms'; b.style.width = '0%'; }, 60); }
+  function counter(root, api, to, ms) { var el = root.querySelector('.cnt'), k = 0, steps = 24; api.every(function () { if (k < steps) { k++; el.textContent = Math.round(to * k / steps); } }, ms / steps); }
+  function reveal(root, pct, ok) {
+    root.classList.add('rv');
+    [].forEach.call(root.querySelectorAll('.t'), function (t, i) { t.classList.add(ok.indexOf(i) >= 0 ? 'ok' : 'no'); t.querySelector('.f').style.width = pct[i] + '%'; t.querySelector('.p').textContent = pct[i] + '%'; });
+  }
+  function prep(root) { [].forEach.call(root.querySelectorAll('.t .f'), function (f) { f.style.width = '100%'; }); }
+  function loop(st, api, build, ms) { (function run() { st.innerHTML = ''; build(st); api.later(run, ms); })(); }
+  function typeIn(api, el, text, at, speed) { for (var i = 1; i <= text.length; i++) (function (k) { api.later(function () { el.textContent = text.slice(0, k); }, at + k * speed); })(i); }
+  function factScreen(X, withHero) {
+    return head(X, 5) + '<div class="sq">' + esc(X.q) + '</div><div class="tb"><i></i></div><div class="pw"><div class="st">' + tiles(X.o) + '</div>' +
+      '<div class="hc' + (withHero ? '' : ' off') + '"><div class="hin"><div class="hb"><span>?</span><em>' + esc(X.who) + '</em></div><div class="hf2"><div class="hp2">🙋‍♀️</div><div class="hn2"><small>' + esc(X.it) + '</small><b>' + esc(X.hero) + '</b></div></div></div></div></div><div class="toast">' + esc(X.stand) + '</div>';
+  }
+  var EXS = [
+    function (st, api) { // анкета для пары
+      loop(st, api, function (st) {
+        var X = EXD[L], r = document.createElement('div'); r.className = 'qx fx2';
+        r.innerHTML = '<div class="fphone"><div class="fk2">' + esc(X.form) + '</div>' + X.rows.map(function (x, i) { return '<div class="frow2" style="animation-delay:' + (i * 2.2) + 's"><div class="fav2">' + (i === 1 ? '🙋‍♀️' : '📷') + '</div><div><b class="n"></b><span class="f"></span></div></div>'; }).join('') + '<div class="fsv">' + esc(X.saved) + '</div></div>' +
+          '<div class="fside"><div class="fbig"><b class="fc">0</b><span>' + esc(X.total) + '</span></div><div class="fline"></div></div>';
+        st.appendChild(r);
+        var rows = r.querySelectorAll('.frow2'), cnt = r.querySelector('.fc');
+        X.rows.forEach(function (x, i) { var at = 300 + i * 2200; typeIn(api, rows[i].querySelector('.n'), x[0], at, 60); typeIn(api, rows[i].querySelector('.f'), x[1], at + 500, 28); api.later(function () { cnt.textContent = [4, 9, 12][i]; r.querySelector('.fsv').classList.add('on'); }, at + 1700); });
+      }, 9500);
+    },
+    function (st, api) { // факт на экране
+      loop(st, api, function (st) {
+        var X = EXD[L], r = document.createElement('div'); r.className = 'qx';
+        r.innerHTML = factScreen(X, false); st.appendChild(r); prep(r); timer(r, api, 6500); counter(r, api, 32, 6200);
+        api.later(function () { r.querySelectorAll('.t .f').forEach(function (f) { f.style.width = '0%'; }); }, 6600);
+        api.later(function () { reveal(r, [22, 48, 9, 21], [1]); }, 6800);
+      }, 10500);
+    },
+    function (st, api) { // кто это
+      loop(st, api, function (st) {
+        var X = EXD[L], r = document.createElement('div'); r.className = 'qx';
+        r.innerHTML = factScreen(X, true); st.appendChild(r); prep(r);
+        r.querySelector('.cnt').textContent = 32; r.querySelector('.tb i').style.width = '0%';
+        api.later(function () { r.querySelectorAll('.t .f').forEach(function (f) { f.style.width = '0%'; }); }, 200);
+        api.later(function () { reveal(r, [22, 48, 9, 21], [1]); }, 400);
+        api.later(function () { r.querySelector('.hc').classList.add('on'); }, 2000);
+        api.later(function () { r.querySelector('.toast').classList.add('on'); }, 3300);
+      }, 9000);
+    },
+    function (st, api) { // лидеры
+      loop(st, api, function (st) {
+        var X = EXD[L], r = document.createElement('div'); r.className = 'qx';
+        var sc = [5400, 4800, 4650, 3900, 3100];
+        r.innerHTML = '<div class="sk"><span>' + esc(X.c) + '</span><span>' + X.fk + ' 8 ' + X.of + ' 12</span></div><div class="sq">' + esc(X.lb) + '</div><div class="lbx">' +
+          X.names.map(function (n, i) { return '<div class="lrow" style="animation-delay:' + (i * .18) + 's"><span class="pl">' + (i + 1) + '</span><span class="nm">' + esc(n) + '</span><span class="bar2"><i style="width:0"></i></span><b data-v="' + sc[i] + '">0</b></div>'; }).join('') + '</div>';
+        st.appendChild(r);
+        api.later(function () { [].forEach.call(r.querySelectorAll('.lrow'), function (row, i) { row.querySelector('i').style.width = Math.round(sc[i] / sc[0] * 100) + '%'; var b = row.querySelector('b'), k = 0; api.every(function () { if (k < 20) { k++; b.textContent = Math.round(sc[i] * k / 20).toLocaleString('ru-RU'); } }, 45); }); }, 700);
+      }, 8000);
+    }
+  ];
+  var EX = window.PBExamples ? PBExamples({ selector: '[data-ex]', scenes: EXS, caption: function (i) { var d = I[L]; return { h: d['t' + (i + 1) + 'h'], p: d['t' + (i + 1) + 'p'] }; } }) : null;
+  document.getElementById('lang').onclick = function () { L = L === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('pb_lang', L); } catch (e) {} paint(); if (EX) EX.refresh(); };
+  paint();
+})();
+</script>
+</body>
+</html>
