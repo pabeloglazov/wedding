@@ -1206,9 +1206,7 @@ const FORM = [
   { id: 'months', type: 'number', q: 'Сколько месяцев вы встречались до помолвки?', unit: 'мес.' },
   { id: 'gage', type: 'number', q: 'Сколько лет было жениху, когда вы познакомились?', unit: 'лет' },
   { id: 'babyg', type: 'photo', q: 'Детское фото жениха' },
-  { id: 'babyb', type: 'photo', q: 'Детское фото невесты' },
-  { id: 'own1', type: 'custom', q: 'Свой вопрос (по желанию)' },
-  { id: 'own2', type: 'custom', q: 'Ещё один свой вопрос (по желанию)' }
+  { id: 'babyb', type: 'photo', q: 'Детское фото невесты' }
 ];
 const formLink = f => BASE + '?view=form&f=' + f;
 function shuffleOpts(right, wrong) {
@@ -1217,6 +1215,8 @@ function shuffleOpts(right, wrong) {
   while (all.length < 2) all.push('');
   return { opts: all.map(t => O(t)), ok: [all.indexOf(right)] };
 }
+function ownList(a) { const l = Array.isArray(a.own) ? a.own.filter(Boolean) : Object.values(a.own || {}); ['own1', 'own2'].forEach(k => { if (a[k]) l.push(a[k]); }); return l; }
+const ownOk = v => v && (v.q || '').trim() && (v.r || '').trim();
 function formToQs(f) {
   const a = f.ans || {}, img = f.img || {}, gn = (a.gname || '').trim() || coupleNames(CFG.couple)[0], bn = (a.bname || '').trim() || coupleNames(CFG.couple)[1];
   const out = [];
@@ -1226,8 +1226,8 @@ function formToQs(f) {
     if (it.type === 'who' && v) { const opts = [gn, bn].concat(v === 'both' ? ['Оба'] : []); out.push(normQ({ type: 'choice', text: it.q, opts: opts.map(t => O(t)), ok: [v === 'g' ? 0 : v === 'b' ? 1 : 2] })); }
     if (it.type === 'number' && v !== undefined && v !== '' && isFinite(+v)) out.push(normQ({ type: 'number', text: it.q.replace('вы встречались', 'пара встречалась').replace('жениху', gn), num: +v, unit: it.unit || '' }));
     if (it.type === 'photo' && img[it.id]) { const id = IMG.put(img[it.id]); STORE.upImg(id); out.push(normQ({ type: 'choice', text: 'Кто на детском фото?', img: id, opts: [O(gn), O(bn)], ok: [it.id === 'babyg' ? 0 : 1] })); }
-    if (it.type === 'custom' && v && (v.q || '').trim() && (v.r || '').trim()) { const s = shuffleOpts(v.r.trim(), v.w || []); out.push(normQ({ type: 'choice', text: v.q.trim(), opts: s.opts, ok: s.ok })); }
   });
+  ownList(a).forEach(v => { if (ownOk(v)) { const s = shuffleOpts(v.r.trim(), v.w || []); out.push(normQ({ type: 'choice', text: v.q.trim(), opts: s.opts, ok: s.ok })); } });
   return out;
 }
 function viewForm() {
@@ -1252,15 +1252,20 @@ function viewForm() {
         `<div class="card"><div class="q">Как вас зовут?</div><div class="grid2"><input class="in2" data-name="gname" placeholder="Имя жениха" value="${esc(A.gname)}"><input class="in2" data-name="bname" placeholder="Имя невесты" value="${esc(A.bname)}"></div></div>`;
       FORM.forEach(it => {
         const v = A[it.id];
-        if (it.type === 'choice' || it.type === 'custom') {
+        if (it.type === 'choice') {
           const x = v || {}, w = x.w || [];
-          h += `<div class="card"><div class="q">${esc(it.q)}</div>` + (it.type === 'custom' ? `<input class="in2" data-f="${it.id}" data-k="q" placeholder="Ваш вопрос" value="${esc(x.q || '')}" style="margin-bottom:8px">` : '') +
+          h += `<div class="card"><div class="q">${esc(it.q)}</div>` +
             `<input class="in2" data-f="${it.id}" data-k="r" placeholder="Правильный ответ" value="${esc(x.r || '')}"><div class="small">Можно придумать неправильные варианты — гостям будет веселее:</div>` +
             `<div class="grid2" style="margin-top:8px">${[0, 1, 2].map(i => `<input class="in2" data-f="${it.id}" data-k="w${i}" placeholder="Неправильный ${i + 1}" value="${esc(w[i] || '')}">`).join('')}</div></div>`;
         } else if (it.type === 'who') h += `<div class="card"><div class="q">${esc(it.q)}</div>${who(it.id, v)}</div>`;
         else if (it.type === 'number') h += `<div class="card"><div class="q">${esc(it.q)}</div><input class="in2" data-f="${it.id}" data-k="n" inputmode="decimal" placeholder="Число${it.unit ? ', ' + it.unit : ''}" value="${esc(v == null ? '' : v)}"></div>`;
         else if (it.type === 'photo') h += `<div class="card"><div class="q">${esc(it.q)}</div><div class="ph2" data-ph="${it.id}" style="${IM[it.id] ? `background-image:url(${IM[it.id]})` : ''}">${IM[it.id] ? '' : '📷 Загрузить фото'}</div><input type="file" accept="image/*" hidden data-file="${it.id}"><div class="small">Станет вопросом «Кто на детском фото?»</div></div>`;
       });
+      A.own = ownList(A); delete A.own1; delete A.own2;
+      const ownCard = (x, n) => `<div class="card own" data-own="${n}"><div class="q oq"><span>Свой вопрос</span><button class="odel" data-odel="${n}" title="Убрать вопрос" aria-label="Убрать вопрос"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.8c0-.4.4-.8.8-.8h4.4c.4 0 .8.4.8.8V7M6.5 7l.8 12.2c.1.9.8 1.8 1.8 1.8h5.8c1 0 1.7-.9 1.8-1.8L17.5 7"/></svg></button></div>` +
+        `<input class="in2" data-ok2="q" placeholder="Ваш вопрос" value="${esc(x.q || '')}" style="margin-bottom:8px"><input class="in2" data-ok2="r" placeholder="Правильный ответ" value="${esc(x.r || '')}">` +
+        `<div class="grid2" style="margin-top:8px">${[0, 1, 2].map(i => `<input class="in2" data-ok2="w${i}" placeholder="Неправильный ${i + 1}" value="${esc((x.w || [])[i] || '')}">`).join('')}</div></div>`;
+      h += `<div id="ownBox">${A.own.map(ownCard).join('')}</div><button class="addown" id="addOwn">+ Свой вопрос</button>`;
       h += `<div class="saved" id="saved"></div><button class="pbtn" id="done">Готово — отправить ведущему</button><p class="small" style="text-align:center;margin-top:10px">Ответы увидит только ведущий. Гости узнают их во время игры 😉</p></div>`;
       app.innerHTML = h;
       app.querySelectorAll('[data-name]').forEach(i => i.oninput = () => { A[i.dataset.name] = i.value.trim(); save(); });
@@ -1270,6 +1275,16 @@ function viewForm() {
         else { const x = A[id] = A[id] || {}; if (k[0] === 'w') { x.w = x.w || []; x.w[+k[1]] = i.value; } else x[k] = i.value; }
         save();
       });
+      const bindOwn = () => {
+        app.querySelectorAll('.own').forEach(c => {
+          const n = +c.dataset.own;
+          c.querySelectorAll('[data-ok2]').forEach(i => i.oninput = () => { const x = A.own[n] = A.own[n] || {}, k = i.dataset.ok2; if (k[0] === 'w') { x.w = x.w || []; x.w[+k[1]] = i.value; } else x[k] = i.value; save(); });
+          c.querySelector('[data-odel]').onclick = () => { A.own.splice(n, 1); paintOwn(); save(); };
+        });
+      };
+      const paintOwn = () => { $('ownBox').innerHTML = A.own.map(ownCard).join(''); bindOwn(); };
+      $('addOwn').onclick = () => { A.own.push({ q: '', r: '', w: [] }); paintOwn(); const c = $('ownBox').lastElementChild; c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.querySelector('input').focus({ preventScroll: true }); };
+      bindOwn();
       app.querySelectorAll('[data-who]').forEach(d => d.querySelectorAll('button').forEach(b => b.onclick = () => { A[d.dataset.who] = b.dataset.v; d.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); save(); }));
       app.querySelectorAll('[data-ph]').forEach(d => {
         const inp = app.querySelector(`[data-file="${d.dataset.ph}"]`);
@@ -1453,7 +1468,7 @@ function paintForm() {
   });
   formSub = () => r.off('value', h2);
 }
-function formToQsPreview(f) { const a = f.ans || {}, img = f.img || {}; return FORM.filter(it => { const v = a[it.id]; if (it.type === 'photo') return !!img[it.id]; if (it.type === 'who') return !!v; if (it.type === 'number') return v !== undefined && v !== '' && isFinite(+v); if (it.type === 'custom') return v && (v.q || '').trim() && (v.r || '').trim(); return v && (v.r || '').trim(); }).length; }
+function formToQsPreview(f) { const a = f.ans || {}, img = f.img || {}; return FORM.filter(it => { const v = a[it.id]; if (it.type === 'photo') return !!img[it.id]; if (it.type === 'who') return !!v; if (it.type === 'number') return v !== undefined && v !== '' && isFinite(+v); return v && (v.r || '').trim(); }).length + ownList(a).filter(ownOk).length; }
 function createForm() {
   const fid = uid(16);
   ref('forms/' + fid).set({ host: NET.uid, couple: CFG.couple || '', accent: CFG.accent, t: TS() }).then(() => { CFG.form = fid; STORE.save(); paintForm(); }, () => toast('Не получилось — проверьте интернет'));

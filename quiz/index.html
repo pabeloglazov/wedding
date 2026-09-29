@@ -440,6 +440,12 @@ body.solo-play #ph>.pv{flex:1}
 .lt .who{display:flex;gap:8px;flex-wrap:wrap}
 .lt .who button{flex:1;min-width:90px;border:1.5px solid rgba(255,255,255,.16);background:#1c1c1b;border-radius:12px;padding:12px;font-weight:800;color:var(--cink)}
 .lt .who button.on{background:var(--gold);border-color:var(--gold);color:var(--gink)}
+.lt .oq{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lt .odel{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:none;color:var(--cmuted);display:grid;place-items:center;flex:none;cursor:pointer;margin:-6px -4px -6px 0}
+.lt .odel:hover{color:var(--cink);border-color:rgba(255,255,255,.35)}
+.lt .addown{display:block;width:100%;margin:4px 0 12px;padding:18px;border:1.5px dashed rgba(255,255,255,.28);border-radius:20px;background:none;color:var(--cink);font:inherit;font-weight:700;font-size:16px;cursor:pointer;transition:border-color .15s,background .15s}
+.lt .addown:hover{border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.03)}
+.lt .own{animation:fadeIn .25s ease}
 .lt .small{font-size:12px;color:var(--cmuted);margin-top:6px}
 .lt .ph2{height:180px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.2);display:grid;place-items:center;color:var(--cmuted);font-weight:700;background:#1c1c1b center/contain no-repeat;cursor:pointer}
 .lt .pbtn{width:100%;border:0;border-radius:999px;padding:16px;font-weight:800;font-size:16px;background:var(--gold);color:var(--gink);margin-top:10px}
@@ -502,6 +508,6 @@ body.solo-play #ph>.pv{flex:1}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=3"></script>
+<script src="quiz.js?v=4"></script>
 </body>
 </html>
