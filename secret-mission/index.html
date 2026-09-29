@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/brand.css">
 <script src="../assets/brand.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#131312;--bg2:#181817;--card:#1c1c1b;--card2:#262625;--line:rgba(255,255,255,.1);--ink:#ffffff;--text:#e8e8e6;--muted:#a3a3a3;--gold:#f2efe9;--gold2:#d9d6d0;--acc:#bdbab4}
 *{box-sizing:border-box}
@@ -196,6 +197,19 @@ section{padding-top:80px}
 .box input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--ink);font:inherit;font-size:16px;outline:none;margin-bottom:12px}
 .box input:focus{border-color:var(--gold2)}
 .box .row{display:flex;gap:8px}.box .row .btn{flex:1}
+.dmb{max-width:460px;text-align:center}
+.dmb p{font-size:14.5px;line-height:1.5}
+.dmqr{background:#fff;border-radius:18px;padding:12px;width:204px;height:204px;margin:4px auto 16px;display:grid;place-items:center}
+.dmqr img,.dmqr canvas{width:180px!important;height:180px!important}
+.dmacts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.dmacts .btn{flex:1;min-width:170px;padding:14px 12px;white-space:nowrap}
+.dmlink{background:none;border:0;color:var(--muted);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;margin-top:14px;padding:0}
+.dmlink:hover{color:var(--ink)}
+.dmfoot{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:0}
+.dmwait{display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px 0}
+.dmspin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:#fff;animation:dmr 1s linear infinite}
+@keyframes dmr{to{transform:rotate(360deg)}}
+
 @media (max-width:980px){.hero{grid-template-columns:1fr;gap:36px}.types{grid-template-columns:repeat(2,1fr)}.proof{grid-template-columns:repeat(2,1fr)}.host{grid-template-columns:1fr}}
 @media (max-width:560px){.types{grid-template-columns:1fr}.phone{width:250px}.hero{padding-top:36px}.proof b{font-size:44px}}
 @container (max-width:560px){
@@ -248,7 +262,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       <h1 data-t="title"></h1>
       <p class="lead" data-t="lead"></p>
       <div class="facts"><span data-t="f1"></span><span data-t="f2"></span><span data-t="f3"></span><span data-t="f4"></span></div>
-      <div class="cta"><a class="btn gold" href="play/" data-t="play"></a><button class="btn ghost" id="hostBtn" data-t="hostBtn"></button></div>
+      <div class="cta"><button class="btn gold" id="demoBtn" data-t="demo"></button><button class="btn ghost" id="hostBtn" data-t="hostBtn"></button></div>
     </div>
     <div class="phone"><div class="scr">
       <div class="row"><div><div class="nm" data-t="mName"></div><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div></div><div class="code"><small data-t="mCode"></small>472</div></div>
@@ -296,6 +310,11 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
   </section>
 </div>
 
+<div class="modal" id="dm"><div class="box dmb">
+  <h3 data-t="dmH"></h3>
+  <div id="dmBody"></div>
+</div></div>
+
 <div class="modal" id="modal"><div class="box">
   <h3 data-t="mhH"></h3><p data-t="mhP"></p>
   <input id="key" type="password" autocomplete="off" data-ph="mhPh">
@@ -317,7 +336,10 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
     ru: { brand: 'Белоглазов', brandSub: 'игры для праздников', all: '← Все игры', kicker: 'Игра для знакомства гостей', title: 'Секретная миссия',
       lead: 'Каждый гость сканирует QR и получает личную тайную миссию: найти свою пару по символу, познакомиться с «другой стороной», узнать пожелание паре. Никто не знает чужих заданий — и весь зал начинает знакомиться.',
       f1: '👥 от 20 гостей', f2: '⏱ 1–2 часа', f3: '📱 без приложений', f4: '🇷🇺 🇺🇸 два языка',
-      play: 'Я гость — играть', hostBtn: 'Вход для ведущего',
+      play: 'Я гость — играть', hostBtn: 'Вход для ведущего', demo: 'Попробовать демо',
+      dmH: 'Демо-игра', dmLoad: 'Создаём вашу личную демо-игру… это займёт несколько секунд.', dmErr: 'Не получилось создать демо: ',
+      dmP: 'Игра только ваша: до 3 телефонов, работает 24 часа. Отсканируйте QR с телефона — вы гость. Панель ведущего откройте на компьютере.',
+      dmAdmin: 'Панель ведущего ↗', dmGuest: 'Открыть как гость ↗', dmCopy: 'Скопировать ссылку для гостей', dmCopied: 'Ссылка скопирована', dmNew: 'Создать новую демо-игру', dmClose: 'Закрыть', dmBuy: 'Понравилось? Выберите тариф →',
       mName: 'Аня', mCode: 'твой код', mK: 'Миссия 3 · найди свою пару', mTask: 'Где-то в зале есть ещё один 🍩', mK2: 'Миссия 4 · знакомство', mTask2: 'Узнай у кого-то из старшего поколения его пожелание паре', mBtn: 'Засчитать',
       typesK: 'Как проходит игра', typesH: 'Четыре вида миссий',
       t1h: 'Знакомство', t1p: 'Найти нового человека — со стороны жениха или невесты — и узнать что-то интересное. Засчитывается по коду.',
@@ -337,7 +359,10 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
     en: { brand: 'Beloglazov', brandSub: 'games for celebrations', all: '← All games', kicker: 'An icebreaker game for guests', title: 'Secret Mission',
       lead: 'Every guest scans a QR code and gets a private secret mission: find their emoji match, meet someone from the other side of the family, collect a wish for the couple. Nobody knows anyone else’s task — and the whole room starts connecting.',
       f1: '👥 20+ guests', f2: '⏱ 1–2 hours', f3: '📱 no apps', f4: '🇷🇺 🇺🇸 two languages',
-      play: 'I’m a guest — play', hostBtn: 'Host sign-in',
+      play: 'I’m a guest — play', hostBtn: 'Host sign-in', demo: 'Try the demo',
+      dmH: 'Demo game', dmLoad: 'Creating your personal demo game… just a few seconds.', dmErr: 'Couldn’t create the demo: ',
+      dmP: 'This game is just yours: up to 3 phones, live for 24 hours. Scan the QR with your phone — you’re a guest. Open the host panel on your computer.',
+      dmAdmin: 'Host panel ↗', dmGuest: 'Open as a guest ↗', dmCopy: 'Copy guest link', dmCopied: 'Link copied', dmNew: 'Create a new demo game', dmClose: 'Close', dmBuy: 'Like it? Pick a plan →',
       mName: 'Anna', mCode: 'your code', mK: 'Mission 3 · find your match', mTask: 'Somewhere in the room is another 🍩', mK2: 'Mission 4 · new acquaintance', mTask2: 'Ask someone from the older generation for their wish for the couple', mBtn: 'Submit',
       typesK: 'How the game works', typesH: 'Four kinds of missions',
       t1h: 'New acquaintance', t1p: 'Meet someone new — from the bride’s or the groom’s side — and learn something about them. Confirmed by code.',
@@ -366,6 +391,34 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
   }
   $('lang').onclick = function () { L = L === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('pb_lang', L); localStorage.setItem('secret_mission_lang', L); } catch (e) {} paint(); };
   $('hostBtn').onclick = function () { location.href = '../host/'; };
+  /* ---------- демо-игра: до 3 телефонов, на сутки ---------- */
+  var PF = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec', DK = 'sm_demo_v1';
+  function demoGet() { try { var d = JSON.parse(localStorage.getItem(DK) || 'null'); if (d && d.exp > Date.now() + 3600000) return d; } catch (e) {} return null; }
+  function demoShow(d) {
+    var t = I[L], b = $('dmBody');
+    b.innerHTML = '<p>' + t.dmP + '</p><div class="dmqr" id="dmQr"></div><div class="dmacts"><a class="btn gold" target="_blank" rel="noopener" href="' + d.adminUrl + '">' + t.dmAdmin + '</a><a class="btn ghost" target="_blank" rel="noopener" href="' + d.playUrl + '">' + t.dmGuest + '</a></div>' +
+      '<button class="dmlink" id="dmCopy">' + t.dmCopy + '</button><div class="dmfoot"><button class="dmlink" id="dmNew">' + t.dmNew + '</button><a class="dmlink" href="../#pricing">' + t.dmBuy + '</a></div>';
+    try { new QRCode($('dmQr'), { text: d.playUrl, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
+    $('dmCopy').onclick = function () { var el = this; (navigator.clipboard ? navigator.clipboard.writeText(d.playUrl) : Promise.reject()).then(function () { el.textContent = t.dmCopied; }, function () { window.prompt('', d.playUrl); }); };
+    $('dmNew').onclick = function () { try { localStorage.removeItem(DK); } catch (e) {} demoStart(); };
+  }
+  function demoStart() {
+    var t = I[L], d = demoGet();
+    $('dm').classList.add('on');
+    if (d) return demoShow(d);
+    $('dmBody').innerHTML = '<p class="dmwait"><span class="dmspin"></span>' + t.dmLoad + '</p>';
+    fetch(PF, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'pfDemoEvent', args: [L] }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j.ok) throw new Error(String(j.error || '').replace(/^(Exception|Error):\s*/i, ''));
+        var x = j.data; x.playUrl = String(x.playUrl).replace(/^http:/, 'https:');
+        try { localStorage.setItem(DK, JSON.stringify(x)); } catch (e) {}
+        demoShow(x);
+      })
+      .catch(function (e) { $('dmBody').innerHTML = '<p>' + t.dmErr + (e && e.message ? e.message : '') + '</p><div class="dmacts"><button class="btn gold" id="dmRetry">↻</button></div>'; $('dmRetry').onclick = demoStart; });
+  }
+  $('demoBtn').onclick = demoStart;
+  $('dm').onclick = function (e) { if (e.target === this) this.classList.remove('on'); };
   $('mhCancel').onclick = function () { $('modal').classList.remove('on'); };
   $('modal').onclick = function (e) { if (e.target === this) this.classList.remove('on'); };
   function go() { var k = $('key').value.trim(); if (!k) return $('key').focus(); window.open(EXEC + '?admin=' + encodeURIComponent(k), '_blank', 'noopener'); $('modal').classList.remove('on'); $('key').value = ''; }
