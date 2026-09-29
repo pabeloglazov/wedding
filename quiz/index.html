@@ -534,12 +534,47 @@ body.solo-play #ph>.pv{flex:1}
   .lt .grid2{grid-template-columns:1fr}
 }
 @media (min-width:821px){.mnext{display:none}}
+
+/* ===== Интересный факт ===== */
+.addrow.one{grid-template-columns:1fr}
+.fcard{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:10px;animation:fadeIn .3s ease}
+.fcard .fav{width:64px;height:64px;border-radius:16px;flex:none;border:1.5px dashed var(--line);display:grid;place-items:center;font-size:22px;cursor:pointer;background:var(--bg) center/cover no-repeat;transition:border-color .15s}
+.fcard .fav:hover{border-color:rgba(255,255,255,.5)}
+.fcard .fav.has{border-style:solid}
+.fcard .fmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.fcard .frow{display:flex;gap:8px;align-items:center}
+.fcard .fnum{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.07);display:grid;place-items:center;font-weight:800;font-size:12px;color:var(--muted);flex:none}
+.fcard .fname{flex:1;min-width:0;font-weight:700}
+.fcard .ftext{resize:vertical;min-height:48px}
+.fcard .fx{border:1px solid var(--line);background:none;color:var(--muted);border-radius:10px;padding:0 10px;height:34px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.fcard .fdel{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--muted);display:grid;place-items:center;flex:none;cursor:pointer}
+.fcard .fdel:hover,.fcard .fx:hover{color:var(--ink);border-color:rgba(255,255,255,.35)}
+.qbody.fq{grid-template-columns:1.35fr 1fr}
+.hero{perspective:60em;min-height:0;display:flex}
+.hero .hcard{position:relative;flex:1;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.2,.8,.2,1)}
+.hero.on .hcard{transform:rotateY(180deg)}
+.hero .hback,.hero .hfront{position:absolute;inset:0;border-radius:1.4em;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.hero .hback{background:radial-gradient(ellipse at 50% 35%,rgba(255,255,255,.1),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3em}
+.hero .hback span{font-family:var(--hf);font-stretch:125%;font-size:9em;line-height:1;color:var(--gold);opacity:.9;animation:qPulse 2.4s ease-in-out infinite}
+.hero .hback em{font-style:normal;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-size:1.1em}
+@keyframes qPulse{50%{transform:scale(1.08);opacity:.6}}
+.hero .hfront{transform:rotateY(180deg);background:#0b0b0a;box-shadow:0 1.2em 3em rgba(0,0,0,.5);display:flex;flex-direction:column}
+.hero .hph{flex:1;background:center/cover no-repeat}
+.hero .hph.none{display:grid;place-items:center;font-family:var(--hf);font-stretch:125%;font-size:9em;color:var(--gold);background:radial-gradient(ellipse at 50% 40%,#2a2a28,#0d0d0c 75%)}
+.hero .hnm{padding:.8em 1em 1em;background:linear-gradient(rgba(11,11,10,0),#0b0b0a);margin-top:-3em;position:relative}
+.hero .hnm small{display:block;color:var(--muted);font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:.9em}
+.hero .hnm b{display:block;font-family:var(--hf);font-stretch:125%;font-weight:600;font-size:2.8em;line-height:1.05;color:#fff;text-transform:uppercase}
+.lt .fcrow{display:flex;gap:12px;align-items:flex-start}
+.lt .fph{width:72px;height:72px;border-radius:16px;flex:none;border:1.5px dashed rgba(255,255,255,.22);display:grid;place-items:center;font-size:24px;cursor:pointer;background:#1c1c1b center/cover no-repeat}
+.lt .fph.has{border-style:solid}
+.lt .fcin{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.lt .fcin textarea{resize:vertical;font-family:inherit}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=15"></script>
+<script src="quiz.js?v=16"></script>
 </body>
 </html>

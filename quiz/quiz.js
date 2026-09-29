@@ -6,6 +6,8 @@ const VIEW = P.get('view') || 'host';
 const GID = (P.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
 const PF_API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
 const DEMO_MAX = 3, DEMO_MIN = 60;
+const GAME = window.PB_GAME === 'fact' ? 'fact' : 'quiz';
+const GNAME = GAME === 'fact' ? 'Интересный факт' : 'Квиз о паре';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -42,6 +44,13 @@ const TYPES = { choice: 'Обычный', couple: 'Угадай ответ па�
 
 function coupleNames(s) { const p = String(s || '').split(/\s+(?:и|&|and|\+)\s+/i).map(x => x.trim()).filter(Boolean); return [p[0] || 'Жених', p[1] || 'Невеста']; }
 const O = t => ({ t: t || '' });
+function sampleFacts() {
+  return [['Оля', 'Прыгала с парашютом на своё 30-летие'], ['Дима', 'Целое лето работал аниматором в Турции'], ['Катя', 'Знает жениха с первого класса — сидели за одной партой'],
+    ['Игорь', 'Выиграл конкурс по поеданию пельменей'], ['Маша', 'Побывала на концертах в 12 странах'], ['Саша', 'Сам построил баню на даче'],
+    ['Вера', 'Играет на арфе'], ['Паша', 'Однажды проспал собственный выпускной']].map(([name, fact]) => ({ id: uid(), name, fact, img: '' }));
+}
+const normFact = f => ({ id: (f && f.id) || uid(), name: String((f && f.name) || ''), fact: String((f && f.fact) || ''), img: (f && f.img) || '' });
+const factOk = f => f && f.name.trim() && f.fact.trim();
 function sampleQs(couple) {
   const [g, b] = coupleNames(couple);
   return [
@@ -217,7 +226,7 @@ const FEAT = {
   keepsake: ['pro', 'Итоги на память для пары'], excel: ['pro', 'Выгрузка результатов в Excel']
 };
 const myTier = () => unlocked() ? (TIER[ACC.info.tier] ? ACC.info.tier : 'pro') : 'demo';
-const can = f => TIER[myTier()].r >= TIER[FEAT[f][0]].r;
+const can = f => (GAME === 'fact' && f === 'form') || TIER[myTier()].r >= TIER[FEAT[f][0]].r;
 const guestCap = () => unlocked() ? (ACC.info.max || TIER[myTier()].max) : DEMO_MAX;
 const nextTier = () => { const t = myTier(); return t === 'demo' ? 'basic' : t === 'basic' ? 'pro' : t === 'pro' ? 'biz' : ''; };
 function upsellHtml(title, text) {
@@ -235,10 +244,11 @@ function upsellCap() {
 const ICON_LOCK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const lockTag = f => can(f) ? '' : `<em class="lk" title="Тариф «${TIER[FEAT[f][0]].n}»">${ICON_LOCK}${TIER[FEAT[f][0]].n}</em>`;
 const wsKey = () => ACC.info && /^[0-9a-f]{64}$/.test(ACC.info.ws || '') ? ACC.info.ws : '';
-function goLogin() { try { localStorage.setItem('pb_next', 'quiz'); } catch (e) {} location.href = '../host/'; }
+function goLogin() { try { localStorage.setItem('pb_next', GAME); } catch (e) {} location.href = '../host/'; }
 
 /* ================= конфиг квиза ================= */
-const KEY_CFG = 'pbq_cfg_v2', KEY_LIVE = 'pbq_live_v2';
+const KEY_CFG = GAME === 'fact' ? 'pbf_cfg_v1' : 'pbq_cfg_v2', KEY_LIVE = GAME === 'fact' ? 'pbf_live_v1' : 'pbq_live_v2';
+const WSQ = GAME === 'fact' ? 'fq' : 'q', WSL = GAME === 'fact' ? 'flist' : 'list';
 const optFilled = o => !!(o && (o.t || '').trim());
 function normQ(q) {
   q = Object.assign({ id: uid(), type: 'choice', text: '', img: '', opts: [], ok: [], x2: false }, q || {});
@@ -257,7 +267,7 @@ function normQ(q) {
 }
 function defaultCfg(blank) {
   const couple = 'Максим и Алина';
-  return { id: uid(10), title: blank ? 'Новый квиз' : 'Квиз о паре', couple, mode: 'wedding',
+  return { id: uid(10), title: GAME === 'fact' ? 'Интересный факт' : blank ? 'Новый квиз' : 'Квиз о паре', couple, mode: 'wedding', facts: GAME === 'fact' && !blank ? sampleFacts() : [], sampleF: GAME === 'fact' && !blank ? 1 : 0,
     s: Object.assign({}, MODES.wedding.s, { play: 'solo', tables: 10, lastX2: true, sound: true }), bots: false,
     accent: '#f2efe9', photo: '', wifi: { ssid: '', pass: '' }, form: '',
     qs: blank ? [normQ({ opts: [O(), O(), O(), O()] })] : sampleQs(couple), updated: Date.now() };
@@ -274,12 +284,25 @@ function normCfg(c) {
   if (!c.qs.length) c.qs = [normQ({ opts: [O(), O(), O(), O()] })];
   if (!c.brand2) { if (!c.accent || c.accent === '#e2cd92') c.accent = '#f2efe9'; c.brand2 = 1; }
   c.accent = validColor(c.accent); c.wifi = c.wifi || { ssid: '', pass: '' };
-  c.id = c.id || uid(10); c.title = c.title || 'Квиз о паре'; c.couple = c.couple || '';
+  c.id = c.id || uid(10); c.title = c.title || GNAME; c.couple = c.couple || '';
+  c.facts = (c.facts || []).map(normFact);
   if (!MODES[c.mode]) c.mode = 'wedding';
   c.bots = !!c.bots;
   return c;
 }
-let CFG = normCfg(ls('get', KEY_CFG) || (ls('get', 'pbq_cfg_v1') ? Object.assign(ls('get', 'pbq_cfg_v1'), { bots: false }) : null));
+let CFG = normCfg(ls('get', KEY_CFG) || (GAME === 'quiz' && ls('get', 'pbq_cfg_v1') ? Object.assign(ls('get', 'pbq_cfg_v1'), { bots: false }) : null));
+/* «Интересный факт»: из фактов о гостях собираем вопросы «Кто это?» */
+function factsToQs(facts) {
+  const ok = (facts || []).filter(factOk), names = [...new Set(ok.map(f => f.name.trim()))];
+  if (names.length < 2) return [];
+  return ok.map(f => {
+    const hero = f.name.trim(), others = names.filter(n => n !== hero);
+    for (let i = others.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [others[i], others[j]] = [others[j], others[i]]; }
+    const all = [hero].concat(others.slice(0, 3));
+    for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
+    return normQ({ type: 'choice', text: f.fact.trim(), opts: all.map(t => O(t)), ok: [all.indexOf(hero)], fact: 1, hp: f.img || '' });
+  });
+}
 function validQ(q) {
   if (!((q.text || '').trim() || q.img)) return false;
   if (q.type === 'number') return q.num !== '' && q.num != null && isFinite(+q.num);
@@ -307,7 +330,7 @@ const STORE = {
     clearTimeout(this.timer); this.synced = 'saving'; paintSync();
     this.timer = setTimeout(() => {
       const c = JSON.parse(JSON.stringify(CFG));
-      Promise.all([ref(`ws/${k}/q/${c.id}`).set(c), ref(`ws/${k}/list/${c.id}`).set({ title: c.title || 'Квиз', couple: c.couple || '', n: c.qs.length, updated: c.updated })])
+      Promise.all([ref(`ws/${k}/${WSQ}/${c.id}`).set(c), ref(`ws/${k}/${WSL}/${c.id}`).set({ title: c.title || GNAME, couple: c.couple || '', n: GAME === 'fact' ? c.facts.length : c.qs.length, updated: c.updated })])
         .then(() => { this.synced = 'ok'; paintSync(); }, () => { this.synced = 'err'; paintSync(); });
     }, 1000);
   },
@@ -318,18 +341,18 @@ const STORE = {
     if (done[id]) return;
     ref(`ws/${k}/img/${id}`).set(d).then(() => { done[id] = 1; ls('set', 'pbq_up_' + k.slice(0, 8), done); });
   },
-  imgsOf(c) { const s = new Set(); if (c.photo) s.add(c.photo); c.qs.forEach(q => { if (q.img) s.add(q.img); (q.opts || []).forEach(o => { if (o.img) s.add(o.img); }); }); return [...s]; },
+  imgsOf(c) { const s = new Set(); if (c.photo) s.add(c.photo); (c.facts || []).forEach(f => { if (f.img) s.add(f.img); }); c.qs.forEach(q => { if (q.img) s.add(q.img); (q.opts || []).forEach(o => { if (o.img) s.add(o.img); }); }); return [...s]; },
   pushAll() { this.save(); this.imgsOf(CFG).forEach(id => this.upImg(id)); },
-  list() { const k = wsKey(); if (!k || !NET.ok) return Promise.resolve([]); return ref(`ws/${k}/list`).once('value').then(s => { const v = s.val() || {}; return Object.keys(v).map(id => Object.assign({ id }, v[id])).sort((a, b) => (b.updated || 0) - (a.updated || 0)); }); },
+  list() { const k = wsKey(); if (!k || !NET.ok) return Promise.resolve([]); return ref(`ws/${k}/${WSL}`).once('value').then(s => { const v = s.val() || {}; return Object.keys(v).map(id => Object.assign({ id }, v[id])).sort((a, b) => (b.updated || 0) - (a.updated || 0)); }); },
   open(id) {
     const k = wsKey();
-    return ref(`ws/${k}/q/${id}`).once('value').then(s => {
+    return ref(`ws/${k}/${WSQ}/${id}`).once('value').then(s => {
       const c = normCfg(s.val()); c.id = id;
       const miss = this.imgsOf(c).filter(i => !IMG.get(i));
       return Promise.all(miss.map(i => ref(`ws/${k}/img/${i}`).once('value').then(x => { if (x.val()) IMG.put(x.val(), i); }))).then(() => c);
     });
   },
-  remove(id) { const k = wsKey(); if (!k) return Promise.resolve(); return Promise.all([ref(`ws/${k}/q/${id}`).remove(), ref(`ws/${k}/list/${id}`).remove()]); }
+  remove(id) { const k = wsKey(); if (!k) return Promise.resolve(); return Promise.all([ref(`ws/${k}/${WSQ}/${id}`).remove(), ref(`ws/${k}/${WSL}/${id}`).remove()]); }
 };
 function paintSync() { const el = $('syncSt'); if (!el) return; el.textContent = { local: '', saving: 'Сохраняем…', ok: '✓ Сохранено в аккаунте', err: 'Не сохранилось — проверьте интернет' }[STORE.synced] || ''; }
 
@@ -339,7 +362,7 @@ const isLastQ = (g, i) => i === g.qs.length - 1;
 const mult = (g, i) => (g.qs[i].x2 || (g.s.lastX2 && isLastQ(g, i) && g.qs.length > 2)) ? 2 : 1;
 const qTime = (g, q) => (q.time || (q.type === 'number' ? Math.max(g.s.time, 30) : g.s.time)) * 1000;
 function newGame() {
-  const qs = CFG.qs.filter(validQ).map(q => JSON.parse(JSON.stringify(q)));
+  const qs = (GAME === 'fact' ? factsToQs(CFG.facts) : CFG.qs).filter(validQ).map(q => JSON.parse(JSON.stringify(q)));
   endNet();
   G = { id: uid(12), net: NET.ok, ts: Date.now(), code: '', rkey: uid(20), title: CFG.title, couple: CFG.couple, accent: CFG.accent, photo: CFG.photo || '',
     wifi: CFG.wifi && CFG.wifi.ssid ? { ssid: CFG.wifi.ssid, pass: CFG.wifi.pass || '' } : null, mode: CFG.mode, s: Object.assign({}, CFG.s), qs,
@@ -627,7 +650,7 @@ function endNet() {
 function uploadImgs(gid) {
   const ids = [];
   const add = id => { if (id && ids.indexOf(id) < 0 && IMG.get(id)) ids.push(id); };
-  add(G.photo); G.qs.forEach(q => { add(q.img); (q.opts || []).forEach(o => add(o.img)); });
+  add(G.photo); G.qs.forEach(q => { add(q.img); add(q.hp); (q.opts || []).forEach(o => add(o.img)); });
   ids.reduce((pr, id) => pr.then(() => { const d = IMG.get(id); return IMG.shrink(d, 900, .72).then(ph => { if (!G || G.id !== gid) return; return gref(gid, 'img/' + id).set({ p: ph || d, s: d }); }); }), Promise.resolve()).catch(e => console.warn('quiz img', e));
 }
 function coreOf(g) {
@@ -644,7 +667,7 @@ function scrOf(g) {
   const rev = g.phase === 'reveal' || g.phase === 'board' || g.phase === 'final';
   const v = JSON.parse(JSON.stringify(g));
   delete v.snap; delete v.rkey; delete v.banned;
-  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2 }; if (rev && i === g.qi) { o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; } return o; });
+  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '' }; if (rev && i === g.qi) { o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; } return o; });
   const a = {}; if (g.qi >= 0) a['q' + g.qi] = g.ans[g.qi] || {}; v.ans = a;
   const c = g.cpl[g.qi] || {};
   v.cpl = {}; if (g.qi >= 0) v.cpl['q' + g.qi] = rev ? c : { groom: c.groom != null ? 9 : null, bride: c.bride != null ? 9 : null };
@@ -658,7 +681,7 @@ function fixScr(v) {
   Object.keys(v.players).forEach(k => { const p = v.players[k]; p.times = p.times || []; p.score = p.score || 0; });
   const a = {}; if (v.ans && v.ans['q' + v.qi]) a[v.qi] = v.ans['q' + v.qi]; v.ans = a;
   const c = {}; if (v.cpl && v.cpl['q' + v.qi]) c[v.qi] = v.cpl['q' + v.qi]; v.cpl = c;
-  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, x2: !!q.x2 }; });
+  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '' }; });
   return v;
 }
 function netPush(force) {
@@ -760,7 +783,7 @@ function tilesHtml(q, pic) {
 }
 function buildScreen(box, g) {
   let h = '';
-  if (!g) h = '<div class="sv center"><div class="kk">Квиз о паре</div><h1>Экран проектора</h1><p class="muted" style="font-size:1.3em">Запустите игру на пульте ведущего</p></div>';
+  if (!g) h = '<div class="sv center"><div class="kk">' + GNAME + '</div><h1>Экран проектора</h1><p class="muted" style="font-size:1.3em">Запустите игру на пульте ведущего</p></div>';
   else if (g.phase === 'lobby') {
     h = `<div class="glow"></div><div class="sv"><div class="lob"><div class="left"><div class="ttl">${g.photo && IMG.get(g.photo) ? `<div class="cph" style="${bgUrl(g.photo)}"></div>` : ''}<div>${g.couple ? `<div class="kk">${esc(g.title)}</div><h1 class="cpl">${esc(g.couple)}</h1>` : `<h1>${esc(g.title)}</h1>`}</div></div>` +
       `<div class="kk lcount">${g.s.play === 'teams' ? 'Команды' : 'В игре'} · <b style="color:var(--ink)" id="lcnt">0</b></div><div class="chips" id="chips"></div></div>` +
@@ -775,13 +798,14 @@ function buildScreen(box, g) {
     const q = g.qs[g.qi], pic = isPicQ(q), img = !pic && q.img ? picHtml(q.img, 'qpic') : '';
     const [gn, bn] = coupleNames(g.couple);
     const badge = (mult(g, g.qi) > 1 ? '<span class="x2">×2 очки</span>' : '') + (q.type === 'couple' ? '<span class="ctype">💍 Угадайте ответ пары</span>' : q.type === 'number' ? '<span class="ctype">🔢 Ответ — число</span>' : '');
-    const head = `<div class="qtop2"><span class="n">Вопрос ${g.qi + 1} из ${g.qs.length}</span>${badge}${ringSvg}</div>`;
+    const head = `<div class="qtop2"><span class="n">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}</span>${q.fact ? '<span class="ctype">💡 Кто это?</span>' : badge}${ringSvg}</div>`;
     const cst = q.type === 'couple' ? `<div class="cst" id="cst"><span data-r="groom">${esc(gn)} …</span><span data-r="bride">${esc(bn)} …</span></div><div class="cres" id="cres" style="display:none"></div>` : '';
     let body;
-    if (q.type === 'number') body = `<div class="qtext" style="flex:none">${esc(q.text)}</div>${img ? `<div class="qbody" style="grid-template-columns:1fr 1fr"><div class="numq" id="numq"></div>${img}</div>` : '<div class="numq" id="numq"></div>'}`;
+    if (q.fact) body = `<div class="qbody fq"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${tilesHtml(q, false)}</div><div class="hero" id="hero"><div class="hcard"><div class="hback"><span>?</span><em>Кто это?</em></div><div class="hfront"><div class="hph" id="hph"></div><div class="hnm"><small>Это</small><b id="hnm"></b></div></div></div></div></div>`;
+    else if (q.type === 'number') body = `<div class="qtext" style="flex:none">${esc(q.text)}</div>${img ? `<div class="qbody" style="grid-template-columns:1fr 1fr"><div class="numq" id="numq"></div>${img}</div>` : '<div class="numq" id="numq"></div>'}`;
     else if (img) body = `<div class="qbody"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${cst}${tilesHtml(q, false)}</div>${img}</div>`;
     else body = `<div class="qtext"${pic ? ' style="flex:none;font-size:2.8em"' : ''}>${esc(q.text)}</div>${cst}${tilesHtml(q, pic)}`;
-    h = `<div class="sv${img ? ' wimg' : ''}">${head}${body}<div class="foot"><span id="ansCnt"></span><span id="footR"></span></div></div>`;
+    h = `<div class="sv${img || q.fact ? ' wimg' : ''}">${head}${body}<div class="foot"><span id="ansCnt"></span><span id="footR"></span></div></div>`;
   } else if (g.phase === 'board') {
     const fin = g.final;
     const row = (p, i, delay) => { const was = g.prevRank[p.id], d = was ? was - (i + 1) : 0; return `<div class="brow" style="animation-delay:${delay}ms"><span class="pl">${i + 1}</span><span class="nm"><span>${esc(p.name)}</span>${p.table ? `<small>стол ${p.table}</small>` : ''}${!fin && d > 0 ? `<i class="up">▲${d}</i>` : !fin && d < 0 ? `<i class="dn">▼${-d}</i>` : ''}</span><span class="sc">${p.gain && !fin ? `<span class="gain">+${nums(p.gain)}</span>` : ''}${nums(p.score)}</span></div>`; };
@@ -881,6 +905,16 @@ function updScreen(box, g, snd) {
       const f = t.querySelector('.fill'); if (f) f.style.width = pct + '%';
       const cn = t.querySelector('.cnt'); if (cn) { cn.textContent = c ? `${c} · ${pct}%` : '0'; cn.style.opacity = c || rev ? 1 : .55; }
     });
+  }
+  if (q.fact) {
+    const hero = box.querySelector('#hero');
+    if (hero && rev && !hero.dataset.done) {
+      hero.dataset.done = 1;
+      const nm = q.opts[okS[0]] ? q.opts[okS[0]].t : '', d = q.hp && IMG.get(q.hp);
+      box.querySelector('#hnm').textContent = nm;
+      const ph = box.querySelector('#hph'); if (d) ph.style.backgroundImage = `url(${d})`; else { ph.classList.add('none'); ph.textContent = (nm || '?').trim().charAt(0).toUpperCase(); }
+      setTimeout(() => hero.classList.add('on'), 900);
+    }
   }
   if (q.type === 'couple') {
     const c = (g.cpl && g.cpl[g.qi]) || {}, cst = box.querySelector('#cst'), cres = box.querySelector('#cres'), [gn, bn] = coupleNames(g.couple);
@@ -1091,9 +1125,9 @@ function viewScreenNet() {
     const redraw = () => { box._st = {}; renderScreen(box, LIVE, true); };
     gref(GID, 'scr').on('value', x => {
       LIVE = fixScr(x.val());
-      if (!LIVE) { if (!gone) { box._st = {}; box.innerHTML = '<div class="sv center"><div class="kk">Квиз о паре</div><h1>Игра завершена</h1></div>'; } return; }
+      if (!LIVE) { if (!gone) { box._st = {}; box.innerHTML = '<div class="sv center"><div class="kk">' + GNAME + '</div><h1>Игра завершена</h1></div>'; } return; }
       applyAccent(LIVE.accent);
-      const ids = new Set(); if (LIVE.photo) ids.add(LIVE.photo); LIVE.qs.forEach(q => { if (q.img) ids.add(q.img); q.opts.forEach(o => { if (o.img) ids.add(o.img); }); });
+      const ids = new Set(); if (LIVE.photo) ids.add(LIVE.photo); LIVE.qs.forEach(q => { if (q.img) ids.add(q.img); if (q.hp) ids.add(q.hp); q.opts.forEach(o => { if (o.img) ids.add(o.img); }); });
       ids.forEach(id => IMG.fetchNet('g/' + GID + '/img/' + id + '/s', id, redraw));
       renderScreen(box, LIVE, true);
     });
@@ -1117,7 +1151,7 @@ function viewPlayLocal() {
   IMG.ready.then(draw); send({ type: 'hello' });
 }
 function viewPlayNet() {
-  document.body.classList.add('solo-play', 'no-cursor'); document.title = 'Квиз о паре';
+  document.body.classList.add('solo-play', 'no-cursor'); document.title = GNAME;
   $('app').innerHTML = '<div id="ph"></div>';
   const box = $('ph'), roleP = P.get('role'), rkey = (P.get('k') || '').replace(/[^a-z0-9]/gi, '');
   const cl = { pid: '', role: roleP === 'groom' || roleP === 'bride' ? roleP : '', picked: {}, pending: {}, net: true, table: 0, joining: false };
@@ -1180,7 +1214,7 @@ function viewPlayNet() {
 
 /* ---------- пульт ведущего на телефоне ---------- */
 function viewRemote() {
-  document.title = 'Пульт · Квиз о паре';
+  document.title = 'Пульт · ' + GNAME;
   const rkey = (P.get('k') || '').replace(/[^a-z0-9]/gi, '');
   $('app').innerHTML = '<div class="rm" id="rm"><div class="cur"><div class="k">Пульт ведущего</div><div class="q">Подключаемся…</div></div></div>';
   let RV = null, sure = '';
@@ -1267,7 +1301,46 @@ function formToQs(f) {
   ownList(a).forEach(v => { if (ownOk(v)) { const s = shuffleOpts(v.r.trim(), v.w || []); out.push(normQ({ type: 'choice', text: v.q.trim(), opts: s.opts, ok: s.ok })); } });
   return out;
 }
+function viewFactForm() {
+  document.body.classList.add('cream'); document.title = 'Интересные факты о гостях';
+  const fid = (P.get('f') || '').replace(/[^a-z0-9]/gi, ''), app = $('app');
+  app.innerHTML = '<div class="lt"><div class="k">Анкета для пары</div><h1>Загружаем…</h1></div>';
+  netReady.then(ok => {
+    if (!ok || !fid) { app.innerHTML = '<div class="lt"><h1>Не получилось открыть анкету</h1><p>Проверьте интернет и обновите страницу.</p></div>'; return; }
+    const fr = ref('forms/' + fid);
+    fr.once('value').then(s => {
+      const f = s.val();
+      if (!f) { app.innerHTML = '<div class="lt"><h1>Анкета не найдена</h1><p>Попросите ведущего прислать ссылку ещё раз.</p></div>'; return; }
+      applyAccent(f.accent);
+      const A = f.ans || {}, IM = f.img || {};
+      A.items = (Array.isArray(A.items) ? A.items : Object.values(A.items || {})).filter(Boolean);
+      if (!A.items.length) A.items = [{ id: uid(), name: '', fact: '' }, { id: uid(), name: '', fact: '' }, { id: uid(), name: '', fact: '' }];
+      let t = null;
+      const save = () => { clearTimeout(t); $('saved').textContent = 'Сохраняем…'; t = setTimeout(() => fr.child('ans').set(A).then(() => { $('saved').textContent = '✓ Сохранено'; }, () => { $('saved').textContent = 'Нет связи — попробуйте ещё раз'; }), 700); };
+      const card = (x, n) => `<div class="card own fc" data-n="${n}"><div class="q oq"><span>Гость ${n + 1}</span><button class="odel" data-del title="Убрать" aria-label="Убрать">${'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.8c0-.4.4-.8.8-.8h4.4c.4 0 .8.4.8.8V7M6.5 7l.8 12.2c.1.9.8 1.8 1.8 1.8h5.8c1 0 1.7-.9 1.8-1.8L17.5 7"/></svg>'}</button></div>` +
+        `<div class="fcrow"><div class="fph${IM[x.id] ? ' has' : ''}" data-ph style="${IM[x.id] ? `background-image:url(${IM[x.id]})` : ''}">${IM[x.id] ? '' : '📷'}</div><div class="fcin"><input class="in2" data-k="name" maxlength="40" placeholder="Имя гостя — как его знают в зале" value="${esc(x.name || '')}">` +
+        `<textarea class="in2" data-k="fact" rows="2" maxlength="220" placeholder="Интересный факт о нём">${esc(x.fact || '')}</textarea></div></div><div class="small">Фото — по желанию: гости увидят его, когда откроется ответ.</div><input type="file" accept="image/*" hidden></div>`;
+      app.innerHTML = `<div class="lt"><div class="pbrand">${BRAND()}</div><div class="k">Анкета для пары · ${esc(f.couple || '')}</div><h1>Интересные факты о гостях</h1>` +
+        `<p>Впишите гостей и что-нибудь удивительное о каждом: «прыгал с парашютом», «знает жениха с первого класса». На празднике факт появится на экране, а гости будут угадывать, о ком он. Всё сохраняется автоматически.</p>` +
+        `<div id="fcBox"></div><button class="addown" id="addF">+ Ещё гость</button><div class="saved" id="saved"></div><button class="pbtn" id="done">Готово — отправить ведущему</button><p class="small" style="text-align:center;margin-top:10px">Факты увидит только ведущий. Гости узнают их во время игры 😉</p></div>`;
+      const paint = () => {
+        $('fcBox').innerHTML = A.items.map(card).join('');
+        $('fcBox').querySelectorAll('.fc').forEach(c => {
+          const n = +c.dataset.n, x = A.items[n], inp = c.querySelector('input[type=file]'), ph = c.querySelector('[data-ph]');
+          c.querySelectorAll('[data-k]').forEach(i => i.oninput = () => { x[i.dataset.k] = i.value; save(); });
+          c.querySelector('[data-del]').onclick = () => { A.items.splice(n, 1); if (IM[x.id]) { fr.child('img/' + x.id).remove(); delete IM[x.id]; } paint(); save(); };
+          ph.onclick = () => { inp.value = ''; inp.click(); };
+          inp.onchange = () => { const file = inp.files && inp.files[0]; if (!file) return; ph.textContent = '…'; IMG.load(file, 700, 120000).then(data => fr.child('img/' + x.id).set(data).then(() => { IM[x.id] = data; ph.textContent = ''; ph.classList.add('has'); ph.style.backgroundImage = `url(${data})`; })).catch(() => { ph.textContent = '📷'; toast('Не получилось — попробуйте другое фото'); }); };
+        });
+      };
+      paint();
+      $('addF').onclick = () => { A.items.push({ id: uid(), name: '', fact: '' }); paint(); const c = $('fcBox').lastElementChild; c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.querySelector('input').focus({ preventScroll: true }); };
+      $('done').onclick = () => { fr.child('ans').set(A).then(() => fr.child('done').set(TS())).then(() => { app.innerHTML = `<div class="lt" style="text-align:center;padding-top:14vh"><div style="font-size:64px">💌</div><h1>Спасибо!</h1><p>Факты у ведущего. Увидимся на празднике — гостей ждут сюрпризы.</p><p><a href="" style="color:var(--gdark);font-weight:800">Изменить</a></p></div>`; }, () => toast('Нет связи — попробуйте ещё раз')); };
+    });
+  });
+}
 function viewForm() {
+  if (GAME === 'fact') return viewFactForm();
   document.body.classList.add('cream'); document.title = 'Анкета для пары';
   const fid = (P.get('f') || '').replace(/[^a-z0-9]/gi, '');
   const app = $('app');
@@ -1418,8 +1491,8 @@ function renderEditor() {
   edBuilt = true; liveBuilt = false;
   applyAccent(CFG.accent);
   const s = CFG.s;
-  $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('Квиз · редактор')}</a><span class="sp"></span><span class="muted" style="font-size:12px" id="syncSt"></span><div class="acc" id="acc"></div></div></div>` +
-    `<div class="ed"><div class="k">Новая игра</div><h1>Соберите квиз за 5 минут</h1><p class="lead">Впишите вопросы, отметьте правильные ответы тапом по букве — и запускайте. Гости входят по QR-коду или коду игры.</p><div id="demoN">${demoNote()}</div>` +
+  $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND(GAME === 'fact' ? 'Интересный факт · редактор' : 'Квиз · редактор')}</a><span class="sp"></span><span class="muted" style="font-size:12px" id="syncSt"></span><div class="acc" id="acc"></div></div></div>` +
+    (GAME === 'fact' ? `<div class="ed"><div class="k">Новая игра</div><h1>Интересный факт</h1><p class="lead">Пара присылает имена гостей и интересные факты о них. На экране появляется факт — гости угадывают с телефонов, о ком он, а потом герой встаёт под аплодисменты.</p>` : `<div class="ed"><div class="k">Новая игра</div><h1>Соберите квиз за 5 минут</h1><p class="lead">Впишите вопросы, отметьте правильные ответы тапом по букве — и запускайте. Гости входят по QR-коду или коду игры.</p>`) + `<div id="demoN">${demoNote()}</div>` +
     `<div class="panel"><div class="row2"><div class="fld"><label>Название игры</label><input class="inp" id="fTitle" maxlength="60"></div><div class="fld"><label>Имена пары</label><input class="inp" id="fCouple" maxlength="60" placeholder="Максим и Алина"></div></div></div>` +
     `<div class="panel"><h3>Формат</h3><div class="modes" id="modes"></div><div class="lbl">Как играем</div><div class="modes" id="plays"></div><div id="tblRow"></div>` +
     `<details class="tune"><summary><span>⚙️</span><span>Тонкая настройка<small>время, очки, звук, боты для проверки</small></span><span class="chev">▾</span></summary><div class="tgrid">` +
@@ -1432,8 +1505,9 @@ function renderEditor() {
     `<div class="lbl">Фото пары на заставку ${tip('Появится на экране, пока гости заходят.')}<span id="phLk"></span></div><div class="photoSlot"><div class="ph" id="cPh" role="button" tabindex="0" title="Загрузить фото"></div><div><button class="btn ghost sm" id="cPhB">Загрузить фото</button> <button class="btn ghost sm" id="cPhD" style="display:none">Убрать</button></div><input type="file" accept="image/*" hidden id="cPhF"></div>` +
     `<div class="lbl">Wi‑Fi для гостей (по желанию) ${tip('На экране появится QR-код для подключения к Wi‑Fi — выручает, если в зале слабая связь.')}</div><div class="row2"><input class="inp" id="wS" placeholder="Название сети" maxlength="40"><input class="inp" id="wP" placeholder="Пароль" maxlength="60"></div></div>` +
     `<div class="panel" id="formP"></div>` +
+    (GAME === 'fact' ? `<div class="qhead"><h2>Факты о гостях</h2><span class="muted" id="qCount"></span></div><div class="hint tipline" style="margin:-4px 0 12px">Имя гостя и факт о нём. Фото — по желанию: появится на экране, когда откроется ответ.</div><div id="qList"></div><div class="addrow one"><button class="btn ghost" id="addFact">+ Факт о госте</button></div></div>` :
     `<div class="qhead"><h2>Вопросы</h2><span class="muted" id="qCount"></span><span class="sp"></span><button class="btn ghost sm" id="bImport">Вставить списком</button></div><div id="qList"></div>` +
-    `<div class="addrow"><button class="btn ghost" data-add="choice">+ Вопрос</button><button class="btn ghost" data-add="couple">+ Угадай ответ пары${lockTag('couple')}</button><button class="btn ghost" data-add="number">+ Ответ числом</button></div></div>` +
+    `<div class="addrow"><button class="btn ghost" data-add="choice">+ Вопрос</button><button class="btn ghost" data-add="couple">+ Угадай ответ пары${lockTag('couple')}</button><button class="btn ghost" data-add="number">+ Ответ числом</button></div></div>`) +
     `<div class="bar"><div class="in"><div style="min-width:0;flex:1"><div style="font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="bSum"></div><div class="muted" style="font-size:12px" id="bSub"></div></div><button class="btn gold" id="bStart">Запустить ▶</button></div></div>`;
   renderTop(); paintSync();
   if ($('bLogin2')) $('bLogin2').onclick = goLogin;
@@ -1442,7 +1516,8 @@ function renderEditor() {
   $('fCouple').oninput = e => { CFG.couple = e.target.value; STORE.save(); };
   paintModes(); paintTune(); paintDesign(); paintForm(); paintQs(); sum();
   document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => b.dataset.add === 'couple' && !can('couple') ? upsell('couple') : addQ(b.dataset.add));
-  $('bImport').onclick = openImport;
+  if ($('bImport')) $('bImport').onclick = openImport;
+  if ($('addFact')) $('addFact').onclick = () => { CFG.facts.push(normFact({})); CFG.sampleF = 0; STORE.save(); paintFacts(); sum(); const c = $('qList').lastElementChild; if (c) { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); c.querySelector('.fname').focus({ preventScroll: true }); } };
   $('bStart').onclick = start;
 }
 function addQ(type) {
@@ -1487,6 +1562,7 @@ function paintDesign() {
 }
 let formSub = null;
 function paintForm() {
+  if (GAME === 'fact') return paintFactForm();
   const p = $('formP'); if (!p) return;
   if (formSub) { formSub(); formSub = null; }
   let h = '<h3>Анкета для пары</h3><div class="sub">Отправьте паре ссылку — они ответят на вопросы о себе, а квиз соберётся из их ответов.</div>';
@@ -1507,6 +1583,62 @@ function paintForm() {
   formSub = () => r.off('value', h2);
 }
 function formToQsPreview(f) { const a = f.ans || {}, img = f.img || {}; return FORM.filter(it => { const v = a[it.id]; if (it.type === 'photo') return !!img[it.id]; if (it.type === 'who') return !!v; if (it.type === 'number') return v !== undefined && v !== '' && isFinite(+v); return v && (v.r || '').trim(); }).length + ownList(a).filter(ownOk).length; }
+
+/* ================= «Интересный факт»: редактор фактов и анкета для пары ================= */
+const TRASH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.8c0-.4.4-.8.8-.8h4.4c.4 0 .8.4.8.8V7M6.5 7l.8 12.2c.1.9.8 1.8 1.8 1.8h5.8c1 0 1.7-.9 1.8-1.8L17.5 7"/></svg>';
+function factCard(f, i) {
+  const d = f.img && IMG.get(f.img);
+  return `<div class="fcard" data-i="${i}"><div class="fav${d ? ' has' : ''}" data-fph title="${d ? 'Заменить фото' : 'Добавить фото (по желанию)'}" style="${d ? `background-image:url(${d})` : ''}">${d ? '' : '📷'}</div>` +
+    `<div class="fmain"><div class="frow"><span class="fnum">${i + 1}</span><input class="inp fname" maxlength="40" placeholder="Имя гостя" value="${esc(f.name)}">` +
+    (d ? `<button class="fx" data-fdelph title="Убрать фото">Без фото</button>` : '') + `<button class="fdel" data-fdel title="Удалить факт" aria-label="Удалить факт">${TRASH}</button></div>` +
+    `<textarea class="inp ftext" rows="2" maxlength="220" placeholder="Интересный факт — например, «прыгал с парашютом на 30-летие»">${esc(f.fact)}</textarea></div><input type="file" accept="image/*" hidden></div>`;
+}
+function paintFacts() {
+  const box = $('qList'); if (!box) return;
+  box.innerHTML = CFG.facts.map(factCard).join('');
+  box.querySelectorAll('.fcard').forEach(c => {
+    const i = +c.dataset.i, f = CFG.facts[i], inp = c.querySelector('input[type=file]');
+    c.querySelector('.fname').oninput = e => { f.name = e.target.value; CFG.sampleF = 0; STORE.save(); sum(); };
+    c.querySelector('.ftext').oninput = e => { f.fact = e.target.value; CFG.sampleF = 0; STORE.save(); sum(); };
+    c.querySelector('[data-fdel]').onclick = () => { CFG.facts.splice(i, 1); STORE.save(); paintFacts(); sum(); };
+    const dp = c.querySelector('[data-fdelph]'); if (dp) dp.onclick = () => { f.img = ''; STORE.save(); paintFacts(); };
+    c.querySelector('[data-fph]').onclick = () => { inp.value = ''; inp.click(); };
+    inp.onchange = () => { const file = inp.files && inp.files[0]; if (!file) return; IMG.load(file, 700, 120000).then(d => { f.img = IMG.put(d); STORE.upImg(f.img); STORE.save(); paintFacts(); }, () => toast('Не получилось открыть фото')); };
+  });
+  sum();
+}
+const factItems = a => (Array.isArray(a && a.items) ? a.items : Object.values((a && a.items) || {})).filter(Boolean);
+function paintFactForm() {
+  const p = $('formP'); if (!p) return;
+  if (formSub) { formSub(); formSub = null; }
+  let h = '<h3>Анкета для пары</h3><div class="sub">Отправьте паре ссылку — они впишут гостей и интересные факты о них, при желании добавят фото. Факты появятся здесь одной кнопкой.</div>';
+  if (!NET.ok) { p.innerHTML = h + '<div class="hint">Нужен интернет — подключаемся…</div>'; return; }
+  if (!CFG.form) { p.innerHTML = h + '<button class="btn gold sm" id="fNew">Создать анкету</button>'; $('fNew').onclick = createForm; return; }
+  p.innerHTML = h + `<div class="linkrow"><code>${esc(formLink(CFG.form))}</code><button class="btn ghost sm" id="fCopy">Копировать</button><button class="btn ghost sm" id="fQr">QR</button></div><div class="hint" id="fSt">Проверяем ответы…</div><div class="links" style="margin-top:10px"><button class="btn gold sm" id="fImp" disabled>Добавить факты из анкеты</button><button class="btn ghost sm" id="fDel">Новая анкета</button></div>`;
+  $('fCopy').onclick = () => copy(formLink(CFG.form));
+  $('fQr').onclick = () => modal(`<h3>Анкета для пары</h3><p class="muted">Пусть пара отсканирует код или откроет ссылку.</p><div class="qrbox" id="mq"></div><button class="btn ghost" data-close style="width:100%">Закрыть</button>`, b => qr(b.querySelector('#mq'), formLink(CFG.form), 400));
+  $('fDel').onclick = () => { if (confirmTwice($('fDel'), 'Точно новую?')) { CFG.form = ''; STORE.save(); paintForm(); } };
+  const r = ref('forms/' + CFG.form), h2 = r.on('value', s => {
+    const f = s.val(), st = $('fSt'), imp = $('fImp'); if (!st) return;
+    if (!f) { st.textContent = 'Анкета не найдена'; return; }
+    const items = factItems(f.ans).filter(x => (x.name || '').trim() && (x.fact || '').trim()), n = items.length;
+    st.innerHTML = f.done ? `✓ Пара заполнила анкету · фактов: <b>${n}</b>` : n ? `Пара заполняет анкету… фактов: <b>${n}</b>` : 'Пара ещё не открывала анкету';
+    imp.disabled = !n;
+    imp.onclick = () => {
+      if (CFG.sampleF) { CFG.facts = []; CFG.sampleF = 0; }
+      let add = 0;
+      items.forEach(x => {
+        const ph = f.img && f.img[x.id], cur = CFG.facts.find(y => y.id === x.id);
+        const img = ph ? IMG.put(ph) : '';
+        if (img) STORE.upImg(img);
+        if (cur) { cur.name = x.name.trim(); cur.fact = x.fact.trim(); if (img) cur.img = img; }
+        else { CFG.facts.push(normFact({ id: x.id, name: x.name.trim(), fact: x.fact.trim(), img })); add++; }
+      });
+      STORE.save(); paintFacts(); sum(); toast(add ? 'Добавлено фактов: ' + add : 'Факты обновлены');
+    };
+  });
+  formSub = () => r.off('value', h2);
+}
 function createForm() {
   const fid = uid(16);
   ref('forms/' + fid).set({ host: NET.uid, couple: CFG.couple || '', accent: CFG.accent, t: TS() }).then(() => { CFG.form = fid; STORE.save(); paintForm(); }, () => toast('Не получилось — проверьте интернет'));
@@ -1560,7 +1692,7 @@ function sortable(box, itemSel, handleSel, onMove) {
     h.addEventListener('pointermove', move); h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
   });
 }
-function paintQs() { sortable($('qList'), '.qcard', '.qg', (from, to) => { CFG.qs.splice(to, 0, CFG.qs.splice(from, 1)[0]); STORE.save(); paintQs(); }); $('qList').innerHTML = CFG.qs.map(cardHtml).join(''); document.querySelectorAll('.qcard').forEach(bindCard); $('qCount').textContent = CFG.qs.length + ' ' + plural(CFG.qs.length, 'вопрос', 'вопроса', 'вопросов'); }
+function paintQs() { if (GAME === 'fact') return paintFacts(); sortable($('qList'), '.qcard', '.qg', (from, to) => { CFG.qs.splice(to, 0, CFG.qs.splice(from, 1)[0]); STORE.save(); paintQs(); }); $('qList').innerHTML = CFG.qs.map(cardHtml).join(''); document.querySelectorAll('.qcard').forEach(bindCard); $('qCount').textContent = CFG.qs.length + ' ' + plural(CFG.qs.length, 'вопрос', 'вопроса', 'вопросов'); }
 function repaintCard(i, focusSel) {
   const old = document.querySelector(`.qcard[data-i="${i}"]`); if (!old) return paintQs();
   const tmp = document.createElement('div'); tmp.innerHTML = cardHtml(CFG.qs[i], i); const nc = tmp.firstChild; nc.style.animation = 'none';
@@ -1626,6 +1758,13 @@ function imgSlot(q) {
   return `<button class="add" data-im="add">${ICON.cam} Добавить фото к вопросу</button>`;
 }
 function sum() {
+  if (GAME === 'fact') {
+    const n = CFG.facts.length, ok = CFG.facts.filter(factOk).length, mins = Math.max(1, Math.round(ok * (CFG.s.time + 20) / 60));
+    $('bSum').textContent = (CFG.title || GNAME) + ' · ' + PLAYS[CFG.s.play].t.toLowerCase();
+    $('bSub').textContent = `${ok} из ${n} ${plural(n, 'факта', 'фактов', 'фактов')} готово · около ${mins} мин` + (CFG.bots ? ' · с ботами' : '');
+    if ($('qCount')) $('qCount').textContent = n + ' ' + plural(n, 'факт', 'факта', 'фактов');
+    return;
+  }
   const n = CFG.qs.length, ok = CFG.qs.filter(validQ).length, mins = Math.max(1, Math.round(CFG.qs.reduce((s, q) => s + (q.type === 'number' ? Math.max(CFG.s.time, 30) : CFG.s.time) + 12, 0) / 60));
   $('bSum').textContent = (CFG.title || 'Квиз') + ' · ' + MODES[CFG.mode].t + ' · ' + PLAYS[CFG.s.play].t.toLowerCase();
   $('bSub').textContent = `${ok} из ${n} ${plural(n, 'вопроса', 'вопросов', 'вопросов')} готово · около ${mins} мин` + (CFG.bots ? ' · с ботами' : '');
@@ -1665,8 +1804,8 @@ function openMine() {
   });
 }
 function start() {
-  const ok = CFG.qs.filter(validQ);
-  if (!ok.length) { alertBar('Добавьте хотя бы один готовый вопрос'); return; }
+  const ok = GAME === 'fact' ? factsToQs(CFG.facts) : CFG.qs.filter(validQ);
+  if (!ok.length) { alertBar(GAME === 'fact' ? 'Добавьте хотя бы два факта о разных гостях' : 'Добавьте хотя бы один готовый вопрос'); return; }
   const used = [];
   if (FEAT[CFG.s.play] && !can(CFG.s.play)) used.push(CFG.s.play);
   if (ok.some(q => q.type === 'couple') && !can('couple')) used.push('couple');
@@ -1821,7 +1960,7 @@ function bootHost() {
   if (P.get('demo')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
   if (DEMO_GO) {
     const cur = ls('get', KEY_CFG); if (cur && !cur.isDemo) ls('set', 'pbq_cfg_bak', cur);
-    CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = 'Демо-квиз'; CFG.qs = sampleQs(CFG.couple).filter(q => q.type !== 'couple').map(normQ); CFG.isDemo = 1; ls('set', KEY_CFG, CFG);
+    CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = GAME === 'fact' ? 'Демо: интересный факт' : 'Демо-квиз'; if (GAME !== 'fact') CFG.qs = sampleQs(CFG.couple).filter(q => q.type !== 'couple').map(normQ); CFG.isDemo = 1; ls('set', KEY_CFG, CFG);
   }
   setInterval(() => {
     if (!G) return;
