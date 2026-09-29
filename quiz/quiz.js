@@ -735,12 +735,9 @@ function buildScreen(box, g) {
   let h = '';
   if (!g) h = '<div class="sv center"><div class="kk">Квиз о паре</div><h1>Экран проектора</h1><p class="muted" style="font-size:1.3em">Запустите игру на пульте ведущего</p></div>';
   else if (g.phase === 'lobby') {
-    const who = g.s.play === 'teams' ? 'название команды' : 'своё имя';
     h = `<div class="glow"></div><div class="sv"><div class="lob"><div class="left"><div class="ttl">${g.photo && IMG.get(g.photo) ? `<div class="cph" style="${bgUrl(g.photo)}"></div>` : ''}<div><div class="kk">${esc(g.couple)}</div><h1>${esc(g.title)}</h1></div></div>` +
-      `<div class="how">Наведите камеру на QR-код или откройте <b>${esc(SHORT)}</b> и введите ${who}</div>` +
-      `<div class="code" id="lcode" ${g.code ? '' : 'style="visibility:hidden"'}><span>Код игры</span><b>${fmtCode(g.code)}</b></div>` +
-      `<div class="kk" style="margin-bottom:.6em">${g.s.play === 'teams' ? 'Команды' : 'В игре'} · <b style="color:var(--ink)" id="lcnt">0</b></div><div class="chips" id="chips"></div></div>` +
-      `<div class="right"><div class="qr" id="lqr"></div>${g.wifi ? `<div class="wifi"><div class="wq" id="wq"></div><div>Wi‑Fi<b>${esc(g.wifi.ssid)}</b>${g.wifi.pass ? 'пароль: ' + esc(g.wifi.pass) : ''}</div></div>` : ''}</div></div></div>`;
+      `<div class="kk lcount">${g.s.play === 'teams' ? 'Команды' : 'В игре'} · <b style="color:var(--ink)" id="lcnt">0</b></div><div class="chips" id="chips"></div></div>` +
+      `<div class="right"><div class="join"><div class="qr" id="lqr"></div><div class="jurl">${esc(SHORT.replace(/^https?:\/\//, ''))}</div><div class="jcode" id="lcode" ${g.code ? '' : 'style="visibility:hidden"'}><span>код</span><b>${fmtCode(g.code)}</b></div></div>${g.wifi ? `<div class="wifi"><div class="wq" id="wq"></div><div>Wi‑Fi<b>${esc(g.wifi.ssid)}</b>${g.wifi.pass ? 'пароль: ' + esc(g.wifi.pass) : ''}</div></div>` : ''}</div></div></div>`;
   } else if (g.phase === 'intro') {
     const E = entities(g), e = E[g.ii] || { name: '', members: [] };
     const lab = g.s.play === 'teams' ? 'Команда' : 'Стол';
@@ -1391,7 +1388,7 @@ function renderEditor() {
     `<label class="sw">Последний вопрос ×2<input type="checkbox" id="sX2"></label><label class="sw">Звуки на экране<input type="checkbox" id="sSound"></label>` +
     `<label class="sw">Гости-боты для проверки<input type="checkbox" id="sBots"></label></div></details></div>` +
     `<div class="panel"><h3>Оформление</h3><div class="lbl" style="margin-top:0">Основной цвет</div><div class="swatches" id="sws"></div>` +
-    `<div class="lbl">Фото пары на заставку ${tip('Появится на экране, пока гости заходят.')}</div><div class="photoSlot"><div class="ph" id="cPh"></div><div><button class="btn ghost sm" id="cPhB">Загрузить фото</button> <button class="btn ghost sm" id="cPhD" style="display:none">Убрать</button></div><input type="file" accept="image/*" hidden id="cPhF"></div>` +
+    `<div class="lbl">Фото пары на заставку ${tip('Появится на экране, пока гости заходят.')}</div><div class="photoSlot"><div class="ph" id="cPh" role="button" tabindex="0" title="Загрузить фото"></div><div><button class="btn ghost sm" id="cPhB">Загрузить фото</button> <button class="btn ghost sm" id="cPhD" style="display:none">Убрать</button></div><input type="file" accept="image/*" hidden id="cPhF"></div>` +
     `<div class="lbl">Wi‑Fi для гостей (по желанию) ${tip('На экране появится QR-код для подключения к Wi‑Fi — выручает, если в зале слабая связь.')}</div><div class="row2"><input class="inp" id="wS" placeholder="Название сети" maxlength="40"><input class="inp" id="wP" placeholder="Пароль" maxlength="60"></div></div>` +
     `<div class="panel" id="formP"></div>` +
     `<div class="qhead"><h2>Вопросы</h2><span class="muted" id="qCount"></span><span class="sp"></span><button class="btn ghost sm" id="bImport">Вставить списком</button></div><div id="qList"></div>` +
@@ -1440,7 +1437,7 @@ function paintDesign() {
   $('cCust').oninput = e => set(e.target.value);
   const ph = () => { const d = IMG.get(CFG.photo); $('cPh').style.backgroundImage = d ? `url(${d})` : ''; $('cPh').textContent = d ? '' : '💍'; $('cPhD').style.display = d ? '' : 'none'; };
   ph();
-  $('cPhB').onclick = () => $('cPhF').click();
+  $('cPhB').onclick = $('cPh').onclick = () => $('cPhF').click();
   $('cPhD').onclick = () => { CFG.photo = ''; STORE.save(); ph(); };
   $('cPhF').onchange = e => { const f = e.target.files && e.target.files[0]; if (!f) return; IMG.load(f, 1000, 220000).then(d => { CFG.photo = IMG.put(d); STORE.upImg(CFG.photo); STORE.save(); ph(); }, () => toast('Не получилось открыть фото')); e.target.value = ''; };
   $('wS').value = CFG.wifi.ssid || ''; $('wP').value = CFG.wifi.pass || '';

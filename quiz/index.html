@@ -106,6 +106,8 @@ select.inp{appearance:none;-webkit-appearance:none}
 .swatches input[type=color]{width:38px;height:38px;border:0;padding:0;background:none;border-radius:50%;cursor:pointer}
 .photoSlot{display:flex;gap:14px;align-items:center}
 .photoSlot .ph{width:84px;height:84px;border-radius:50%;background:var(--bg) center/cover no-repeat;border:1.5px dashed var(--line);flex:none;display:grid;place-items:center;font-size:26px;color:var(--muted)}
+.photoSlot .ph{cursor:pointer;transition:border-color .15s,transform .15s}
+.photoSlot .ph:hover{border-color:rgba(255,255,255,.5);transform:scale(1.03)}
 .qhead{display:flex;align-items:center;gap:10px;margin:26px 0 12px;flex-wrap:wrap}
 .qhead h2{font-family:var(--hf);font-stretch:125%;font-size:22px;margin:0;color:var(--ink);font-weight:500;text-transform:uppercase}
 .qcard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;animation:fadeIn .3s ease}
@@ -238,11 +240,12 @@ body.sorting,body.sorting *{-webkit-user-select:none;user-select:none;cursor:gra
 .lob .right{display:flex;flex-direction:column;align-items:center;gap:.9em}
 .lob .qr{background:#fff;border-radius:1.3em;padding:1em;width:15em;height:15em;display:grid;place-items:center}
 .lob .qr img,.lob .qr canvas{width:100%!important;height:100%!important}
-.lob .how{font-size:1.15em;color:var(--text);margin:.6em 0 .6em;line-height:1.4}
-.lob .how b{color:var(--gold)}
-.lob .code{display:flex;align-items:baseline;gap:.6em;margin:.2em 0 1em}
-.lob .code span{font-size:.85em;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:800}
-.lob .code b{font-size:3em;font-weight:800;letter-spacing:.08em;color:var(--ink);line-height:1}
+.lob .lcount{margin:1.6em 0 .7em}
+.lob .join{display:flex;flex-direction:column;align-items:center;gap:.55em;padding:1.1em 1.1em 1em;border:1px solid rgba(255,255,255,.12);border-radius:1.8em;background:rgba(255,255,255,.035)}
+.lob .jurl{font-size:.95em;font-weight:700;color:var(--muted);letter-spacing:.01em;margin-top:.2em}
+.lob .jcode{display:flex;align-items:baseline;gap:.45em;line-height:1}
+.lob .jcode span{font-size:.8em;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.lob .jcode b{font-size:2.6em;font-weight:800;letter-spacing:.08em;color:var(--ink)}
 .lob .wifi{display:flex;align-items:center;gap:.7em;font-size:.8em;color:var(--muted);font-weight:700;max-width:15em}
 .lob .wifi .wq{background:#fff;border-radius:.5em;padding:.3em;width:4.4em;height:4.4em;flex:none}
 .lob .wifi .wq img,.lob .wifi .wq canvas{width:100%!important;height:100%!important}
@@ -440,8 +443,9 @@ body.solo-play #ph>.pv{flex:1}
 .lt .who{display:flex;gap:8px;flex-wrap:wrap}
 .lt .who button{flex:1;min-width:90px;border:1.5px solid rgba(255,255,255,.16);background:#1c1c1b;border-radius:12px;padding:12px;font-weight:800;color:var(--cink)}
 .lt .who button.on{background:var(--gold);border-color:var(--gold);color:var(--gink)}
-.lt .oq{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.lt .odel{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:none;color:var(--cmuted);display:grid;place-items:center;flex:none;cursor:pointer;margin:-6px -4px -6px 0}
+.lt .oq{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.lt .own{padding:18px 18px 18px}
+.lt .odel{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:none;color:var(--cmuted);display:grid;place-items:center;flex:none;cursor:pointer;margin:0}
 .lt .odel:hover{color:var(--cink);border-color:rgba(255,255,255,.35)}
 .lt .addown{display:block;width:100%;margin:4px 0 12px;padding:18px;border:1.5px dashed rgba(255,255,255,.28);border-radius:20px;background:none;color:var(--cink);font:inherit;font-weight:700;font-size:16px;cursor:pointer;transition:border-color .15s,background .15s}
 .lt .addown:hover{border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.03)}
@@ -508,6 +512,6 @@ body.solo-play #ph>.pv{flex:1}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=4"></script>
+<script src="quiz.js?v=6"></script>
 </body>
 </html>
