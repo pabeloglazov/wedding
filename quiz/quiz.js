@@ -5,7 +5,7 @@ const P = new URLSearchParams(location.search);
 const VIEW = P.get('view') || 'host';
 const GID = (P.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
 const PF_API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
-const DEMO_MAX = 5;
+const DEMO_MAX = 3;
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -1810,6 +1810,13 @@ function bootHost() {
   const saved = ls('get', KEY_LIVE);
   if (saved && saved.net && saved.phase !== 'final' && Date.now() - (saved.ts || 0) < 6 * 3600e3) { G = saved; ['players', 'ans', 'cpl', 'prevRank', 'banned'].forEach(k => { G[k] = G[k] || {}; }); }
   else { ls('del', KEY_LIVE); send({ type: 'reset' }); }
+  // ?demo=1 — сразу запускаем готовый демо-квиз (черновик ведущего сохраняем в резерв)
+  const DEMO_GO = !!P.get('demo') && !G;
+  if (P.get('demo')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (DEMO_GO) {
+    const cur = ls('get', KEY_CFG); if (cur && !cur.isDemo) ls('set', 'pbq_cfg_bak', cur);
+    CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = 'Демо-квиз'; CFG.qs = sampleQs(CFG.couple).map(normQ); CFG.isDemo = 1; ls('set', KEY_CFG, CFG);
+  }
   setInterval(() => {
     if (!G) return;
     maybeAutoReveal();
@@ -1822,6 +1829,7 @@ function bootHost() {
     netReady.then(ok => {
       if (G && G.net && ok) { attachNet(); lastCore = ''; lastPk = ''; netPush(true); }
       if (!G && edBuilt) paintForm();
+      if (DEMO_GO && !G) { newGame(); window.scrollTo(0, 0); }
       accLoad().then(() => {
         if (G) { if (unlocked() && (G.demo || G.cap !== guestCap())) { G.demo = false; G.cap = guestCap(); G.capHit = 0; publish(); } return; }
         renderTop(); if (edBuilt) { paintModes(); paintDesign(); paintForm(); paintQs(); const ac = document.querySelector('[data-add=couple]'); if (ac) ac.innerHTML = '+ Угадай ответ пары' + lockTag('couple'); } const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
