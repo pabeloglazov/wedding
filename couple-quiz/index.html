@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/brand.css">
 <script src="../assets/brand.js"></script>
+<script src="../assets/examples.js"></script>
 <style>
 :root{--bg:#131312;--bg2:#181817;--card:#1c1c1b;--card2:#262625;--line:rgba(255,255,255,.1);--ink:#ffffff;--text:#e8e8e6;--muted:#a3a3a3;--gold:#f2efe9;--gold2:#d9d6d0;--acc:#bdbab4}
 *{box-sizing:border-box}
@@ -233,6 +234,57 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
 @media (max-width:560px){.brand .pb-word{height:11px}.brand span{display:none}}
 .hero h1{font-size:clamp(36px,6vw,72px)!important}.h2{font-size:clamp(26px,3.6vw,40px)!important}.proof b{font-size:44px!important}.box h3,.pvcap h3{font-size:22px!important}
 
+
+/* ===== примеры ===== */
+.type.ex{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer;display:flex;flex-direction:column;transition:border-color .2s,background .2s,transform .2s}
+.type.ex:hover{border-color:rgba(242,239,233,.35);background:#20201f;transform:translateY(-2px)}
+.type.ex:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+.type.ex p{flex:1}
+.type .see{display:inline-block;margin-top:12px;color:var(--gold2);font-size:13px;font-weight:700}
+.qx{position:absolute;inset:0;padding:4.2% 4.6%;display:flex;flex-direction:column;color:#fff;background:radial-gradient(ellipse at 50% 18%,#262625,#0b0b0a 72%);font-family:Manrope,system-ui,sans-serif}
+.qx .sk{padding-right:5.5cqw;font-size:1.6cqw;letter-spacing:.2em;text-transform:uppercase;color:#a3a3a3;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.qx .sk b{color:#fff;font-weight:800}
+.qx .sq{font-family:var(--hf);font-stretch:125%;text-transform:uppercase;font-size:3.9cqw;line-height:1.05;font-weight:600;margin:1.6cqw 0 1.4cqw;animation:qxUp .5s ease both}
+.qx .tb{height:.7cqw;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:2cqw}
+.qx .tb i{display:block;height:100%;width:100%;background:#f2efe9;border-radius:9px;transition:width linear}
+.qx .st{display:grid;grid-template-columns:1fr 1fr;gap:1.5cqw;flex:1}
+.qx .t{border-radius:1.6cqw;padding:1.4cqw 1.8cqw;display:flex;align-items:center;gap:1.4cqw;position:relative;overflow:hidden;font-weight:800;font-size:2.3cqw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);animation:qxUp .45s ease both;transition:opacity .5s,box-shadow .4s}
+.qx .t .f{position:absolute;inset:0;right:auto;width:100%;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.qx .t>*:not(.f){position:relative}
+.qx .t .l{width:3.4cqw;height:3.4cqw;border-radius:1cqw;display:grid;place-items:center;background:rgba(0,0,0,.25);font-size:1.8cqw;flex:none}
+.qx .t .p{margin-left:auto;font-size:2.5cqw;opacity:0;transition:opacity .4s}
+.qx.rv .t .p{opacity:1}
+.qx.rv .t.no{opacity:.35}
+.qx.rv .t.ok{box-shadow:0 0 0 .45cqw #fff inset}
+.qx .ta .f{background:#e07a5f}.qx .tb2 .f{background:#3d9a8b}.qx .tc .f{background:#d9a441}.qx .td .f{background:#7b6fd6}
+.qx .toast{position:absolute;left:50%;bottom:4%;transform:translate(-50%,1.5cqw);opacity:0;background:#f2efe9;color:#131312;border-radius:99em;padding:1cqw 2.4cqw;font-weight:800;font-size:1.9cqw;white-space:nowrap;transition:all .45s cubic-bezier(.2,1.2,.4,1);box-shadow:0 1.4cqw 3cqw rgba(0,0,0,.4)}
+.qx .toast.on{opacity:1;transform:translate(-50%,0)}
+.qx .badge{align-self:flex-start;display:inline-flex;align-items:center;gap:.8cqw;border:1px solid rgba(255,255,255,.2);border-radius:99em;padding:.6cqw 1.6cqw;font-size:1.7cqw;font-weight:800;color:#d9d6d0;opacity:0;transform:scale(.9);transition:all .4s cubic-bezier(.2,1.2,.4,1)}
+.qx .badge.on{opacity:1;transform:none}
+.qx .badge.done{background:#f2efe9;color:#131312;border-color:#f2efe9}
+.qx .cpl{display:flex;gap:1.2cqw;margin-bottom:1.6cqw}
+.qx .ph{width:15cqw;border-radius:1.8cqw;background:#1b1b1a;border:.25cqw solid #333;padding:1cqw;display:flex;flex-direction:column;gap:.8cqw;font-size:1.3cqw;font-weight:800;animation:qxUp .5s ease both}
+.qx .ph small{color:#a3a3a3;font-size:1.1cqw;letter-spacing:.14em;text-transform:uppercase}
+.qx .ph span{border-radius:.8cqw;padding:.7cqw;background:rgba(255,255,255,.08);transition:background .3s,color .3s}
+.qx .ph span.pick{background:#f2efe9;color:#131312}
+.qx .gs{display:flex;flex-wrap:wrap;gap:1.2cqw;align-content:flex-start;flex:1}
+.qx .g{display:flex;align-items:center;gap:1cqw;border-radius:99em;padding:.9cqw 1.8cqw;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-weight:800;font-size:2.1cqw;animation:qxPop .4s cubic-bezier(.2,1.3,.4,1) both;transition:all .5s}
+.qx .g b{font-family:var(--hf);font-stretch:125%;font-size:2.4cqw;font-weight:600}
+.qx .g em{font-style:normal;color:#131312;background:#f2efe9;border-radius:99em;padding:.2cqw 1cqw;font-size:1.6cqw;display:none}
+.qx.rv .g.far{opacity:.3}
+.qx.rv .g.win{background:#f2efe9;color:#131312;border-color:#f2efe9}.qx.rv .g.win em{display:inline-block;background:#131312;color:#f2efe9}
+.qx .ans{display:flex;align-items:baseline;gap:1.4cqw;margin-top:1.4cqw;opacity:0;transform:translateY(1cqw);transition:all .5s}
+.qx .ans.on{opacity:1;transform:none}
+.qx .ans small{font-size:1.7cqw;letter-spacing:.18em;text-transform:uppercase;color:#a3a3a3;font-weight:800}
+.qx .ans b{font-family:var(--hf);font-stretch:125%;font-size:6.5cqw;font-weight:500;line-height:1}
+.qx .pw{display:grid;grid-template-columns:1fr 1.25fr;gap:2.2cqw;flex:1;min-height:0}
+.qx .pic{border-radius:1.8cqw;background:linear-gradient(150deg,#d8b4a0,#8a6a5c);display:grid;place-items:center;position:relative;overflow:hidden;animation:qxZoom 9s ease-out both;box-shadow:0 1.4cqw 3cqw rgba(0,0,0,.45)}
+.qx .pic span{font-size:12cqw;filter:drop-shadow(0 1cqw 1.5cqw rgba(0,0,0,.3))}
+.qx .pic i{position:absolute;left:1.4cqw;bottom:1.2cqw;font-style:normal;font-size:1.4cqw;font-weight:800;letter-spacing:.14em;text-transform:uppercase;background:rgba(0,0,0,.35);border-radius:99em;padding:.4cqw 1.2cqw}
+.qx .pw .st{grid-template-columns:1fr}
+@keyframes qxUp{from{opacity:0;transform:translateY(1.2cqw)}}
+@keyframes qxPop{from{opacity:0;transform:scale(.6)}}
+@keyframes qxZoom{from{transform:scale(1.06)}}
 /* ===== квиз ===== */
 .scr.qz{background:#141413;color:#fff;padding:34px 12px 12px;display:flex;flex-direction:column;gap:8px;font-family:Manrope,system-ui,sans-serif}
 .qz .row{margin-bottom:2px}
@@ -328,10 +380,10 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
     <div class="k" data-t="typesK"></div>
     <div class="h2" data-t="typesH"></div>
     <div class="types">
-      <div class="type"><i>✅</i><h4 data-t="t1h"></h4><p data-t="t1p"></p></div>
-      <div class="type"><i>💍</i><h4 data-t="t2h"></h4><p data-t="t2p"></p></div>
-      <div class="type"><i>🔢</i><h4 data-t="t3h"></h4><p data-t="t3p"></p></div>
-      <div class="type"><i>📸</i><h4 data-t="t4h"></h4><p data-t="t4p"></p></div>
+      <button type="button" class="type ex" data-ex="0"><i>✅</i><h4 data-t="t1h"></h4><p data-t="t1p"></p><span class="see" data-t="see"></span></button>
+      <button type="button" class="type ex" data-ex="1"><i>💍</i><h4 data-t="t2h"></h4><p data-t="t2p"></p><span class="see" data-t="see"></span></button>
+      <button type="button" class="type ex" data-ex="2"><i>🔢</i><h4 data-t="t3h"></h4><p data-t="t3p"></p><span class="see" data-t="see"></span></button>
+      <button type="button" class="type ex" data-ex="3"><i>📸</i><h4 data-t="t4h"></h4><p data-t="t4p"></p><span class="see" data-t="see"></span></button>
     </div>
   </section>
 
@@ -378,8 +430,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
     <div class="final">
       <div class="h2" style="margin-top:0" data-t="finH"></div>
       <p data-t="finP"></p>
-      <div class="price3"><span data-h="pr1"></span><span data-h="pr2"></span><span data-h="pr3"></span></div>
-      <div class="cta" style="justify-content:center"><a class="btn gold" href="../quiz/" data-t="finTry"></a><a class="btn ghost" href="../#pricing" data-t="finPlans"></a><a class="btn ghost" href="https://pabeloglazov.com" target="_blank" rel="noopener" data-t="finHost"></a></div>
+      <div class="cta" style="justify-content:center"><a class="btn gold" href="../quiz/?demo=1" data-t="finTry"></a><a class="btn ghost" href="../#pricing" data-t="finPlans"></a><a class="btn ghost" href="https://pabeloglazov.com" target="_blank" rel="noopener" data-t="finHost"></a></div>
     </div>
   </section>
 </div>
@@ -391,7 +442,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
   var I = {
     ru: { brandSub: 'игры для праздников', all: '← Все игры', kicker: 'Квиз для свадьбы и праздника', title: 'Квиз о паре',
       lead: 'Как хорошо гости знают жениха и невесту? Вопросы с фото — на большом экране, ответы — со своих телефонов по коду. Живая таблица, команды и столы, а в финале — пьедестал и итоги на память.',
-      f1: '👥 любое число гостей', f2: '⏱ 15–25 минут', f3: '📱 без приложений', f4: '🔢 вход по коду или QR',
+      f1: '👥 любое число гостей', f2: '⏱ 30–60 минут', f3: '📱 без приложений', f4: '🔢 вход по коду или QR',
       make: 'Собрать квиз', play: 'Я гость — ввести код', demo: 'Демо',
       mName: 'Оля', mPts: 'очков', mK: 'Вопрос 3 из 8', mQ: 'Где Максим сделал предложение?', mA: 'На берегу океана', mB: 'В горах', mC: 'Дома за ужином', mD: 'На крыше', mNote: 'Ответ принят · можно изменить',
       howK: 'Как это работает', howH: 'Четыре шага до квиза',
@@ -400,6 +451,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       s3h: 'Отвечают на время', s3p: 'Очки за правильность и скорость, серии верных ответов, двойные очки за финальный вопрос.',
       s4h: 'Финал и итоги', s4p: 'Пьедестал 3 → 2 → 1 с музыкой, номинации и страница итогов для пары.',
       typesK: 'Вопросы на любой вкус', typesH: 'Четыре типа вопросов',
+      see: 'Смотреть пример →', exAns: 'ответили', exQ: 'Вопрос', exOf: 'из', exRight: 'угадали',
       t1h: 'Обычный', t1p: 'До четырёх вариантов, правильных может быть несколько. Картинка к вопросу — по желанию.',
       t2h: 'Угадай ответ пары', t2p: 'Гости угадывают, что ответят жених и невеста. Пара отвечает со своих телефонов прямо в игре.',
       t3h: 'Ответ числом', t3p: '«Сколько месяцев они встречались?» — чем ближе ответ, тем больше очков.',
@@ -419,13 +471,13 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
         ['Что если в зале слабый интернет?', 'Квиз быстрый и лёгкий: ответы сохраняются, даже если связь моргнула, а время ответа считается честно. Можно вывести на экран QR-код Wi-Fi зала.'],
         ['Сколько гостей может играть?', 'Зависит от тарифа: до 10, до 100 или без ограничений. Бесплатно — до 3 телефонов, чтобы попробовать всё.'],
         ['Нужен ли ведущий?', 'Нет — квизом легко управлять самим с ноутбука или телефона. Но если хотите, я проведу его на вашем празднике.']],
-      finH: 'Проведите квиз на своём празднике', finP: 'Попробуйте бесплатно — в демо в игру войдут до 3 телефонов. Понравится — выберите тариф.',
+      finH: 'Проведите квиз на своём празднике', finP: 'Попробуйте бесплатно — демо-игра на 1 час, до 3 телефонов. Понравится — выберите тариф.',
       pr1: 'Базовый · <b>от $9.99</b>', pr2: 'Продвинутый · <b>от $24.99</b>', pr3: 'Бизнес · <b>от $69.99</b>',
       finTry: 'Попробовать бесплатно', finPlans: 'Все тарифы', finHost: 'Позвать ведущего',
       foot: '© Павел Белоглазов · ведущий и автор игр' },
     en: { brandSub: 'games for celebrations', all: '← All games', kicker: 'A quiz for weddings and parties', title: 'Couple Quiz',
       lead: 'How well do the guests know the bride and groom? Photo questions on the big screen, answers from their own phones by code. A live leaderboard, teams and tables, a podium finale and a keepsake results page.',
-      f1: '👥 any number of guests', f2: '⏱ 15–25 min', f3: '📱 no apps', f4: '🔢 join by code or QR',
+      f1: '👥 any number of guests', f2: '⏱ 30–60 min', f3: '📱 no apps', f4: '🔢 join by code or QR',
       make: 'Build a quiz', play: 'I’m a guest — enter code', demo: 'Demo',
       mName: 'Olya', mPts: 'pts', mK: 'Question 3 of 8', mQ: 'Where did Max propose?', mA: 'On the beach', mB: 'In the mountains', mC: 'At home, over dinner', mD: 'On a rooftop', mNote: 'Answer saved · you can change it',
       howK: 'How it works', howH: 'Four steps to a quiz',
@@ -434,6 +486,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       s3h: 'They race the clock', s3p: 'Points for accuracy and speed, streak bonuses, double points on the final question.',
       s4h: 'Finale and results', s4p: 'A 3 → 2 → 1 podium with music, awards and a results page for the couple.',
       typesK: 'Questions for every taste', typesH: 'Four question types',
+      see: 'See an example →', exAns: 'answered', exQ: 'Question', exOf: 'of', exRight: 'got it right',
       t1h: 'Classic', t1p: 'Up to four options, one or several correct. Add a picture if you like.',
       t2h: 'Guess the couple', t2p: 'Guests guess what the bride and groom will answer. The couple answers from their phones during the game.',
       t3h: 'Number answer', t3p: '“How many months did they date?” — the closer, the more points.',
@@ -453,7 +506,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
         ['What if the Wi-Fi is weak?', 'The quiz is light and fast: answers are kept even if the connection blinks, and answer time is counted fairly. You can also show the venue Wi-Fi QR on screen.'],
         ['How many guests can play?', 'Depends on the plan: up to 10, up to 100 or unlimited. The free plan allows 3 phones so you can try everything.'],
         ['Do I need a host?', 'No — the quiz is easy to run yourself from a laptop or phone. But if you like, I’ll host it at your event.']],
-      finH: 'Run the quiz at your celebration', finP: 'Try it free — the demo lets up to 3 phones in. Like it? Pick a plan.',
+      finH: 'Run the quiz at your celebration', finP: 'Try it free — a 1-hour demo game for up to 3 phones. Like it? Pick a plan.',
       pr1: 'Basic · <b>from $9.99</b>', pr2: 'Pro · <b>from $24.99</b>', pr3: 'Business · <b>from $69.99</b>',
       finTry: 'Try it free', finPlans: 'All plans', finHost: 'Book a host',
       foot: '© Pavel Beloglazov · host and game author' }
@@ -468,7 +521,82 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
     document.getElementById('lang').textContent = L === 'ru' ? 'EN' : 'RU';
     document.title = (L === 'ru' ? 'Квиз о паре' : 'Couple Quiz') + ' · Beloglazov Event';
   }
-  document.getElementById('lang').onclick = function () { L = L === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('pb_lang', L); } catch (e) {} paint(); };
+
+  /* ===== примеры (живые сцены по типам вопросов) ===== */
+  var EXD = {
+    ru: { c: 'Аня & Макс', q1: 'Где познакомились Аня и Макс?', o1: ['В церкви', 'В кафе', 'На работе', 'В университете'],
+      q2: 'Кто первым написал сообщение?', o2: ['Аня', 'Макс'], cp: 'Пара отвечает', cpd: 'Пара ответила', cpA: 'Аня', cpM: 'Макс',
+      q3: 'Сколько месяцев пара встречалась до помолвки?', unit: 'мес.', ansL: 'Правильный ответ',
+      q4: 'Кто на фото?', o4: ['Аня', 'Макс', 'Сестра Ани', 'Брат Макса'], photo: 'Фото · 1998',
+      names: ['Оля', 'Дима', 'Катя', 'Игорь', 'Маша', 'Саша', 'Вера'], t1: '+1000 · Оля, Катя и ещё 9 угадали', t2: '+1000 · 14 гостей угадали ответ пары', t4: '+1000 · 17 гостей узнали Макса' },
+    en: { c: 'Anna & Max', q1: 'Where did Anna and Max meet?', o1: ['At church', 'In a café', 'At work', 'At university'],
+      q2: 'Who texted first?', o2: ['Anna', 'Max'], cp: 'Couple is answering', cpd: 'Couple answered', cpA: 'Anna', cpM: 'Max',
+      q3: 'How many months did they date before the engagement?', unit: 'mo', ansL: 'Correct answer',
+      q4: 'Who is in the photo?', o4: ['Anna', 'Max', 'Anna’s sister', 'Max’s brother'], photo: 'Photo · 1998',
+      names: ['Olga', 'Dima', 'Kate', 'Igor', 'Masha', 'Sasha', 'Vera'], t1: '+1000 · Olga, Kate and 9 more got it', t2: '+1000 · 14 guests guessed the couple', t4: '+1000 · 17 guests recognised Max' }
+  };
+  var CLS = ['ta', 'tb2', 'tc', 'td'], LET = ['A', 'B', 'C', 'D'];
+  function exHead(X, d, n) { return '<div class="sk"><span>' + esc(X.c) + '</span><span>' + d.exQ + ' ' + n + ' ' + d.exOf + ' 8 · <b class="cnt">0</b> ' + d.exAns + '</span></div>'; }
+  function tiles(opts) { return opts.map(function (t, i) { return '<div class="t ' + CLS[i] + '" style="animation-delay:' + (.15 + i * .08) + 's"><span class="f"></span><span class="l">' + LET[i] + '</span><span>' + esc(t) + '</span><span class="p"></span></div>'; }).join(''); }
+  function timer(root, api, ms) { var b = root.querySelector('.tb i'); api.later(function () { b.style.transitionDuration = ms + 'ms'; b.style.width = '0%'; }, 60); }
+  function counter(root, api, to, ms) { var el = root.querySelector('.cnt'), k = 0, steps = 24; api.every(function () { if (k < steps) { k++; el.textContent = Math.round(to * k / steps); } }, ms / steps); }
+  function reveal(root, pct, ok) {
+    root.classList.add('rv');
+    [].forEach.call(root.querySelectorAll('.t'), function (t, i) { t.classList.add(ok.indexOf(i) >= 0 ? 'ok' : 'no'); t.querySelector('.f').style.width = pct[i] + '%'; t.querySelector('.p').textContent = pct[i] + '%'; });
+  }
+  function prep(root) { [].forEach.call(root.querySelectorAll('.t .f'), function (f) { f.style.width = '100%'; }); }
+  function loop(st, api, build, ms) { (function run() { st.innerHTML = ''; build(st); api.later(run, ms); })(); }
+  var EXS = [
+    function (st, api) { // обычный
+      loop(st, api, function (st) {
+        var X = EXD[L], d = I[L], r = document.createElement('div'); r.className = 'qx';
+        r.innerHTML = exHead(X, d, 1) + '<div class="sq">' + esc(X.q1) + '</div><div class="tb"><i></i></div><div class="st">' + tiles(X.o1) + '</div><div class="toast">' + esc(X.t1) + '</div>';
+        st.appendChild(r); prep(r); timer(r, api, 5200); counter(r, api, 24, 5000);
+        api.later(function () { r.querySelectorAll('.t .f').forEach(function (f) { f.style.width = '0%'; }); }, 5300);
+        api.later(function () { reveal(r, [46, 17, 8, 29], [0]); }, 5500);
+        api.later(function () { r.querySelector('.toast').classList.add('on'); }, 7000);
+      }, 11500);
+    },
+    function (st, api) { // угадай ответ пары
+      loop(st, api, function (st) {
+        var X = EXD[L], d = I[L], r = document.createElement('div'); r.className = 'qx';
+        r.innerHTML = exHead(X, d, 2) + '<div class="sq">' + esc(X.q2) + '</div><div class="cpl"><span class="badge">💍 <span class="bt">' + esc(X.cp) + '…</span></span></div><div class="tb"><i></i></div><div class="st">' + tiles(X.o2) + '</div><div class="toast">' + esc(X.t2) + '</div>';
+        st.appendChild(r); prep(r); timer(r, api, 5200); counter(r, api, 24, 5000);
+        api.later(function () { r.querySelector('.badge').classList.add('on'); }, 800);
+        api.later(function () { var b = r.querySelector('.badge'); b.classList.add('done'); b.querySelector('.bt').textContent = X.cpd + ': ' + X.cpM; }, 3600);
+        api.later(function () { r.querySelectorAll('.t .f').forEach(function (f) { f.style.width = '0%'; }); }, 5300);
+        api.later(function () { reveal(r, [42, 58], [1]); }, 5500);
+        api.later(function () { r.querySelector('.toast').classList.add('on'); }, 7000);
+      }, 11500);
+    },
+    function (st, api) { // ответ числом
+      loop(st, api, function (st) {
+        var X = EXD[L], d = I[L], r = document.createElement('div'); r.className = 'qx';
+        var gs = [[0, 12], [1, 24], [2, 17], [3, 36], [4, 19], [5, 9], [6, 18]];
+        r.innerHTML = exHead(X, d, 3) + '<div class="sq">' + esc(X.q3) + '</div><div class="tb"><i></i></div><div class="gs"></div><div class="ans"><small>' + esc(X.ansL) + '</small><b>18 ' + esc(X.unit) + '</b></div>';
+        st.appendChild(r); timer(r, api, 5200); counter(r, api, 24, 5000);
+        var box = r.querySelector('.gs');
+        gs.forEach(function (g, i) { api.later(function () { var e = document.createElement('span'); e.className = 'g'; e.dataset.v = g[1]; e.innerHTML = esc(X.names[g[0]]) + ' <b>' + g[1] + '</b><em></em>'; box.appendChild(e); }, 500 + i * 620); });
+        api.later(function () {
+          r.classList.add('rv'); r.querySelector('.ans').classList.add('on');
+          var arr = [].slice.call(box.children).sort(function (a, b) { return Math.abs(a.dataset.v - 18) - Math.abs(b.dataset.v - 18); });
+          arr.forEach(function (e, i) { if (i < 3) { e.classList.add('win'); e.querySelector('em').textContent = ['+1000', '+800', '+600'][i]; } else e.classList.add('far'); box.appendChild(e); });
+        }, 5600);
+      }, 11500);
+    },
+    function (st, api) { // вопрос с фото
+      loop(st, api, function (st) {
+        var X = EXD[L], d = I[L], r = document.createElement('div'); r.className = 'qx';
+        r.innerHTML = exHead(X, d, 4) + '<div class="sq">' + esc(X.q4) + '</div><div class="tb"><i></i></div><div class="pw"><div class="pic"><span>👶</span><i>' + esc(X.photo) + '</i></div><div class="st">' + tiles(X.o4) + '</div></div><div class="toast">' + esc(X.t4) + '</div>';
+        st.appendChild(r); prep(r); timer(r, api, 5200); counter(r, api, 24, 5000);
+        api.later(function () { r.querySelectorAll('.t .f').forEach(function (f) { f.style.width = '0%'; }); }, 5300);
+        api.later(function () { reveal(r, [21, 71, 4, 4], [1]); }, 5500);
+        api.later(function () { r.querySelector('.toast').classList.add('on'); }, 7000);
+      }, 11500);
+    }
+  ];
+  var EX = window.PBExamples ? PBExamples({ selector: '[data-ex]', scenes: EXS, caption: function (i) { var d = I[L]; return { h: d['t' + (i + 1) + 'h'], p: d['t' + (i + 1) + 'p'] }; } }) : null;
+  document.getElementById('lang').onclick = function () { L = L === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('pb_lang', L); } catch (e) {} paint(); if (EX) EX.refresh(); };
   paint();
 })();
 </script>
