@@ -56,7 +56,7 @@ a{color:var(--gold)}
 .stage .pb-mark{width:2.2cqw;height:2.2cqw}
 .pv .pbrand{display:flex;justify-content:center;margin:0 0 14px;opacity:.9}
 .lt .pbrand{margin-bottom:18px}
-body.solo-screen{cursor:none}
+body.solo-screen.idle,body.solo-screen.idle *{cursor:none}
 /* ---------- редактор ---------- */
 .ed{max-width:880px;margin:0 auto;padding:28px 20px 120px}
 .ed h1{font-family:var(--hf);font-stretch:125%;font-weight:500;text-transform:uppercase;letter-spacing:-.01em;font-size:clamp(30px,5.4vw,50px);line-height:1.02;margin:8px 0 6px;color:var(--ink)}
@@ -241,6 +241,8 @@ body.sorting,body.sorting *{-webkit-user-select:none;user-select:none;cursor:gra
 .lob .right{display:flex;flex-direction:column;align-items:center;gap:.9em}
 .lob .qr{background:#fff;border-radius:1.3em;padding:1em;width:15em;height:15em;display:grid;place-items:center}
 .lob .qr img,.lob .qr canvas{width:100%!important;height:100%!important}
+.lob h1.cpl{font-size:4.6em;line-height:1;margin:.12em 0 0;overflow-wrap:anywhere}
+.lob .ttl .kk{font-size:1em}
 .lob .lcount{margin:1.6em 0 .7em}
 .lob .join{display:flex;flex-direction:column;align-items:center;gap:.55em;padding:1.1em 1.1em 1em;border:1px solid rgba(255,255,255,.12);border-radius:1.8em;background:rgba(255,255,255,.035)}
 .lob .jurl{font-size:.95em;font-weight:700;color:var(--muted);letter-spacing:.01em;margin-top:.2em}
@@ -513,6 +515,6 @@ body.solo-play #ph>.pv{flex:1}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=7"></script>
+<script src="quiz.js?v=8"></script>
 </body>
 </html>
