@@ -209,11 +209,12 @@ function accLoad() {
 }
 const unlocked = () => !!(ACC.info && ACC.info.unlocked);
 /* ===== тарифы: что где доступно ===== */
-const TIER = { basic: { n: 'Базовый', r: 1, max: 30 }, pro: { n: 'Продвинутый', r: 2, max: 150 }, biz: { n: 'Бизнес', r: 3, max: 500 } };
+const TIER = { basic: { n: 'Базовый', r: 1, max: 10 }, pro: { n: 'Продвинутый', r: 2, max: 100 }, biz: { n: 'Бизнес', r: 3, max: 100000 } };
+const capTxt = n => n >= 10000 ? 'без ограничений' : 'до ' + n;
 const FEAT = {
   teams: ['pro', 'Игра командами'], tables: ['pro', 'Игра по столам'], couple: ['pro', 'Вопросы «Угадай ответ пары»'],
   color: ['pro', 'Свой основной цвет'], photo: ['pro', 'Фото пары на заставке'], form: ['pro', 'Анкета для пары'],
-  keepsake: ['pro', 'Итоги на память для пары'], excel: ['biz', 'Выгрузка результатов в Excel']
+  keepsake: ['pro', 'Итоги на память для пары'], excel: ['pro', 'Выгрузка результатов в Excel']
 };
 const myTier = () => unlocked() ? (TIER[ACC.info.tier] ? ACC.info.tier : 'pro') : 'demo';
 const can = f => { const t = myTier(); return t === 'demo' || TIER[t].r >= TIER[FEAT[f][0]].r; };
@@ -229,7 +230,7 @@ function upsell(f) {
 }
 function upsellCap() {
   const t = myTier(), nt = nextTier();
-  modal(upsellHtml('Нужно больше гостей?', 'В тарифе «' + TIER[t].n + '» в игру входят до ' + guestCap() + ' телефонов.' + (nt ? ' В тарифе «' + TIER[nt].n + '» — до ' + TIER[nt].max + '.' : '')));
+  modal(upsellHtml('Нужно больше гостей?', 'В тарифе «' + TIER[t].n + '» в игру входят до ' + guestCap() + ' телефонов.' + (nt ? ' В тарифе «' + TIER[nt].n + '» — ' + capTxt(TIER[nt].max) + '.' : '')));
 }
 const ICON_LOCK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const lockTag = f => can(f) ? '' : `<em class="lk" title="Тариф «${TIER[FEAT[f][0]].n}»">${ICON_LOCK}${TIER[FEAT[f][0]].n}</em>`;
@@ -1853,7 +1854,7 @@ function boot() {
 boot();
 })();
 
-/* Выгрузка результатов в Excel (CSV с BOM) — тариф «Бизнес» */
+/* Выгрузка результатов в Excel (CSV с BOM) — тариф «Продвинутый» и выше */
 function exportXls() {
   if (!G) return;
   const rows = [['Место', 'Участник', G.s.play === 'tables' ? 'Стол' : '', 'Очки']];
