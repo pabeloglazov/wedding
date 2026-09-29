@@ -5,7 +5,7 @@ const P = new URLSearchParams(location.search);
 const VIEW = P.get('view') || 'host';
 const GID = (P.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
 const PF_API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
-const DEMO_MAX = 3;
+const DEMO_MAX = 3, DEMO_MIN = 60;
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -209,17 +209,17 @@ function accLoad() {
 }
 const unlocked = () => !!(ACC.info && ACC.info.unlocked);
 /* ===== тарифы: что где доступно ===== */
-const TIER = { basic: { n: 'Базовый', r: 1, max: 10 }, pro: { n: 'Продвинутый', r: 2, max: 100 }, biz: { n: 'Бизнес', r: 3, max: 100000 } };
+const TIER = { demo: { n: 'Бесплатный', r: 0, max: DEMO_MAX }, basic: { n: 'Базовый', r: 1, max: 10 }, pro: { n: 'Продвинутый', r: 2, max: 100 }, biz: { n: 'Бизнес', r: 3, max: 100000 } };
 const capTxt = n => n >= 10000 ? 'без ограничений' : 'до ' + n;
 const FEAT = {
-  teams: ['pro', 'Игра командами'], tables: ['pro', 'Игра по столам'], couple: ['pro', 'Вопросы «Угадай ответ пары»'],
+  teams: ['basic', 'Игра командами'], tables: ['basic', 'Игра по столам'], couple: ['basic', 'Вопросы «Угадай ответ пары»'],
   color: ['pro', 'Свой основной цвет'], photo: ['pro', 'Фото пары на заставке'], form: ['pro', 'Анкета для пары'],
   keepsake: ['pro', 'Итоги на память для пары'], excel: ['pro', 'Выгрузка результатов в Excel']
 };
 const myTier = () => unlocked() ? (TIER[ACC.info.tier] ? ACC.info.tier : 'pro') : 'demo';
-const can = f => { const t = myTier(); return t === 'demo' || TIER[t].r >= TIER[FEAT[f][0]].r; };
+const can = f => TIER[myTier()].r >= TIER[FEAT[f][0]].r;
 const guestCap = () => unlocked() ? (ACC.info.max || TIER[myTier()].max) : DEMO_MAX;
-const nextTier = () => { const t = myTier(); return t === 'basic' ? 'pro' : t === 'pro' ? 'biz' : ''; };
+const nextTier = () => { const t = myTier(); return t === 'demo' ? 'basic' : t === 'basic' ? 'pro' : t === 'pro' ? 'biz' : ''; };
 function upsellHtml(title, text) {
   return `<div class="ups"><div class="upi">${ICON_LOCK}</div><h3>${title}</h3><p class="muted">${text}</p><p class="muted small">Настройки квиза сохранятся — после смены тарифа просто обновите страницу.</p>` +
     `<div class="links"><a class="btn gold" href="../#pricing" target="_blank" rel="noopener">Выбрать тариф</a><button class="btn ghost" data-close>Не сейчас</button></div></div>`;
@@ -345,6 +345,7 @@ function newGame() {
     wifi: CFG.wifi && CFG.wifi.ssid ? { ssid: CFG.wifi.ssid, pass: CFG.wifi.pass || '' } : null, mode: CFG.mode, s: Object.assign({}, CFG.s), qs,
     phase: 'lobby', qi: -1, ii: 0, t0: 0, t1: 0, players: {}, ans: {}, cpl: {}, prevRank: {}, banned: {}, final: false, ver: 0,
     demo: !unlocked(), cap: guestCap(), res: '', bots: !!CFG.bots && CFG.s.play !== 'teams' };
+  if (G.demo) { let de = ls('get', 'pbq_demo_end'); if (!de || de < Date.now()) de = Date.now() + DEMO_MIN * 60000; ls('set', 'pbq_demo_end', de); G.demoEnd = de; }
   if (G.net) startNet();
   publish();
   if (G.bots) addBots();
@@ -1728,7 +1729,7 @@ function renderLive() {
   const n = Object.keys(G.players).length, A = G.qi >= 0 ? (G.ans[G.qi] || {}) : {}, a = Object.keys(A).length;
   $('sP').textContent = n; $('sPl').textContent = G.s.play === 'teams' ? plural(n, 'команда', 'команды', 'команд') : plural(n, 'гость', 'гостя', 'гостей');
   $('sA').textContent = G.phase === 'question' || G.phase === 'reveal' ? a + '/' + n : '–';
-  $('demoL').innerHTML = G.demo ? `<div class="demo">Демо: в игру войдут до ${DEMO_MAX} телефонов гостей. <a href="../#pricing" target="_blank">Полный доступ</a></div>` : G.capHit || netCount() >= (G.cap || 0) ? `<div class="demo">Достигнут лимит тарифа — ${G.cap} телефонов. Новые гости не войдут. <a href="#" id="capUp">Нужно больше?</a></div>` : '';
+  $('demoL').innerHTML = G.demo ? `<div class="demo">Демо: до ${DEMO_MAX} телефонов гостей${G.demoEnd ? ', осталось ' + Math.max(1, Math.ceil((G.demoEnd - Date.now()) / 60000)) + ' мин' : ''}. <a href="../#pricing" target="_blank">Полный доступ</a></div>` : G.capHit || netCount() >= (G.cap || 0) ? `<div class="demo">Достигнут лимит тарифа — ${G.cap} телефонов. Новые гости не войдут. <a href="#" id="capUp">Нужно больше?</a></div>` : '';
   if ($('capUp')) $('capUp').onclick = e => { e.preventDefault(); upsellCap(); };
   const q = G.qi >= 0 ? G.qs[G.qi] : null, c = (q && G.cpl[G.qi]) || {};
   let cur = '';
@@ -1795,6 +1796,10 @@ function resultsMenu() {
 function render() { if (G) renderLive(); else if (!edBuilt) renderEditor(); }
 
 /* ================= запуск ================= */
+function demoOver() {
+  clearBots(); endNet(); G = null; liveBuilt = false; ls('del', KEY_LIVE); send({ type: 'reset' }); renderEditor(); window.scrollTo(0, 0);
+  modal(upsellHtml('Демо-игра закончилась', 'Демо работает ' + DEMO_MIN + ' минут. Выберите тариф — или запустите новую демо-игру.'));
+}
 function bootHost() {
   document.addEventListener('keydown', e => {
     if (!G || /INPUT|TEXTAREA/.test((e.target || {}).tagName || '') || $('modal').classList.contains('on')) return;
@@ -1816,10 +1821,11 @@ function bootHost() {
   if (P.get('demo')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
   if (DEMO_GO) {
     const cur = ls('get', KEY_CFG); if (cur && !cur.isDemo) ls('set', 'pbq_cfg_bak', cur);
-    CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = 'Демо-квиз'; CFG.qs = sampleQs(CFG.couple).map(normQ); CFG.isDemo = 1; ls('set', KEY_CFG, CFG);
+    CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = 'Демо-квиз'; CFG.qs = sampleQs(CFG.couple).filter(q => q.type !== 'couple').map(normQ); CFG.isDemo = 1; ls('set', KEY_CFG, CFG);
   }
   setInterval(() => {
     if (!G) return;
+    if (G.demo && G.demoEnd && Date.now() > G.demoEnd) { demoOver(); return; }
     maybeAutoReveal();
     updScreen($('stg'), G, soundHere()); updPhone($('ph'), G, me);
     if (!soundHere() && Date.now() - scrAlive > 4000 && scrAlive) { scrAlive = 0; render(); }
