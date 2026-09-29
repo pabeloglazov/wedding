@@ -208,6 +208,31 @@ function accLoad() {
     .then(d => { ACC.loading = false; return d; });
 }
 const unlocked = () => !!(ACC.info && ACC.info.unlocked);
+/* ===== тарифы: что где доступно ===== */
+const TIER = { basic: { n: 'Базовый', r: 1, max: 30 }, pro: { n: 'Продвинутый', r: 2, max: 150 }, biz: { n: 'Бизнес', r: 3, max: 500 } };
+const FEAT = {
+  teams: ['pro', 'Игра командами'], tables: ['pro', 'Игра по столам'], couple: ['pro', 'Вопросы «Угадай ответ пары»'],
+  color: ['pro', 'Свой основной цвет'], photo: ['pro', 'Фото пары на заставке'], form: ['pro', 'Анкета для пары'],
+  keepsake: ['pro', 'Итоги на память для пары'], excel: ['biz', 'Выгрузка результатов в Excel']
+};
+const myTier = () => unlocked() ? (TIER[ACC.info.tier] ? ACC.info.tier : 'pro') : 'demo';
+const can = f => { const t = myTier(); return t === 'demo' || TIER[t].r >= TIER[FEAT[f][0]].r; };
+const guestCap = () => unlocked() ? (ACC.info.max || TIER[myTier()].max) : DEMO_MAX;
+const nextTier = () => { const t = myTier(); return t === 'basic' ? 'pro' : t === 'pro' ? 'biz' : ''; };
+function upsellHtml(title, text) {
+  return `<div class="ups"><div class="upi">${ICON_LOCK}</div><h3>${title}</h3><p class="muted">${text}</p><p class="muted small">Настройки квиза сохранятся — после смены тарифа просто обновите страницу.</p>` +
+    `<div class="links"><a class="btn gold" href="../#pricing" target="_blank" rel="noopener">Выбрать тариф</a><button class="btn ghost" data-close>Не сейчас</button></div></div>`;
+}
+function upsell(f) {
+  const need = FEAT[f][0], t = myTier();
+  modal(upsellHtml(FEAT[f][1] + ' — в тарифе «' + TIER[need].n + '»', (t !== 'demo' ? 'Сейчас у вас тариф «' + TIER[t].n + '». ' : '') + 'Перейдите на «' + TIER[need].n + '» — и эта функция откроется сразу.'));
+}
+function upsellCap() {
+  const t = myTier(), nt = nextTier();
+  modal(upsellHtml('Нужно больше гостей?', 'В тарифе «' + TIER[t].n + '» в игру входят до ' + guestCap() + ' телефонов.' + (nt ? ' В тарифе «' + TIER[nt].n + '» — до ' + TIER[nt].max + '.' : '')));
+}
+const ICON_LOCK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const lockTag = f => can(f) ? '' : `<em class="lk" title="Тариф «${TIER[FEAT[f][0]].n}»">${ICON_LOCK}${TIER[FEAT[f][0]].n}</em>`;
 const wsKey = () => ACC.info && /^[0-9a-f]{64}$/.test(ACC.info.ws || '') ? ACC.info.ws : '';
 function goLogin() { try { localStorage.setItem('pb_next', 'quiz'); } catch (e) {} location.href = '../host/'; }
 
@@ -318,7 +343,7 @@ function newGame() {
   G = { id: uid(12), net: NET.ok, ts: Date.now(), code: '', rkey: uid(20), title: CFG.title, couple: CFG.couple, accent: CFG.accent, photo: CFG.photo || '',
     wifi: CFG.wifi && CFG.wifi.ssid ? { ssid: CFG.wifi.ssid, pass: CFG.wifi.pass || '' } : null, mode: CFG.mode, s: Object.assign({}, CFG.s), qs,
     phase: 'lobby', qi: -1, ii: 0, t0: 0, t1: 0, players: {}, ans: {}, cpl: {}, prevRank: {}, banned: {}, final: false, ver: 0,
-    demo: !unlocked(), res: '', bots: !!CFG.bots && CFG.s.play !== 'teams' };
+    demo: !unlocked(), cap: guestCap(), res: '', bots: !!CFG.bots && CFG.s.play !== 'teams' };
   if (G.net) startNet();
   publish();
   if (G.bots) addBots();
@@ -342,7 +367,7 @@ function join(pid, name, net, table) {
   const p = G.players[pid];
   if (p) { if (p.name === name && p.table === table) return; p.name = name; p.table = table; }
   else {
-    if (net && G.demo && netCount() >= DEMO_MAX) { if (NET.ok) gref(G.id, 'sc/' + pid).set({ full: true }); return; }
+    if (net && netCount() >= (G.cap || DEMO_MAX)) { if (NET.ok) gref(G.id, 'sc/' + pid).set({ full: true, demo: !!G.demo }); if (!G.capHit) { G.capHit = 1; publish(); } return; }
     G.players[pid] = newPlayer(name, net, table);
   }
   publish();
@@ -669,7 +694,7 @@ function scheduleRv(now_) {
   if (!rvTimer) rvTimer = setTimeout(() => { rvTimer = null; if (G) ref('rv/' + G.id).set(rvOf()); }, 450);
 }
 function saveResults() {
-  if (!G || !G.net || !NET.ok || G.res) return;
+  if (!G || !G.net || !NET.ok || G.res || !can('keepsake')) return;
   const rid = uid(14), g = G;
   const qs = g.qs.map((q, i) => {
     const A = g.ans[i] || {}, ids = Object.keys(A), tot = ids.length;
@@ -901,7 +926,7 @@ function buildPhone(box, g, cl) {
       `<input class="pin code" id="pCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="000 000"><button class="pbtn acc" id="pGo">Войти</button><p class="note w" id="pErr"></p></div></div>`;
     else h = `<div class="pv"><div class="wait">${PHMSG ? '<div class="big" style="font-size:44px">' + (/Спасибо/.test(PHMSG) ? '🎉' : /удалил/.test(PHMSG) ? '👋' : '⚠️') + '</div>' : '<div class="spin"></div>'}<div class="kk">Квиз о паре</div><p class="sub" style="margin:0">${PHMSG || 'Подключаемся к игре…'}</p></div></div>`;
   } else if (cl.kicked) h = wait('<div class="big" style="font-size:44px">👋</div>', 'Вы вне игры', 'Ведущий убрал этого участника из игры');
-  else if (cl.full) h = wait('<div class="big" style="font-size:44px">⏳</div>', 'Мест нет', 'Игра в демо-режиме: до ' + DEMO_MAX + ' телефонов. Ведущему нужен полный доступ, чтобы впустить всех.');
+  else if (cl.full) h = wait('<div class="big" style="font-size:44px">⏳</div>', 'Мест нет', cl.demo ? 'Игра в демо-режиме: до ' + DEMO_MAX + ' телефонов. Ведущему нужен полный доступ, чтобы впустить всех.' : 'В игре уже максимум гостей по тарифу ведущего. Подойдите к ведущему — он сможет расширить игру.');
   else if (cl.role) h = buildCouple(g, cl);
   else {
     const me = g.players[cl.pid], teams = g.s.play === 'teams', tables = g.s.play === 'tables';
@@ -1377,13 +1402,14 @@ function accTag() {
   if (ACC.loading && !ACC.info) return '<span class="tag">…</span>';
   if (!ACC.info) return `<span class="tag">Демо</span><button class="btn ghost sm" id="bLogin" title="${esc(ACC.err)}">Войти заново</button>`;
   const i = ACC.info;
-  const t = i.pro ? '<span class="tag pro">Host Pro</span>' : i.unlocked ? `<span class="tag pro">Событие до ${new Date(i.eventUntil).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>` : '<span class="tag">Демо</span>';
+  const tn = TIER[i.tier] ? TIER[i.tier].n : '';
+  const t = i.pro ? `<span class="tag pro">${tn || 'Подписка'}</span>` : i.unlocked ? `<span class="tag pro">${tn ? tn + ' · ' : ''}до ${new Date(i.eventUntil).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>` : '<span class="tag">Демо</span>';
   return `<span class="em">${esc(i.email)}</span>${t}<button class="btn ghost sm" id="bMine">Мои квизы</button>`;
 }
 function renderTop() { const a = $('acc'); if (!a) return; a.innerHTML = accTag(); if ($('bLogin')) $('bLogin').onclick = goLogin; if ($('bMine')) $('bMine').onclick = openMine; }
 function demoNote() {
   if (unlocked()) return '';
-  return `<div class="notice"><span>🎈</span><span><b>Демо-режим:</b> всё работает, но в игру войдут максимум ${DEMO_MAX} телефонов гостей. Полный доступ — тариф Host Pro или «Одно событие».</span><span class="sp"></span>${ACC.info ? '' : '<button class="btn ghost sm" id="bLogin2">Войти</button>'}<a class="btn gold sm" href="../#pricing">Тарифы</a></div>`;
+  return `<div class="notice"><span>🎈</span><span><b>Демо-режим:</b> всё работает, но в игру войдут максимум ${DEMO_MAX} телефонов гостей. Полный доступ — любой тариф: подписка или одно мероприятие.</span><span class="sp"></span>${ACC.info ? '' : '<button class="btn ghost sm" id="bLogin2">Войти</button>'}<a class="btn gold sm" href="../#pricing">Тарифы</a></div>`;
 }
 let edBuilt = false;
 function renderEditor() {
@@ -1401,11 +1427,11 @@ function renderEditor() {
     `<label class="sw">Последний вопрос ×2<input type="checkbox" id="sX2"></label><label class="sw">Звуки на экране<input type="checkbox" id="sSound"></label>` +
     `<label class="sw">Гости-боты для проверки<input type="checkbox" id="sBots"></label></div></details></div>` +
     `<div class="panel"><h3>Оформление</h3><div class="lbl" style="margin-top:0">Основной цвет</div><div class="swatches" id="sws"></div>` +
-    `<div class="lbl">Фото пары на заставку ${tip('Появится на экране, пока гости заходят.')}</div><div class="photoSlot"><div class="ph" id="cPh" role="button" tabindex="0" title="Загрузить фото"></div><div><button class="btn ghost sm" id="cPhB">Загрузить фото</button> <button class="btn ghost sm" id="cPhD" style="display:none">Убрать</button></div><input type="file" accept="image/*" hidden id="cPhF"></div>` +
+    `<div class="lbl">Фото пары на заставку ${tip('Появится на экране, пока гости заходят.')}<span id="phLk"></span></div><div class="photoSlot"><div class="ph" id="cPh" role="button" tabindex="0" title="Загрузить фото"></div><div><button class="btn ghost sm" id="cPhB">Загрузить фото</button> <button class="btn ghost sm" id="cPhD" style="display:none">Убрать</button></div><input type="file" accept="image/*" hidden id="cPhF"></div>` +
     `<div class="lbl">Wi‑Fi для гостей (по желанию) ${tip('На экране появится QR-код для подключения к Wi‑Fi — выручает, если в зале слабая связь.')}</div><div class="row2"><input class="inp" id="wS" placeholder="Название сети" maxlength="40"><input class="inp" id="wP" placeholder="Пароль" maxlength="60"></div></div>` +
     `<div class="panel" id="formP"></div>` +
     `<div class="qhead"><h2>Вопросы</h2><span class="muted" id="qCount"></span><span class="sp"></span><button class="btn ghost sm" id="bImport">Вставить списком</button></div><div id="qList"></div>` +
-    `<div class="addrow"><button class="btn ghost" data-add="choice">+ Вопрос</button><button class="btn ghost" data-add="couple">+ Угадай ответ пары</button><button class="btn ghost" data-add="number">+ Ответ числом</button></div></div>` +
+    `<div class="addrow"><button class="btn ghost" data-add="choice">+ Вопрос</button><button class="btn ghost" data-add="couple">+ Угадай ответ пары${lockTag('couple')}</button><button class="btn ghost" data-add="number">+ Ответ числом</button></div></div>` +
     `<div class="bar"><div class="in"><div style="min-width:0;flex:1"><div style="font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="bSum"></div><div class="muted" style="font-size:12px" id="bSub"></div></div><button class="btn gold" id="bStart">Запустить ▶</button></div></div>`;
   renderTop(); paintSync();
   if ($('bLogin2')) $('bLogin2').onclick = goLogin;
@@ -1413,7 +1439,7 @@ function renderEditor() {
   $('fTitle').oninput = e => { CFG.title = e.target.value; STORE.save(); sum(); };
   $('fCouple').oninput = e => { CFG.couple = e.target.value; STORE.save(); };
   paintModes(); paintTune(); paintDesign(); paintForm(); paintQs(); sum();
-  document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => addQ(b.dataset.add));
+  document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => b.dataset.add === 'couple' && !can('couple') ? upsell('couple') : addQ(b.dataset.add));
   $('bImport').onclick = openImport;
   $('bStart').onclick = start;
 }
@@ -1426,11 +1452,11 @@ function addQ(type) {
 }
 function paintModes() {
   $('modes').innerHTML = Object.keys(MODES).map(k => { const m = MODES[k]; return `<button class="mode${CFG.mode === k ? ' on' : ''}" data-m="${k}"><i>${m.ic}</i><b>${m.t}</b><span>${m.d}</span></button>`; }).join('');
-  $('plays').innerHTML = Object.keys(PLAYS).map(k => { const m = PLAYS[k]; return `<button class="mode${CFG.s.play === k ? ' on' : ''}" data-p="${k}"><i>${m.ic}</i><b>${m.t}</b><span>${m.d}</span></button>`; }).join('');
+  $('plays').innerHTML = Object.keys(PLAYS).map(k => { const m = PLAYS[k]; return `<button class="mode${CFG.s.play === k ? ' on' : ''}${FEAT[k] && !can(k) ? ' locked' : ''}" data-p="${k}"><i>${m.ic}</i><b>${m.t}${FEAT[k] ? lockTag(k) : ''}</b><span>${m.d}</span></button>`; }).join('');
   $('tblRow').innerHTML = CFG.s.play === 'tables' ? `<div class="rng" style="margin-top:12px"><span>Сколько столов в зале</span><input type="range" id="sTbl" min="2" max="40"><b id="sTblV"></b></div>` : CFG.s.play === 'teams' ? `<div class="hint tipline">Как работают команды ${tip('Команды сами придумывают название при входе. Перед игрой их можно представить залу по очереди.')}</div>` : '';
   if ($('sTbl')) { $('sTbl').value = CFG.s.tables; $('sTblV').textContent = CFG.s.tables; $('sTbl').oninput = e => { CFG.s.tables = +e.target.value; $('sTblV').textContent = CFG.s.tables; STORE.save(); }; }
   document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { CFG.mode = b.dataset.m; Object.assign(CFG.s, MODES[CFG.mode].s); STORE.save(); paintModes(); paintTune(); sum(); });
-  document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { CFG.s.play = b.dataset.p; STORE.save(); paintModes(); sum(); });
+  document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { if (FEAT[b.dataset.p] && !can(b.dataset.p)) return upsell(b.dataset.p); CFG.s.play = b.dataset.p; STORE.save(); paintModes(); sum(); });
 }
 function paintTune() {
   const s = CFG.s;
@@ -1444,13 +1470,13 @@ function paintTune() {
 }
 function paintDesign() {
   const cur = validColor(CFG.accent);
-  $('sws').innerHTML = ACCENTS.map(c => `<button data-c="${c}" style="background:${c}" class="${c === cur ? 'on' : ''}" title="${c}"></button>`).join('') + `<label>Свой<input type="color" id="cCust" value="${cur}"></label>`;
-  const set = c => { CFG.accent = validColor(c); applyAccent(CFG.accent); STORE.save(); document.querySelectorAll('#sws [data-c]').forEach(b => b.classList.toggle('on', b.dataset.c === CFG.accent)); };
+  $('sws').innerHTML = ACCENTS.map(c => `<button data-c="${c}" style="background:${c}" class="${c === cur ? 'on' : ''}" title="${c}"></button>`).join('') + `<label>Свой<input type="color" id="cCust" value="${cur}"></label>` + (can('color') ? '' : lockTag('color'));
+  const set = c => { if (validColor(c) !== ACCENTS[0] && !can('color')) { upsell('color'); $('cCust').value = cur; return; } CFG.accent = validColor(c); applyAccent(CFG.accent); STORE.save(); document.querySelectorAll('#sws [data-c]').forEach(b => b.classList.toggle('on', b.dataset.c === CFG.accent)); };
   document.querySelectorAll('#sws [data-c]').forEach(b => b.onclick = () => { set(b.dataset.c); $('cCust').value = b.dataset.c; });
   $('cCust').oninput = e => set(e.target.value);
   const ph = () => { const d = IMG.get(CFG.photo); $('cPh').style.backgroundImage = d ? `url(${d})` : ''; $('cPh').textContent = d ? '' : '💍'; $('cPhD').style.display = d ? '' : 'none'; };
-  ph();
-  $('cPhB').onclick = $('cPh').onclick = () => $('cPhF').click();
+  ph(); if ($('phLk')) $('phLk').innerHTML = lockTag('photo');
+  $('cPhB').onclick = $('cPh').onclick = () => can('photo') ? $('cPhF').click() : upsell('photo');
   $('cPhD').onclick = () => { CFG.photo = ''; STORE.save(); ph(); };
   $('cPhF').onchange = e => { const f = e.target.files && e.target.files[0]; if (!f) return; IMG.load(f, 1000, 220000).then(d => { CFG.photo = IMG.put(d); STORE.upImg(CFG.photo); STORE.save(); ph(); }, () => toast('Не получилось открыть фото')); e.target.value = ''; };
   $('wS').value = CFG.wifi.ssid || ''; $('wP').value = CFG.wifi.pass || '';
@@ -1463,7 +1489,7 @@ function paintForm() {
   if (formSub) { formSub(); formSub = null; }
   let h = '<h3>Анкета для пары</h3><div class="sub">Отправьте паре ссылку — они ответят на вопросы о себе, а квиз соберётся из их ответов.</div>';
   if (!NET.ok) { p.innerHTML = h + '<div class="hint">Нужен интернет — подключаемся…</div>'; return; }
-  if (!CFG.form) { p.innerHTML = h + '<button class="btn gold sm" id="fNew">Создать анкету</button>'; $('fNew').onclick = createForm; return; }
+  if (!CFG.form) { p.innerHTML = h + '<button class="btn gold sm" id="fNew">Создать анкету</button>' + lockTag('form'); $('fNew').onclick = () => can('form') ? createForm() : upsell('form'); return; }
   p.innerHTML = h + `<div class="linkrow"><code>${esc(formLink(CFG.form))}</code><button class="btn ghost sm" id="fCopy">Копировать</button><button class="btn ghost sm" id="fQr">QR</button></div><div class="hint" id="fSt">Проверяем ответы…</div><div class="links" style="margin-top:10px"><button class="btn gold sm" id="fImp" disabled>Добавить вопросы из анкеты</button><button class="btn ghost sm" id="fDel">Новая анкета</button></div>`;
   $('fCopy').onclick = () => copy(formLink(CFG.form));
   $('fQr').onclick = () => modal(`<h3>Анкета для пары</h3><p class="muted">Пусть пара отсканирует код или откроет ссылку.</p><div class="qrbox" id="mq"></div><button class="btn ghost" data-close style="width:100%">Закрыть</button>`, b => qr(b.querySelector('#mq'), formLink(CFG.form), 400));
@@ -1495,7 +1521,7 @@ function cardHtml(q, i) {
       (q.opts.length < 4 ? '<button class="btn ghost sm" data-addopt style="margin-top:8px">+ Вариант</button>' : '');
   }
   if (issue) body += `<div class="hint w">⚠ ${esc(issue)}</div>`;
-  return `<div class="qcard${issue ? ' warn' : ''}" data-i="${i}"><div class="qtop"><span class="grip qg" title="Перетащить вопрос">${ICON.grip}</span><span class="qnum">${i + 1}</span><div class="seg">${Object.keys(TYPES).map(t => `<button data-t="${t}" class="${q.type === t ? 'on' : ''}">${TYPES[t]}</button>`).join('')}</div><button class="x2b${q.x2 ? ' on' : ''}" data-x2 title="Двойные очки">×2</button>` +
+  return `<div class="qcard${issue ? ' warn' : ''}" data-i="${i}"><div class="qtop"><span class="grip qg" title="Перетащить вопрос">${ICON.grip}</span><span class="qnum">${i + 1}</span><div class="seg">${Object.keys(TYPES).map(t => `<button data-t="${t}" class="${q.type === t ? 'on' : ''}">${TYPES[t]}${t === 'couple' && !can('couple') ? '<em class="lk sm">' + ICON_LOCK + '</em>' : ''}</button>`).join('')}</div><button class="x2b${q.x2 ? ' on' : ''}" data-x2 title="Двойные очки">×2</button>` +
     `<div class="qtools">${qTip(q)}<button class="ic" data-a="dup" title="Копия">⧉</button><button class="ic" data-a="del" title="Удалить вопрос">${ICON.trash}</button></div></div>${body}</div>`;
 }
 /* перетаскивание за ручку — мышью и пальцем */
@@ -1565,7 +1591,7 @@ function bindCard(c) {
   });
   const ao = c.querySelector('[data-addopt]'); if (ao) ao.onclick = () => { if (q.opts.length >= 4) return; q.opts.push(O()); STORE.save(); repaintCard(i, `[data-o="${q.opts.length - 1}"]`); };
   c.querySelectorAll('[data-t]').forEach(b => b.onclick = () => {
-    const t = b.dataset.t; if (t === q.type) return;
+    const t = b.dataset.t; if (t === q.type) return; if (t === 'couple' && !can('couple')) return upsell('couple');
     q.type = t;
     if (t === 'number') { q.ok = []; }
     else { if (q.opts.length < 2) q.opts = [O(), O()]; if (t === 'couple') { q.ok = []; if (!q.opts.some(optFilled)) { const [g, bn] = coupleNames(CFG.couple); q.opts = [O(g), O(bn)]; } } else if (!q.ok.length) q.ok = [0]; }
@@ -1639,6 +1665,16 @@ function openMine() {
 function start() {
   const ok = CFG.qs.filter(validQ);
   if (!ok.length) { alertBar('Добавьте хотя бы один готовый вопрос'); return; }
+  const used = [];
+  if (FEAT[CFG.s.play] && !can(CFG.s.play)) used.push(CFG.s.play);
+  if (ok.some(q => q.type === 'couple') && !can('couple')) used.push('couple');
+  if (validColor(CFG.accent) !== ACCENTS[0] && !can('color')) used.push('color');
+  if (CFG.photo && !can('photo')) used.push('photo');
+  if (used.length) {
+    const need = used.map(f => FEAT[f][0]).sort((a, b) => TIER[b].r - TIER[a].r)[0];
+    modal(upsellHtml('В квизе есть функции тарифа «' + TIER[need].n + '»', used.map(f => '• ' + FEAT[f][1]).join('<br>') + '<br><br>Перейдите на тариф выше или отключите их — и можно запускать.'));
+    return;
+  }
   const b = $('bStart'); b.disabled = true; b.textContent = 'Запускаем…';
   SND.unlock();
   netReady.then(() => { newGame(); window.scrollTo(0, 0); });
@@ -1691,12 +1727,14 @@ function renderLive() {
   const n = Object.keys(G.players).length, A = G.qi >= 0 ? (G.ans[G.qi] || {}) : {}, a = Object.keys(A).length;
   $('sP').textContent = n; $('sPl').textContent = G.s.play === 'teams' ? plural(n, 'команда', 'команды', 'команд') : plural(n, 'гость', 'гостя', 'гостей');
   $('sA').textContent = G.phase === 'question' || G.phase === 'reveal' ? a + '/' + n : '–';
-  $('demoL').innerHTML = G.demo ? `<div class="demo">Демо: в игру войдут до ${DEMO_MAX} телефонов гостей. <a href="../#pricing" target="_blank">Полный доступ</a></div>` : '';
+  $('demoL').innerHTML = G.demo ? `<div class="demo">Демо: в игру войдут до ${DEMO_MAX} телефонов гостей. <a href="../#pricing" target="_blank">Полный доступ</a></div>` : G.capHit || netCount() >= (G.cap || 0) ? `<div class="demo">Достигнут лимит тарифа — ${G.cap} телефонов. Новые гости не войдут. <a href="#" id="capUp">Нужно больше?</a></div>` : '';
+  if ($('capUp')) $('capUp').onclick = e => { e.preventDefault(); upsellCap(); };
   const q = G.qi >= 0 ? G.qs[G.qi] : null, c = (q && G.cpl[G.qi]) || {};
   let cur = '';
   if (G.phase === 'lobby') cur = `<div class="k">Лобби</div><div class="q">Гости сканируют QR или вводят код ${G.code ? '<b style="color:var(--gold)">' + fmtCode(G.code) + '</b>' : ''} на ${esc(SHORT)}</div><div class="muted" style="font-size:13px">${G.qs.length} ${plural(G.qs.length, 'вопрос', 'вопроса', 'вопросов')} готово. ${canIntro ? 'Можно представить участников перед стартом.' : 'Нажмите «Начать игру», когда все войдут.'}</div>`;
   else if (G.phase === 'intro') { const E = entities(G); cur = `<div class="k">Знакомство · ${G.ii + 1} из ${E.length}</div><div class="q">${esc((E[G.ii] || {}).name || '')}</div>`; }
-  else if (G.phase === 'final') cur = `<div class="k">Финал</div><div class="q">Победители на экране. Спасибо за игру!</div>` + (G.res ? '<button class="btn gold sm" id="bRes" style="margin-top:6px">💌 Итоги для пары</button>' : G.net ? '<div class="muted" style="font-size:13px">Готовим итоги для пары…</div>' : '');
+  else if (G.phase === 'final') cur = `<div class="k">Финал</div><div class="q">Победители на экране. Спасибо за игру!</div>` + '<div class="links" style="margin-top:6px">' + (!can('keepsake') ? '<button class="btn ghost sm" id="bResL">💌 Итоги для пары ' + lockTag('keepsake') + '</button>' : G.res ? '<button class="btn gold sm" id="bRes">💌 Итоги для пары</button>' : G.net ? '<span class="muted" style="font-size:13px">Готовим итоги для пары…</span>' : '') +
+      '<button class="btn ghost sm" id="bXls">⬇ Excel ' + lockTag('excel') + '</button></div>';
   else if (q) {
     const okT = q.type === 'number' ? `✓ ${nums(q.num)} ${esc(q.unit || '')}` : q.type === 'couple' ? '💍 ответ даст пара' : '✓ ' + q.ok.map(i => L[i] + ' — ' + esc(q.opts[i].t || 'фото')).join(', ');
     cur = `<div class="k">Вопрос ${G.qi + 1} из ${G.qs.length}${G.phase === 'board' ? ' · таблица' : ''}${mult(G, G.qi) > 1 ? ' · ×2' : ''}</div><div class="q">${esc(q.text)}</div><div class="a">${okT}</div>`;
@@ -1708,6 +1746,8 @@ function renderLive() {
   $('cur').innerHTML = cur;
   $('cur').querySelectorAll('[data-cpl]').forEach(b => b.onclick = () => coupleAnswer('host', G.qi, +b.dataset.cpl));
   if ($('bRes')) $('bRes').onclick = resultsMenu;
+  if ($('bResL')) $('bResL').onclick = () => upsell('keepsake');
+  if ($('bXls')) $('bXls').onclick = () => can('excel') ? exportXls() : upsell('excel');
   $('plist').innerHTML = ranked().map((p, i) => `<div class="p"><span class="muted" style="width:20px">${i + 1}</span><span class="dot ${A[p.id] && G.phase === 'question' ? 'on' : p.net && G.net && !ONLINE[p.id] ? 'off' : ''}"></span><b>${esc(p.name)}${p.id === 'me' ? ' (вы)' : ''}${p.table ? ` <small>стол ${p.table}</small>` : ''}</b><span>${nums(p.score)}</span><button class="kick${sureKick === p.id ? ' sure' : ''}" data-kick="${esc(p.id)}" title="Убрать из игры">${sureKick === p.id ? 'Убрать?' : '✕'}</button></div>`).join('') || '<div class="p muted">Пока никого</div>';
   $('plist').querySelectorAll('[data-kick]').forEach(b => b.onclick = () => { const id = b.dataset.kick; if (sureKick === id) { sureKick = ''; kick(id); } else { sureKick = id; setTimeout(() => { if (sureKick === id) { sureKick = ''; render(); } }, 3000); render(); } });
   renderNetLine();
@@ -1783,8 +1823,8 @@ function bootHost() {
       if (G && G.net && ok) { attachNet(); lastCore = ''; lastPk = ''; netPush(true); }
       if (!G && edBuilt) paintForm();
       accLoad().then(() => {
-        if (G) { if (G.demo && unlocked()) { G.demo = false; publish(); } return; }
-        renderTop(); const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
+        if (G) { if (unlocked() && (G.demo || G.cap !== guestCap())) { G.demo = false; G.cap = guestCap(); G.capHit = 0; publish(); } return; }
+        renderTop(); if (edBuilt) { paintModes(); paintDesign(); paintForm(); paintQs(); const ac = document.querySelector('[data-add=couple]'); if (ac) ac.innerHTML = '+ Угадай ответ пары' + lockTag('couple'); } const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
         if (wsKey() && ok) {
           const pushed = ls('get', 'pbq_pushed') || {};
           if (!pushed[CFG.id]) { STORE.pushAll(); pushed[CFG.id] = 1; ls('set', 'pbq_pushed', pushed); } else { STORE.synced = 'ok'; paintSync(); }
@@ -1804,3 +1844,20 @@ function boot() {
 }
 boot();
 })();
+
+/* Выгрузка результатов в Excel (CSV с BOM) — тариф «Бизнес» */
+function exportXls() {
+  if (!G) return;
+  const rows = [['Место', 'Участник', G.s.play === 'tables' ? 'Стол' : '', 'Очки']];
+  ranked().forEach((p, i) => rows.push([i + 1, p.name, G.s.play === 'tables' ? (p.table || '') : '', p.score]));
+  rows.push([]); rows.push(['Вопрос', 'Правильный ответ', 'Ответили', 'Верно']);
+  G.qs.forEach((q, i) => {
+    if (i > G.qi) return;
+    const A = G.ans[i] || {}, ids = Object.keys(A), ok = okSet(G, i);
+    const good = q.type === 'number' ? ids.filter(id => +A[id].v === +q.num).length : ids.filter(id => ok.indexOf(A[id].o) >= 0).length;
+    rows.push([q.text || 'Вопрос ' + (i + 1), q.type === 'number' ? q.num + ' ' + (q.unit || '') : ok.map(k => (q.opts[k] || {}).t || '').join(', '), ids.length, good]);
+  });
+  const csv = '\ufeff' + rows.map(r => r.map(v => { v = v == null ? '' : String(v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = ((G.couple || G.title || 'квиз') + ' — итоги.csv').replace(/[\\/:*?"<>|]/g, ''); document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}

@@ -139,6 +139,17 @@ body.sorting,body.sorting *{-webkit-user-select:none;user-select:none;cursor:gra
 @media (hover:hover){.tip:hover .tipb{display:block}}
 .tip.on .tipb,.tip:focus-visible .tipb{display:block}
 .tipline{display:flex;align-items:center;gap:8px;margin-top:12px}
+.lk{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:2px 8px 2px 6px;border-radius:99px;border:1px solid rgba(255,255,255,.22);font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);vertical-align:middle;white-space:nowrap}
+.lk svg{width:11px;height:11px}
+.lk.sm{padding:0;border:0;margin-left:5px}
+.mode.locked{opacity:.62}
+.mode.locked:hover{opacity:.85}
+.ups{text-align:center;padding:6px 4px 2px}
+.ups .upi{width:52px;height:52px;border-radius:16px;margin:0 auto 12px;display:grid;place-items:center;background:var(--gsoft);color:var(--ink)}
+.ups h3{margin:0 0 8px;font-size:20px;line-height:1.25}
+.ups p{margin:0 0 10px;line-height:1.5}
+.ups .small{font-size:12.5px}
+.ups .links{justify-content:center;margin-top:14px}
 .qtools{margin-left:auto;display:flex;gap:4px}
 .ic{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--muted);display:grid;place-items:center;font-size:15px}
 .ic:hover{color:var(--ink);background:rgba(255,255,255,.06)}
@@ -529,6 +540,6 @@ body.solo-play #ph>.pv{flex:1}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=9"></script>
+<script src="quiz.js?v=10"></script>
 </body>
 </html>
