@@ -203,9 +203,11 @@ section{padding-top:80px}
 .dmqr img,.dmqr canvas{width:180px!important;height:180px!important}
 .dmacts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .dmacts .btn{flex:1;min-width:170px;padding:14px 12px;white-space:nowrap}
-.dmlink{background:none;border:0;color:var(--muted);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;margin-top:14px;padding:0}
+.dmlink{background:none;border:0;color:var(--muted);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:none;padding:0;display:inline-flex;align-items:center;gap:6px}
+.dmlink svg{width:15px;height:15px;flex:none}
+.dmrow{display:flex;justify-content:center;align-items:center;gap:8px 22px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.dmtime{display:inline-block;margin:0 auto 12px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:700;color:var(--muted)}
 .dmlink:hover{color:var(--ink)}
-.dmfoot{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:0}
 .dmwait{display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px 0}
 .dmspin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:#fff;animation:dmr 1s linear infinite}
 @keyframes dmr{to{transform:rotate(360deg)}}
@@ -338,8 +340,8 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       f1: '👥 от 20 гостей', f2: '⏱ 1–2 часа', f3: '📱 без приложений', f4: '🇷🇺 🇺🇸 два языка',
       play: 'Я гость — играть', hostBtn: 'Вход для ведущего', demo: 'Демо',
       dmH: 'Демо-игра', dmLoad: 'Создаём вашу личную демо-игру… это займёт несколько секунд.', dmErr: 'Не получилось создать демо: ',
-      dmP: 'Игра только ваша: до 3 телефонов, работает 24 часа. Отсканируйте QR с телефона — вы гость. Панель ведущего откройте на компьютере.',
-      dmAdmin: 'Панель ведущего ↗', dmGuest: 'Открыть как гость ↗', dmCopy: 'Скопировать ссылку для гостей', dmCopied: 'Ссылка скопирована', dmNew: 'Создать новую демо-игру', dmClose: 'Закрыть', dmBuy: 'Понравилось? Выберите тариф →',
+      dmP: 'Отсканируйте QR с телефона — вы гость. Панель ведущего откройте на компьютере.', dmLeft: 'До 3 телефонов · осталось ${m} мин',
+      dmAdmin: 'Панель ведущего ↗', dmGuest: 'Открыть как гость ↗', dmCopy: 'Ссылка для гостей', dmCopied: 'Скопировано', dmNew: 'Новая игра', dmClose: 'Закрыть', dmBuy: 'Тарифы',
       mName: 'Аня', mCode: 'твой код', mK: 'Миссия 3 · найди свою пару', mTask: 'Где-то в зале есть ещё один 🍩', mK2: 'Миссия 4 · знакомство', mTask2: 'Узнай у кого-то из старшего поколения его пожелание паре', mBtn: 'Засчитать',
       typesK: 'Как проходит игра', typesH: 'Четыре вида миссий',
       t1h: 'Знакомство', t1p: 'Найти нового человека — со стороны жениха или невесты — и узнать что-то интересное. Засчитывается по коду.',
@@ -361,8 +363,8 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       f1: '👥 20+ guests', f2: '⏱ 1–2 hours', f3: '📱 no apps', f4: '🇷🇺 🇺🇸 two languages',
       play: 'I’m a guest — play', hostBtn: 'Host sign-in', demo: 'Demo',
       dmH: 'Demo game', dmLoad: 'Creating your personal demo game… just a few seconds.', dmErr: 'Couldn’t create the demo: ',
-      dmP: 'This game is just yours: up to 3 phones, live for 24 hours. Scan the QR with your phone — you’re a guest. Open the host panel on your computer.',
-      dmAdmin: 'Host panel ↗', dmGuest: 'Open as a guest ↗', dmCopy: 'Copy guest link', dmCopied: 'Link copied', dmNew: 'Create a new demo game', dmClose: 'Close', dmBuy: 'Like it? Pick a plan →',
+      dmP: 'Scan the QR with your phone — you’re a guest. Open the host panel on your computer.', dmLeft: 'Up to 3 phones · ${m} min left',
+      dmAdmin: 'Host panel ↗', dmGuest: 'Open as a guest ↗', dmCopy: 'Guest link', dmCopied: 'Copied', dmNew: 'New game', dmClose: 'Close', dmBuy: 'Plans',
       mName: 'Anna', mCode: 'your code', mK: 'Mission 3 · find your match', mTask: 'Somewhere in the room is another 🍩', mK2: 'Mission 4 · new acquaintance', mTask2: 'Ask someone from the older generation for their wish for the couple', mBtn: 'Submit',
       typesK: 'How the game works', typesH: 'Four kinds of missions',
       t1h: 'New acquaintance', t1p: 'Meet someone new — from the bride’s or the groom’s side — and learn something about them. Confirmed by code.',
@@ -393,13 +395,14 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
   $('hostBtn').onclick = function () { location.href = '../host/'; };
   /* ---------- демо-игра: до 3 телефонов, на сутки ---------- */
   var PF = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec', DK = 'sm_demo_v1';
-  function demoGet() { try { var d = JSON.parse(localStorage.getItem(DK) || 'null'); if (d && d.exp > Date.now() + 3600000) return d; } catch (e) {} return null; }
+  function demoGet() { try { var d = JSON.parse(localStorage.getItem(DK) || 'null'); if (d && d.exp > Date.now() + 600000) return d; } catch (e) {} return null; }
   function demoShow(d) {
     var t = I[L], b = $('dmBody');
-    b.innerHTML = '<p>' + t.dmP + '</p><div class="dmqr" id="dmQr"></div><div class="dmacts"><a class="btn gold" target="_blank" rel="noopener" href="' + d.adminUrl + '">' + t.dmAdmin + '</a><a class="btn ghost" target="_blank" rel="noopener" href="' + d.playUrl + '">' + t.dmGuest + '</a></div>' +
-      '<button class="dmlink" id="dmCopy">' + t.dmCopy + '</button><div class="dmfoot"><button class="dmlink" id="dmNew">' + t.dmNew + '</button><a class="dmlink" href="../#pricing">' + t.dmBuy + '</a></div>';
+    var mins = Math.max(1, Math.round((d.exp - Date.now()) / 60000)), IC = { c: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', n: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>', p: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>' };
+    b.innerHTML = '<span class="dmtime">' + t.dmLeft.replace('${m}', mins) + '</span><p>' + t.dmP + '</p><div class="dmqr" id="dmQr"></div><div class="dmacts"><a class="btn gold" target="_blank" rel="noopener" href="' + d.adminUrl + '">' + t.dmAdmin + '</a><a class="btn ghost" target="_blank" rel="noopener" href="' + d.playUrl + '">' + t.dmGuest + '</a></div>' +
+      '<div class="dmrow"><button class="dmlink" id="dmCopy">' + IC.c + '<span>' + t.dmCopy + '</span></button><button class="dmlink" id="dmNew">' + IC.n + '<span>' + t.dmNew + '</span></button><a class="dmlink" href="../#pricing"><span>' + t.dmBuy + '</span>' + IC.p + '</a></div>';
     try { new QRCode($('dmQr'), { text: d.playUrl, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
-    $('dmCopy').onclick = function () { var el = this; (navigator.clipboard ? navigator.clipboard.writeText(d.playUrl) : Promise.reject()).then(function () { el.textContent = t.dmCopied; }, function () { window.prompt('', d.playUrl); }); };
+    $('dmCopy').onclick = function () { var el = this; (navigator.clipboard ? navigator.clipboard.writeText(d.playUrl) : Promise.reject()).then(function () { el.querySelector('span').textContent = t.dmCopied; }, function () { window.prompt('', d.playUrl); }); };
     $('dmNew').onclick = function () { try { localStorage.removeItem(DK); } catch (e) {} demoStart(); };
   }
   function demoStart() {
