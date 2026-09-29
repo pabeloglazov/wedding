@@ -84,6 +84,8 @@ section{padding-top:72px}
 .price-toggle button{border:0;background:none;color:var(--muted);font:inherit;font-weight:700;font-size:14px;padding:8px 16px;border-radius:999px;cursor:pointer}
 .price-toggle button.on{background:var(--ink);color:#131312}
 .price-toggle small{color:var(--gold);font-weight:800;margin-left:4px}
+.price-toggle button.on small{color:#131312;opacity:.55}
+.nav a{white-space:nowrap}
 .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
 .plan{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px;display:flex;flex-direction:column;position:relative}
 .plan.best{background:#222221;border-color:rgba(242,239,233,.45);box-shadow:0 30px 70px rgba(0,0,0,.35)}
@@ -98,6 +100,20 @@ section{padding-top:72px}
 .plan li{display:flex;gap:10px;font-size:14.5px;color:var(--text)}
 .plan li:before{content:"✦";color:var(--gold);flex:none}
 .plan .btn{width:100%}
+.toggles{display:flex;flex-direction:column;align-items:center;gap:10px;margin:0 0 28px}
+.toggles .price-toggle{margin:0}
+.price-toggle.sm button{font-size:13px;padding:6px 14px}
+.price-toggle.off{visibility:hidden}
+.plan .pr small{color:var(--muted);font-size:14px;font-weight:600}
+.plan .btn[aria-disabled=true]{opacity:.5;pointer-events:none}
+.agency{margin-top:20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;text-align:left;border:1px dashed rgba(255,255,255,.22);border-radius:24px;padding:22px 26px;background:rgba(255,255,255,.02)}
+.agency .at{flex:1;min-width:240px}
+.agency h3{font-family:var(--hf);font-stretch:125%;text-transform:uppercase;font-size:18px;font-weight:600;margin:0 0 8px;color:var(--ink)}
+.agency .chips2{display:flex;flex-wrap:wrap;gap:6px}
+.agency .chips2 span{border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:13px;color:var(--text)}
+.agency .ar{display:flex;align-items:center;gap:16px}
+.agency .ar b{font-size:15px;color:var(--muted);font-weight:600;white-space:nowrap}
+@media (max-width:640px){.agency{padding:20px}.agency .ar{width:100%;justify-content:space-between}}
 .pnote{text-align:center;color:var(--muted);font-size:13px;margin-top:18px}
 @media (max-width:980px){.plans{grid-template-columns:1fr;max-width:520px;margin:0 auto}}
 
@@ -151,28 +167,10 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
   <section id="pricing" style="text-align:center">
     <div class="k" data-t="prK"></div>
     <div class="h2" data-t="prH"></div>
-    <div class="price-toggle" id="ptog"><button data-p="m" class="on" data-t="prMonth"></button><button data-p="y"><span data-t="prYear"></span><small data-t="prSave"></small></button></div>
-    <div class="plans" style="text-align:left">
-      <div class="plan">
-        <h3 data-t="p1h"></h3><div class="for" data-t="p1f"></div>
-        <div class="pr"><b>$39</b><span data-t="p1u"></span></div><div class="sub" data-t="p1s"></div>
-        <ul><li data-t="p1a"></li><li data-t="p1b"></li><li data-t="p1c"></li><li data-t="p1d"></li></ul>
-        <a class="btn ghost" id="buyEvent" href="https://buy.stripe.com/6oU00j8bBeCS1xC4JW8IU0b" data-t="p1btn"></a>
-      </div>
-      <div class="plan best">
-        <span class="tag" data-t="p2tag"></span>
-        <h3 data-t="p2h"></h3><div class="for" data-t="p2f"></div>
-        <div class="pr"><b id="proPrice">$19</b><span id="proUnit"></span></div><div class="sub" id="proSub"></div>
-        <ul><li data-t="p2a"></li><li data-t="p2b"></li><li data-t="p2c"></li><li data-t="p2d"></li></ul>
-        <a class="btn gold" id="buyPro" href="https://buy.stripe.com/cNi8wP0J99iy5NSekw8IU09" data-t="p2btn"></a>
-      </div>
-      <div class="plan">
-        <h3 data-t="p3h"></h3><div class="for" data-t="p3f"></div>
-        <div class="pr"><b style="font-size:40px" data-t="p3p"></b></div><div class="sub" data-t="p3s"></div>
-        <ul><li data-t="p3a"></li><li data-t="p3b"></li><li data-t="p3c"></li><li data-t="p3d"></li></ul>
-        <a class="btn ghost" href="https://pabeloglazov.com" target="_blank" rel="noopener" data-t="p3btn"></a>
-      </div>
-    </div>
+    <div class="toggles"><div class="price-toggle" id="pmode"><button data-v="sub" class="on" data-t="prSub"></button><button data-v="event" data-t="prEvent"></button></div>
+    <div class="price-toggle sm" id="pper"><button data-v="m" class="on" data-t="prMonth"></button><button data-v="y"><span data-t="prYear"></span><small data-t="prSave"></small></button></div></div>
+    <div class="plans" id="plans" style="text-align:left"></div>
+    <div class="agency" id="agency"></div>
     <div class="pnote" data-t="prNote"></div>
   </section>
 </div>
@@ -192,7 +190,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       tags: ['meet', 'welcome', 'party'],
       ru: { t: 'Человеческое бинго', m: 'от 15 гостей · 30–60 минут', d: 'Карточка бинго из фактов о гостях: «был в трёх странах», «поёт в хоре». Найди людей, собери линию — и забирай приз.' },
       en: { t: 'Human Bingo', m: '15+ guests · 30–60 min', d: 'A bingo card made of guest facts: “has been to three countries”, “sings in a choir”. Find the people, complete a line and claim the prize.' } },
-    { id: 'couple-quiz', href: 'quiz/', status: 'live', emoji: ['💍', '❓'],
+    { id: 'couple-quiz', href: 'couple-quiz/', status: 'live', emoji: ['💍', '❓'],
       bg: 'linear-gradient(140deg,#262625 0%,#161615 100%)', blobs: ['#d4b2ab', '#f2efe9', '#c27078'],
       tags: ['wedding', 'quiz'],
       ru: { t: 'Квиз о паре', m: 'любое число гостей · 15–25 минут', d: 'Как хорошо гости знают жениха и невесту? Вопросы с фото на экране, ответы с телефонов по коду, команды и столы, «угадай ответ пары» и итоги на память. Демо — бесплатно до 5 телефонов.' },
@@ -207,7 +205,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       s1h: 'Выберите игру', s1p: 'Каждая игра решает свою задачу: знакомство, разогрев, общий смех или трогательные пожелания паре.',
       s2h: 'Настройте под событие', s2p: 'Имена пары, свои задания и факты о гостях, язык — русский или английский. Всё из удобной панели ведущего.',
       s3h: 'Гости играют по QR', s3p: 'Никаких приложений: камера телефона → код → игра. На проекторе — живая статистика, в конце — итоги и отчёт.',
-      prK: 'Тарифы', prH: 'Проводите игры сами', prMonth: 'Помесячно', prYear: 'За год', prSave: '−2 мес.',
+      prK: 'Тарифы', prH: 'Проводите игры сами', prSub: 'Подписка', prEvent: 'На одно мероприятие', buySub: 'Оформить подписку', buyEv: 'Купить на событие', soonBtn: 'Скоро', perM: 'в месяц', perE: 'разово', subM: 'Отмена в любой момент', subY: '${t} при оплате за год', subE: 'Доступ на 14 дней', agT: 'Агентствам и площадкам', agP: 'По запросу', agB: 'Написать', ag: ['Несколько ведущих в команде', 'Ваш логотип и цвета', 'Оплата по счёту', 'Помощь с запуском'], prMonth: 'Оплата за месяц', prYear: 'Оплата за год', prSave: '−20%',
       p1h: 'Одно событие', p1f: 'Свадьба, день рождения или корпоратив — один раз и без подписки', p1u: 'разово', p1s: 'Доступ на 14 дней',
       p1a: 'Все игры каталога', p1b: 'До 150 гостей', p1c: 'Экран для проектора и панель ведущего', p1d: 'Итоги, Excel и отчёт на память', p1btn: 'Купить на событие',
       p2tag: 'Для ведущих', p2h: 'Host Pro', p2f: 'Ведущим и организаторам, у которых события каждый месяц',
@@ -225,7 +223,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       s1h: 'Pick a game', s1p: 'Each game has its own job: breaking the ice, warming up the room, shared laughs or heartfelt wishes for the couple.',
       s2h: 'Make it yours', s2p: 'The couple’s names, your own missions and guest facts, Russian or English — all from a simple host panel.',
       s3h: 'Guests play via QR', s3p: 'No apps: phone camera → code → game. Live stats on the projector, results and a keepsake report at the end.',
-      prK: 'Pricing', prH: 'Run the games yourself', prMonth: 'Monthly', prYear: 'Yearly', prSave: '2 months free',
+      prK: 'Pricing', prH: 'Run the games yourself', prSub: 'Subscription', prEvent: 'One event', buySub: 'Subscribe', buyEv: 'Buy for my event', soonBtn: 'Coming soon', perM: 'per month', perE: 'one-time', subM: 'Cancel anytime', subY: '${t} billed yearly', subE: '14 days of access', agT: 'Agencies and venues', agP: 'Custom', agB: 'Get in touch', ag: ['Several hosts on one team', 'Your logo and colors', 'Pay by invoice', 'Launch support'], prMonth: 'Monthly', prYear: 'Yearly', prSave: '−20%',
       p1h: 'One event', p1f: 'A wedding, birthday or company party — once, no subscription', p1u: 'one-time', p1s: '14 days of access',
       p1a: 'Every game in the catalog', p1b: 'Up to 150 guests', p1c: 'Projector screen and host panel', p1d: 'Results, Excel and a keepsake report', p1btn: 'Buy for my event',
       p2tag: 'For hosts', p2h: 'Host Pro', p2f: 'For hosts and planners with events every month',
@@ -260,15 +258,44 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
   }
   document.getElementById('filters').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; F = b.dataset.f; paint(); };
   document.getElementById('lang').onclick = function () { L = L === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('pb_lang', L); } catch (e) {} paint(); };
-  var PER = 'm', LINKS = { m: 'https://buy.stripe.com/cNi8wP0J99iy5NSekw8IU09', y: 'https://buy.stripe.com/4gMcN5ezZ8eu7W02BO8IU0a' };
+  var PLANS = [
+    { id: 'basic', m: 15, y: 144, e: 19,
+      ru: { t: 'Базовый', f: 'Для домашних праздников и дней рождения', li: ['До 30 гостей в игре', 'Все игры каталога', 'Экран для проектора и пульт на телефоне', 'Стандартное оформление'] },
+      en: { t: 'Basic', f: 'For house parties and birthdays', li: ['Up to 30 guests per game', 'Every game in the catalog', 'Projector screen and phone remote', 'Standard look'] } },
+    { id: 'pro', m: 29, y: 276, e: 39, best: true,
+      ru: { tag: 'Для ведущих', t: 'Продвинутый', f: 'Для ведущих свадеб, корпоративов и больших праздников', li: ['До 150 гостей в игре', 'Команды, столы и «угадай ответ пары»', 'Свой цвет, фото пары и анкета для пары', 'Итоги на память и отчёт в PDF'] },
+      en: { tag: 'For hosts', t: 'Pro', f: 'For wedding, corporate and big-party hosts', li: ['Up to 150 guests per game', 'Teams, tables and “guess the couple”', 'Your color, couple photo and questionnaire', 'Keepsake results and PDF report'] } },
+    { id: 'biz', m: 59, y: 564, e: 79,
+      ru: { t: 'Бизнес', f: 'Для больших событий и частых проектов', li: ['До 500 гостей в игре', 'Всё из «Продвинутого»', 'Выгрузка результатов в Excel', 'Приоритетная поддержка'] },
+      en: { t: 'Business', f: 'For big events and busy calendars', li: ['Up to 500 guests per game', 'Everything in Pro', 'Results export to Excel', 'Priority support'] } }
+  ];
+  // Ссылки Stripe: заполняются после настройки продуктов
+  var LINKS = {
+    basic: { m: 'https://buy.stripe.com/bJe6oHbnNeCSccg1xK8IU0c', y: 'https://buy.stripe.com/14A5kDajJbqGeko90c8IU0d', e: 'https://buy.stripe.com/3cIbJ1bnNdyO7W090c8IU0e' },
+    pro: { m: 'https://buy.stripe.com/aFa6oHfE31Q66RWekw8IU0f', y: 'https://buy.stripe.com/dRm3cvfE3dyO2BG5O08IU0g', e: 'https://buy.stripe.com/6oU00j8bBeCS1xC4JW8IU0b' },
+    biz: { m: 'https://buy.stripe.com/7sYeVdbnNbqG3FKfoA8IU0h', y: 'https://buy.stripe.com/3cIaEX1NdfGW2BGb8k8IU0i', e: 'https://buy.stripe.com/8x29ATbnNgL00tyb8k8IU0j' }
+  };
+  var MODE = 'sub', PER = 'm';
+  function money(v) { return '$' + v; }
   function paintPro() {
-    var d = I[L]; document.getElementById('proPrice').textContent = PER === 'm' ? '$19' : '$190';
-    document.getElementById('proUnit').textContent = PER === 'm' ? d.proM : d.proY;
-    document.getElementById('proSub').textContent = PER === 'm' ? d.proMs : d.proYs;
-    document.getElementById('buyPro').href = LINKS[PER];
-    [].forEach.call(document.querySelectorAll('#ptog button'), function (b) { b.classList.toggle('on', b.dataset.p === PER); });
+    var d = I[L], k = MODE === 'event' ? 'e' : PER;
+    document.getElementById('plans').innerHTML = PLANS.map(function (p) {
+      var t = p[L], price = k === 'y' ? Math.round(p.y / 12) : p[k], link = LINKS[p.id][k];
+      var sub = k === 'e' ? d.subE : k === 'y' ? d.subY.replace('${t}', money(p.y)) : d.subM;
+      return '<div class="plan' + (p.best ? ' best' : '') + '">' + (p.best ? '<span class="tag">' + esc(t.tag) + '</span>' : '') +
+        '<h3>' + esc(t.t) + '</h3><div class="for">' + esc(t.f) + '</div>' +
+        '<div class="pr"><b>' + money(price) + '</b><span>' + (k === 'e' ? d.perE : d.perM) + '</span></div><div class="sub">' + esc(sub) + '</div>' +
+        '<ul>' + t.li.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
+        '<a class="btn ' + (p.best ? 'gold' : 'ghost') + '"' + (link ? ' href="' + link + '"' : ' aria-disabled="true"') + '>' + (link ? (k === 'e' ? d.buyEv : d.buySub) : d.soonBtn) + '</a></div>';
+    }).join('');
+    document.getElementById('agency').innerHTML = '<div class="at"><h3>' + esc(d.agT) + '</h3><div class="chips2">' + d.ag.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div></div>' +
+      '<div class="ar"><b>' + esc(d.agP) + '</b><a class="btn ghost" href="https://pabeloglazov.com" target="_blank" rel="noopener">' + esc(d.agB) + '</a></div>';
+    [].forEach.call(document.querySelectorAll('#pmode button'), function (b) { b.classList.toggle('on', b.dataset.v === MODE); });
+    [].forEach.call(document.querySelectorAll('#pper button'), function (b) { b.classList.toggle('on', b.dataset.v === PER); });
+    document.getElementById('pper').classList.toggle('off', MODE === 'event');
   }
-  document.getElementById('ptog').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; PER = b.dataset.p; paintPro(); };
+  document.getElementById('pmode').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; MODE = b.dataset.v; paintPro(); };
+  document.getElementById('pper').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; PER = b.dataset.v; paintPro(); };
   var basePaint = paint; paint = function () { basePaint(); paintPro(); };
   paint();
 })();
