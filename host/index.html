@@ -95,17 +95,17 @@ h1{font-size:clamp(28px,4.6vw,44px)!important}.ev h3{font-size:20px!important}.e
     ru: { brand: 'Белоглазов', k: 'Для ведущих', h: 'Мои игры', out: 'Выйти',
       loginLead: 'Введите почту, на которую оформляли покупку, — пришлём ссылку для входа.', email: 'Email', send: 'Прислать ссылку',
       sent: 'Если такая покупка есть, письмо уже летит. Проверьте почту и папку «Спам».', loading: 'Загружаем…',
-      pro: 'Host Pro', proOff: 'Подписка неактивна', event: 'Одно событие', newEv: '+ Новая игра', creating: 'Создаём…',
+      pro: 'Подписка', proOff: 'Подписка неактивна', event: 'Одно мероприятие', newEv: '+ Новая игра', creating: 'Создаём…',
       admin: 'Панель ведущего', quizT: 'Квиз о паре', quizD: 'Редактор вопросов, запуск по коду и итоги. Квизы сохраняются в аккаунте.', quizB: 'Открыть квиз', guests: 'Ссылка для гостей', copied: 'Ссылка скопирована', created: 'Создана', until: 'до', guestsMax: 'до {n} гостей',
       noCouple: 'Секретная миссия', empty: 'Игр пока нет.', buy: 'Тарифы', expired: 'срок закончился', err: 'Ошибка: ',
-      proLead: 'Создавайте игру под каждое событие — все они будут здесь.', evLead: 'Ваша игра — ниже. Для нескольких событий подойдёт Host Pro.', getPro: 'Перейти на Host Pro' },
+      proLead: 'Создавайте игру под каждое событие — все они будут здесь.', evLead: 'Ваша игра — ниже. Для нескольких событий удобнее подписка.', getPro: 'Оформить подписку' },
     en: { brand: 'Beloglazov', k: 'For hosts', h: 'My games', out: 'Sign out',
       loginLead: 'Enter the email you used at checkout — we’ll send you a sign-in link.', email: 'Email', send: 'Send link',
       sent: 'If there’s a purchase with this email, the message is on its way. Check your inbox and spam.', loading: 'Loading…',
-      pro: 'Host Pro', proOff: 'Subscription inactive', event: 'One event', newEv: '+ New game', creating: 'Creating…',
+      pro: 'Subscription', proOff: 'Subscription inactive', event: 'One event', newEv: '+ New game', creating: 'Creating…',
       admin: 'Host panel', quizT: 'Couple Quiz', quizD: 'Question editor, code-based launch and results. Quizzes are saved to your account.', quizB: 'Open the quiz', guests: 'Guest link', copied: 'Link copied', created: 'Created', until: 'until', guestsMax: 'up to {n} guests',
       noCouple: 'Secret Mission', empty: 'No games yet.', buy: 'Pricing', expired: 'expired', err: 'Error: ',
-      proLead: 'Create a game for every event — they’ll all live here.', evLead: 'Your game is below. For several events, Host Pro is the better fit.', getPro: 'Upgrade to Host Pro' }
+      proLead: 'Create a game for every event — they’ll all live here.', evLead: 'Your game is below. For several events, a subscription is the better fit.', getPro: 'Subscribe' }
   };
   var L = (function () { try { var s = localStorage.getItem('pb_lang'); if (s === 'ru' || s === 'en') return s; } catch (e) {} return /^(ru|uk|be|kk)/i.test(navigator.language || 'ru') ? 'ru' : 'en'; })();
   var TK = 'pb_host_token', token = null, data = null;
@@ -148,7 +148,7 @@ h1{font-size:clamp(28px,4.6vw,44px)!important}.ev h3{font-size:20px!important}.e
   function render() {
     if (!data) { $('view').innerHTML = '<p class="lead">' + esc(T('loading')) + '</p>'; return; }
     var pro = data.plan === 'pro';
-    var h = '<div class="bar"><span class="plan' + (pro && !data.active ? ' off' : '') + '">' + esc(pro ? (data.active ? T('pro') : T('proOff')) : T('event')) + '</span>' +
+    var h = '<div class="bar"><span class="plan' + (pro && !data.active ? ' off' : '') + '">' + esc(pro ? (data.active ? T('pro') + (data.tierName ? ' · ' + data.tierName : '') : T('proOff')) : T('event')) + '</span>' +
       '<span style="color:var(--muted);font-size:14px">' + esc(data.email) + '</span><span class="sp" style="flex:1"></span>' +
       (pro && data.active ? '<button class="btn gold" id="newEv">' + esc(T('newEv')) + '</button>' : '<a class="btn ghost" href="../#pricing">' + esc(pro ? T('buy') : T('getPro')) + '</a>') + '</div>' +
       '<p class="lead">' + esc(pro ? T('proLead') : T('evLead')) + '</p>';
