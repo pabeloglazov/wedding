@@ -268,7 +268,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
 .bul li i{font-style:normal;font-size:24px;flex:none;width:34px}
 .bul li b{display:block;color:var(--ink);font-size:16px;margin-bottom:2px}
 .bul li span{color:var(--muted);font-size:14px}
-.faq{display:grid;gap:10px;max-width:820px}
+.faq{display:grid;gap:10px}
 .faq details{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 20px}
 .faq summary{cursor:pointer;font-weight:700;color:var(--ink);list-style:none;display:flex;justify-content:space-between;gap:12px}
 .faq summary::-webkit-details-marker{display:none}
@@ -296,7 +296,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       <h1 data-t="title"></h1>
       <p class="lead" data-t="lead"></p>
       <div class="facts"><span data-t="f1"></span><span data-t="f2"></span><span data-t="f3"></span><span data-t="f4"></span></div>
-      <div class="cta"><a class="btn gold" href="../quiz/" data-t="make"></a><a class="btn ghost" href="../q/" data-t="play"></a></div>
+      <div class="cta"><a class="btn gold" href="../quiz/" data-t="make"></a><a class="btn ghost" href="../q/" data-t="play"></a><a class="btn ghost" href="../quiz/?demo=1" data-t="demo"></a></div>
     </div>
     <div class="phone"><div class="scr qz">
       <div class="row"><div class="nm" data-t="mName"></div><div class="pts"><b>1 240</b> <span data-t="mPts"></span></div></div>
@@ -392,7 +392,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
     ru: { brandSub: 'игры для праздников', all: '← Все игры', kicker: 'Квиз для свадьбы и праздника', title: 'Квиз о паре',
       lead: 'Как хорошо гости знают жениха и невесту? Вопросы с фото — на большом экране, ответы — со своих телефонов по коду. Живая таблица, команды и столы, а в финале — пьедестал и итоги на память.',
       f1: '👥 до 500 гостей', f2: '⏱ 15–25 минут', f3: '📱 без приложений', f4: '🔢 вход по коду или QR',
-      make: 'Собрать квиз', play: 'Я гость — ввести код',
+      make: 'Собрать квиз', play: 'Я гость — ввести код', demo: 'Демо',
       mName: 'Оля', mPts: 'очков', mK: 'Вопрос 3 из 8', mQ: 'Где Максим сделал предложение?', mA: 'На берегу океана', mB: 'В горах', mC: 'Дома за ужином', mD: 'На крыше', mNote: 'Ответ принят · можно изменить',
       howK: 'Как это работает', howH: 'Четыре шага до квиза',
       s1h: 'Соберите вопросы', s1p: 'За 5 минут в редакторе — или отправьте паре анкету, и квиз соберётся из их ответов.',
@@ -417,16 +417,16 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       faqK: 'Вопросы', faqH: 'Частые вопросы',
       faq: [['Нужно ли гостям что-то устанавливать?', 'Нет. Гости сканируют QR или открывают game.pabeloglazov.com/q и вводят код — всё работает в браузере телефона.'],
         ['Что если в зале слабый интернет?', 'Квиз быстрый и лёгкий: ответы сохраняются, даже если связь моргнула, а время ответа считается честно. Можно вывести на экран QR-код Wi-Fi зала.'],
-        ['Сколько гостей может играть?', 'Зависит от тарифа: до 30, 150 или 500 телефонов. В демо — до 5, чтобы попробовать всё бесплатно.'],
+        ['Сколько гостей может играть?', 'Зависит от тарифа: до 30, 150 или 500 телефонов. В демо — до 3, чтобы попробовать всё бесплатно.'],
         ['Нужен ли ведущий?', 'Нет — квизом легко управлять самим с ноутбука или телефона. Но если хотите, я проведу его на вашем празднике.']],
-      finH: 'Проведите квиз на своём празднике', finP: 'Попробуйте бесплатно — в демо в игру войдут до 5 телефонов. Понравится — выберите тариф.',
+      finH: 'Проведите квиз на своём празднике', finP: 'Попробуйте бесплатно — в демо в игру войдут до 3 телефонов. Понравится — выберите тариф.',
       pr1: 'Базовый · <b>от $19</b>', pr2: 'Продвинутый · <b>от $39</b>', pr3: 'Бизнес · <b>от $79</b>',
       finTry: 'Попробовать бесплатно', finPlans: 'Все тарифы', finHost: 'Позвать ведущего',
       foot: '© Павел Белоглазов · ведущий и автор игр' },
     en: { brandSub: 'games for celebrations', all: '← All games', kicker: 'A quiz for weddings and parties', title: 'Couple Quiz',
       lead: 'How well do the guests know the bride and groom? Photo questions on the big screen, answers from their own phones by code. A live leaderboard, teams and tables, a podium finale and a keepsake results page.',
       f1: '👥 up to 500 guests', f2: '⏱ 15–25 min', f3: '📱 no apps', f4: '🔢 join by code or QR',
-      make: 'Build a quiz', play: 'I’m a guest — enter code',
+      make: 'Build a quiz', play: 'I’m a guest — enter code', demo: 'Demo',
       mName: 'Olya', mPts: 'pts', mK: 'Question 3 of 8', mQ: 'Where did Max propose?', mA: 'On the beach', mB: 'In the mountains', mC: 'At home, over dinner', mD: 'On a rooftop', mNote: 'Answer saved · you can change it',
       howK: 'How it works', howH: 'Four steps to a quiz',
       s1h: 'Add questions', s1p: 'Five minutes in the editor — or send the couple a questionnaire and the quiz builds itself from their answers.',
@@ -451,9 +451,9 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       faqK: 'Questions', faqH: 'FAQ',
       faq: [['Do guests need to install anything?', 'No. Guests scan the QR or open game.pabeloglazov.com/q and enter the code — it all runs in the phone browser.'],
         ['What if the Wi-Fi is weak?', 'The quiz is light and fast: answers are kept even if the connection blinks, and answer time is counted fairly. You can also show the venue Wi-Fi QR on screen.'],
-        ['How many guests can play?', 'Depends on the plan: up to 30, 150 or 500 phones. The demo allows 5 so you can try everything for free.'],
+        ['How many guests can play?', 'Depends on the plan: up to 30, 150 or 500 phones. The demo allows 3 so you can try everything for free.'],
         ['Do I need a host?', 'No — the quiz is easy to run yourself from a laptop or phone. But if you like, I’ll host it at your event.']],
-      finH: 'Run the quiz at your celebration', finP: 'Try it free — the demo lets up to 5 phones in. Like it? Pick a plan.',
+      finH: 'Run the quiz at your celebration', finP: 'Try it free — the demo lets up to 3 phones in. Like it? Pick a plan.',
       pr1: 'Basic · <b>from $19</b>', pr2: 'Pro · <b>from $39</b>', pr3: 'Business · <b>from $79</b>',
       finTry: 'Try it free', finPlans: 'All plans', finHost: 'Book a host',
       foot: '© Pavel Beloglazov · host and game author' }
@@ -464,7 +464,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
     var d = I[L]; document.documentElement.lang = L;
     [].forEach.call(document.querySelectorAll('[data-t]'), function (el) { el.textContent = d[el.dataset.t]; });
     [].forEach.call(document.querySelectorAll('[data-h]'), function (el) { el.innerHTML = d[el.dataset.h]; });
-    document.getElementById('faq').innerHTML = d.faq.map(function (x, i) { return '<details' + (i ? '' : ' open') + '><summary>' + esc(x[0]) + '</summary><p>' + esc(x[1]) + '</p></details>'; }).join('');
+    document.getElementById('faq').innerHTML = d.faq.map(function (x, i) { return '<details><summary>' + esc(x[0]) + '</summary><p>' + esc(x[1]) + '</p></details>'; }).join('');
     document.getElementById('lang').textContent = L === 'ru' ? 'EN' : 'RU';
     document.title = (L === 'ru' ? 'Квиз о паре' : 'Couple Quiz') + ' · Beloglazov Event';
   }
