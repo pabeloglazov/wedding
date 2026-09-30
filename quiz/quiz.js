@@ -44,10 +44,11 @@ const TYPES = { choice: 'Обычный', couple: 'Угадай ответ па�
 
 function coupleNames(s) { const p = String(s || '').split(/\s+(?:и|&|and|\+)\s+/i).map(x => x.trim()).filter(Boolean); return [p[0] || 'Жених', p[1] || 'Невеста']; }
 const O = t => ({ t: t || '' });
+const EMOFACE = i => { const e = [["👩", "#e07a5f"], ["👨", "#3d9a8b"], ["👩‍🦰", "#d9a441"], ["🧔", "#7b6fd6"], ["👱‍♀️", "#c27078"], ["👨‍🦱", "#6f9fc6"], ["👩‍🦱", "#a7ae86"], ["👱‍♂️", "#b98a6e"]][i]; return (function (e, c) { return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g" cx="50%" cy="30%" r="80%"><stop offset="0" stop-color="' + c + '"/><stop offset="1" stop-color="#161615"/></radialGradient></defs><rect width="100" height="100" fill="url(#g)"/><text x="50" y="54" font-size="60" text-anchor="middle" dominant-baseline="middle">' + e + '</text></svg>').replace(/\(/g, '%28').replace(/\)/g, '%29'); })(e[0], e[1]); };
 function sampleFacts() {
   return [['Оля', 'Прыгала с парашютом на своё 30-летие'], ['Дима', 'Целое лето работал аниматором в Турции'], ['Катя', 'Знает жениха с первого класса — сидели за одной партой'],
     ['Игорь', 'Выиграл конкурс по поеданию пельменей'], ['Маша', 'Побывала на концертах в 12 странах'], ['Саша', 'Сам построил баню на даче'],
-    ['Вера', 'Играет на арфе'], ['Паша', 'Однажды проспал собственный выпускной']].map(([name, fact], i) => ({ id: uid(), name, fact, img: 'u:https://images.unsplash.com/photo-' + ['1494790108377-be9c29b29330', '1500648767791-00dcc994a43e', '1580489944761-15a19d654956', '1507003211169-0a1dd7228f2d', '1544005313-94ddf0286df2', '1539571696357-5a69c17a67c6', '1438761681033-6461ffad8d80', '1506794778202-cad84cf45f1d'][i] + '?w=400&h=400&fit=crop&crop=faces&q=75&auto=format' }));
+    ['Вера', 'Играет на арфе'], ['Паша', 'Однажды проспал собственный выпускной']].map(([name, fact], i) => ({ id: uid(), name, fact, img: 'u:' + EMOFACE(i) }));
 }
 const normFact = f => ({ id: (f && f.id) || uid(), name: String((f && f.name) || ''), fact: String((f && f.fact) || ''), img: (f && f.img) || '' });
 const factOk = f => f && f.name.trim() && f.fact.trim();

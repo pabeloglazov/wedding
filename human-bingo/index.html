@@ -656,8 +656,9 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   /* люди и приметы */
-  var PHM = {"olya": "1494790108377-be9c29b29330", "dima": "1500648767791-00dcc994a43e", "katya": "1580489944761-15a19d654956", "igor": "1507003211169-0a1dd7228f2d", "masha": "1544005313-94ddf0286df2", "sasha": "1539571696357-5a69c17a67c6", "vera": "1438761681033-6461ffad8d80", "pasha": "1506794778202-cad84cf45f1d"};
-  var PH = function (k) { return 'https://images.unsplash.com/photo-' + PHM[k] + '?w=400&h=400&fit=crop&crop=faces&q=75&auto=format'; };
+  var PHM = {"olya": ["👩", "#e07a5f"], "dima": ["👨", "#3d9a8b"], "katya": ["👩‍🦰", "#d9a441"], "igor": ["🧔", "#7b6fd6"], "masha": ["👱‍♀️", "#c27078"], "sasha": ["👨‍🦱", "#6f9fc6"], "vera": ["👩‍🦱", "#a7ae86"], "pasha": ["👱‍♂️", "#b98a6e"]};
+  var EMO = function (e, c) { return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g" cx="50%" cy="30%" r="80%"><stop offset="0" stop-color="' + c + '"/><stop offset="1" stop-color="#161615"/></radialGradient></defs><rect width="100" height="100" fill="url(#g)"/><text x="50" y="54" font-size="60" text-anchor="middle" dominant-baseline="middle">' + e + '</text></svg>').replace(/\(/g, '%28').replace(/\)/g, '%29'); };
+  var PH = function (k) { return EMO(PHM[k][0], PHM[k][1]); };
   var PPL = { olya: ['Оля', 'Olga'], dima: ['Дима', 'Dima'], katya: ['Катя', 'Kate'], igor: ['Игорь', 'Igor'], masha: ['Маша', 'Masha'], sasha: ['Саша', 'Sasha'], vera: ['Вера', 'Vera'], pasha: ['Паша', 'Pasha'] };
   var nm = function (k) { return PPL[k][L === 'ru' ? 0 : 1]; };
   var TR = {
