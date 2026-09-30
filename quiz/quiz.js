@@ -47,10 +47,13 @@ const O = t => ({ t: t || '' });
 function sampleFacts() {
   return [['Оля', 'Прыгала с парашютом на своё 30-летие'], ['Дима', 'Целое лето работал аниматором в Турции'], ['Катя', 'Знает жениха с первого класса — сидели за одной партой'],
     ['Игорь', 'Выиграл конкурс по поеданию пельменей'], ['Маша', 'Побывала на концертах в 12 странах'], ['Саша', 'Сам построил баню на даче'],
-    ['Вера', 'Играет на арфе'], ['Паша', 'Однажды проспал собственный выпускной']].map(([name, fact]) => ({ id: uid(), name, fact, img: '' }));
+    ['Вера', 'Играет на арфе'], ['Паша', 'Однажды проспал собственный выпускной']].map(([name, fact], i) => ({ id: uid(), name, fact, img: 'u:https://images.unsplash.com/photo-' + ['1494790108377-be9c29b29330', '1500648767791-00dcc994a43e', '1580489944761-15a19d654956', '1507003211169-0a1dd7228f2d', '1544005313-94ddf0286df2', '1539571696357-5a69c17a67c6', '1438761681033-6461ffad8d80', '1506794778202-cad84cf45f1d'][i] + '?w=400&h=400&fit=crop&crop=faces&q=75&auto=format' }));
 }
 const normFact = f => ({ id: (f && f.id) || uid(), name: String((f && f.name) || ''), fact: String((f && f.fact) || ''), img: (f && f.img) || '' });
 const factOk = f => f && f.name.trim() && f.fact.trim();
+const SHOWS = { stage: { ic: '🎤', t: 'Стендап', d: 'Ведущий показывает факт, зал угадывает вслух — и открываются фото и имя. Без телефонов.' }, v2: { ic: '✌️', t: 'Угадай из двух', d: 'Гости выбирают на телефонах одного из двух гостей. Лидеры — в конце.' }, v4: { ic: '🖐', t: 'Угадай из четырёх', d: 'Четыре лица на выбор — сложнее и азартнее. Лидеры — в конце.' } };
+const isStage = g => !!(g && g.s && g.s.show === 'stage');
+const initial = n => (String(n || '?').trim().charAt(0) || '?').toUpperCase();
 function sampleQs(couple) {
   const [g, b] = coupleNames(couple);
   return [
@@ -128,12 +131,12 @@ const IMG = (() => {
     try { const rq = store('readonly').openCursor(); rq.onsuccess = () => { const c = rq.result; if (c) { cache[c.key] = c.value; c.continue(); } else res(); }; rq.onerror = () => res(); } catch (e) { res(); }
   })).then(() => { try { Object.keys(cache).forEach(k => { if (localStorage.getItem('pbq_img_' + k)) { put(cache[k], k); localStorage.removeItem('pbq_img_' + k); } }); } catch (e) {} });
   function put(data, id) { id = id || 'i' + uid(10); cache[id] = data; open.then(() => { if (db) try { store('readwrite').put(data, id); } catch (e) {} }); return id; }
-  function get(id) { return id ? (cache[id] || '') : ''; }
+  function get(id) { return !id ? '' : id.slice(0, 2) === 'u:' ? id.slice(2) : (cache[id] || ''); }
   function mem(id, data) { cache[id] = data; }
   function del(id) { delete cache[id]; open.then(() => { if (db) try { store('readwrite').delete(id); } catch (e) {} }); }
   const pend = {};
   function fetchNet(path, id, cb) {
-    if (!id || cache[id] || pend[id] || !NET.ok) return;
+    if (!id || id.slice(0, 2) === 'u:' || cache[id] || pend[id] || !NET.ok) return;
     pend[id] = 1;
     const r = NET.db.ref(path);
     const h = s => { const v = s.val(); if (!v) return; r.off('value', h); cache[id] = v; delete pend[id]; if (cb) cb(id); };
@@ -253,7 +256,7 @@ const optFilled = o => !!(o && (o.t || '').trim());
 function normQ(q) {
   q = Object.assign({ id: uid(), type: 'choice', text: '', img: '', opts: [], ok: [], x2: false }, q || {});
   if (!TYPES[q.type]) q.type = 'choice';
-  q.opts = (q.opts || []).slice(0, 4).map(o => typeof o === 'string' ? O(o) : O(o && o.t));
+  q.opts = (q.opts || []).slice(0, 4).map(o => typeof o === 'string' ? O(o) : Object.assign(O(o && o.t), o && o.img ? { img: o.img } : {}));
   delete q.oimg;
   if (typeof q.ok === 'number') q.ok = [q.ok];
   q.ok = (q.ok || []).filter(i => i >= 0 && i < q.opts.length);
@@ -268,7 +271,7 @@ function normQ(q) {
 function defaultCfg(blank) {
   const couple = 'Максим и Алина';
   return { id: uid(10), title: GAME === 'fact' ? 'Интересный факт' : blank ? 'Новый квиз' : 'Квиз о паре', couple, mode: 'wedding', facts: GAME === 'fact' && !blank ? sampleFacts() : [], sampleF: GAME === 'fact' && !blank ? 1 : 0,
-    s: Object.assign({}, MODES.wedding.s, { play: 'solo', tables: 10, lastX2: true, sound: true }), bots: false,
+    s: Object.assign({}, MODES.wedding.s, { play: 'solo', tables: 10, lastX2: true, sound: true }, GAME === 'fact' ? { show: 'stage' } : {}), bots: false,
     accent: '#f2efe9', photo: '', wifi: { ssid: '', pass: '' }, form: '',
     qs: blank ? [normQ({ opts: [O(), O(), O(), O()] })] : sampleQs(couple), updated: Date.now() };
 }
@@ -286,21 +289,23 @@ function normCfg(c) {
   c.accent = validColor(c.accent); c.wifi = c.wifi || { ssid: '', pass: '' };
   c.id = c.id || uid(10); c.title = c.title || GNAME; c.couple = c.couple || '';
   c.facts = (c.facts || []).map(normFact);
+  if (GAME === 'fact') { if (!SHOWS[c.s.show]) c.s.show = 'stage'; c.s.play = 'solo'; }
   if (!MODES[c.mode]) c.mode = 'wedding';
   c.bots = !!c.bots;
   return c;
 }
 let CFG = normCfg(ls('get', KEY_CFG) || (GAME === 'quiz' && ls('get', 'pbq_cfg_v1') ? Object.assign(ls('get', 'pbq_cfg_v1'), { bots: false }) : null));
 /* «Интересный факт»: из фактов о гостях собираем вопросы «Кто это?» */
-function factsToQs(facts) {
-  const ok = (facts || []).filter(factOk), names = [...new Set(ok.map(f => f.name.trim()))];
+function factsToQs(facts, show) {
+  const ok = (facts || []).filter(factOk), names = [...new Set(ok.map(f => f.name.trim()))], n = show === 'v4' ? 4 : 2, ph = {};
+  ok.forEach(f => { const k = f.name.trim(); if (f.img && !ph[k]) ph[k] = f.img; });
   if (names.length < 2) return [];
   return ok.map(f => {
     const hero = f.name.trim(), others = names.filter(n => n !== hero);
     for (let i = others.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [others[i], others[j]] = [others[j], others[i]]; }
-    const all = [hero].concat(others.slice(0, 3));
+    const all = [hero].concat(others.slice(0, n - 1));
     for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
-    return normQ({ type: 'choice', text: f.fact.trim(), opts: all.map(t => O(t)), ok: [all.indexOf(hero)], fact: 1, hp: f.img || '' });
+    return normQ({ type: 'choice', text: f.fact.trim(), opts: all.map(t => ({ t, img: t === hero ? (f.img || ph[t] || '') : (ph[t] || '') })), ok: [all.indexOf(hero)], fact: 1, hp: f.img || ph[hero] || '' });
   });
 }
 function validQ(q) {
@@ -362,12 +367,13 @@ const isLastQ = (g, i) => i === g.qs.length - 1;
 const mult = (g, i) => (g.qs[i].x2 || (g.s.lastX2 && isLastQ(g, i) && g.qs.length > 2)) ? 2 : 1;
 const qTime = (g, q) => (q.time || (q.type === 'number' ? Math.max(g.s.time, 30) : g.s.time)) * 1000;
 function newGame() {
-  const qs = (GAME === 'fact' ? factsToQs(CFG.facts) : CFG.qs).filter(validQ).map(q => JSON.parse(JSON.stringify(q)));
+  const qs = (GAME === 'fact' ? factsToQs(CFG.facts, CFG.s.show) : CFG.qs).filter(validQ).map(q => JSON.parse(JSON.stringify(q)));
   endNet();
   G = { id: uid(12), net: NET.ok, ts: Date.now(), code: '', rkey: uid(20), title: CFG.title, couple: CFG.couple, accent: CFG.accent, photo: CFG.photo || '',
     wifi: CFG.wifi && CFG.wifi.ssid ? { ssid: CFG.wifi.ssid, pass: CFG.wifi.pass || '' } : null, mode: CFG.mode, s: Object.assign({}, CFG.s), qs,
     phase: 'lobby', qi: -1, ii: 0, t0: 0, t1: 0, players: {}, ans: {}, cpl: {}, prevRank: {}, banned: {}, final: false, ver: 0,
-    demo: !unlocked(), cap: guestCap(), res: '', bots: !!CFG.bots && CFG.s.play !== 'teams' };
+    demo: !unlocked(), cap: guestCap(), res: '', bots: !!CFG.bots && CFG.s.play !== 'teams' && !(GAME === 'fact' && CFG.s.show === 'stage') };
+  if (GAME === 'fact') { G.s.every = 999; G.s.lastX2 = false; }
   if (G.demo) { let de = ls('get', 'pbq_demo_end'); if (!de || de < Date.now()) de = Date.now() + DEMO_MIN * 60000; ls('set', 'pbq_demo_end', de); G.demoEnd = de; }
   if (G.net) startNet();
   publish();
@@ -433,6 +439,7 @@ function startQuestion(i) {
   G.phase = 'question'; G.qi = i;
   const q = G.qs[i], dur = qTime(G, q);
   G.t0 = now() + 1500; G.t1 = G.t0 + dur;
+  if (isStage(G)) { G.t0 = now(); G.t1 = G.t0 + 864e5; }
   G.ans[i] = {};
   Object.keys(G.players).forEach(id => { const p = G.players[id]; p.gain = 0; });
   if (G.bots) {
@@ -514,10 +521,11 @@ function entities(g) {
 }
 function next() {
   if (!G) return;
-  if (G.phase === 'lobby') { if (Object.keys(G.players).length) startQuestion(0); return; }
+  if (G.phase === 'lobby') { if (Object.keys(G.players).length || isStage(G)) startQuestion(0); return; }
   if (G.phase === 'intro') { if (G.ii < entities(G).length - 1) { G.ii++; publish(); } else startQuestion(0); return; }
   if (G.phase === 'question') { reveal(); return; }
   if (G.phase === 'reveal') {
+    if (isLastQ(G, G.qi) && isStage(G)) { G.phase = 'final'; G.final = true; G.fts = now(); publish(); return; }
     if (isLastQ(G, G.qi)) { G.phase = 'board'; G.final = true; publish(); return; }
     if ((G.qi + 1) % G.s.every === 0) { G.phase = 'board'; publish(); return; }
     startQuestion(G.qi + 1); return;
@@ -539,9 +547,16 @@ function tableRank(g) {
   Object.keys(g.players).forEach(id => { const p = g.players[id]; if (!p.table) return; const x = t[p.table] = t[p.table] || { table: p.table, name: 'Стол ' + p.table, sum: 0, n: 0 }; x.sum += p.score; x.n++; });
   return Object.values(t).map(x => Object.assign(x, { score: Math.round(x.sum / x.n) })).sort((a, b) => b.score - a.score || a.table - b.table);
 }
-function nextLabel(g) {
+function nextLabel(g) { const r = nextLabel0(g); return g && g.qs && g.qs[0] && g.qs[0].fact ? r.map(x => x.replace(/вопрос/g, 'факт')) : r; }
+function nextLabel0(g) {
   if (!g) return ['Запустить', ''];
   const n = Object.keys(g.players).length, grp = g.s.play === 'teams' ? plural(n, 'команда', 'команды', 'команд') : plural(n, 'гость', 'гостя', 'гостей');
+  if (isStage(g)) switch (g.phase) {
+    case 'lobby': return ['Начать показ', g.qs.length + ' ' + plural(g.qs.length, 'факт', 'факта', 'фактов')];
+    case 'question': return ['Показать, кто это', 'факт ' + (g.qi + 1) + ' из ' + g.qs.length];
+    case 'reveal': return isLastQ(g, g.qi) ? ['Финал — все герои', 'последний факт'] : ['Следующий факт', (g.qi + 2) + ' из ' + g.qs.length];
+    case 'final': return ['Показ окончен', ''];
+  }
   switch (g.phase) {
     case 'lobby': return [n ? 'Начать игру' : 'Ждём гостей…', n + ' ' + grp + ' в игре'];
     case 'intro': { const E = entities(g); return g.ii < E.length - 1 ? ['Следующая ' + (g.s.play === 'teams' ? 'команда' : 'стол'), (g.ii + 2) + ' из ' + E.length] : ['Начать игру', 'все представлены']; }
@@ -649,7 +664,7 @@ function endNet() {
 }
 function uploadImgs(gid) {
   const ids = [];
-  const add = id => { if (id && ids.indexOf(id) < 0 && IMG.get(id)) ids.push(id); };
+  const add = id => { if (id && id.slice(0, 2) !== 'u:' && ids.indexOf(id) < 0 && IMG.get(id)) ids.push(id); };
   add(G.photo); G.qs.forEach(q => { add(q.img); add(q.hp); (q.opts || []).forEach(o => add(o.img)); });
   ids.reduce((pr, id) => pr.then(() => { const d = IMG.get(id); return IMG.shrink(d, 900, .72).then(ph => { if (!G || G.id !== gid) return; return gref(gid, 'img/' + id).set({ p: ph || d, s: d }); }); }), Promise.resolve()).catch(e => console.warn('quiz img', e));
 }
@@ -658,7 +673,7 @@ function coreOf(g) {
   const E = g.phase === 'intro' ? entities(g) : [], e = E[g.ii];
   const c = (g.cpl && g.cpl[g.qi]) || {};
   return { id: g.id, phase: g.phase, qi: g.qi, ii: g.ii, t0: g.t0, t1: g.t1, nq: g.qs.length, title: g.title || '', couple: g.couple || '', accent: g.accent || '', final: !!g.final, code: g.code || '', res: g.res || '', demo: !!g.demo,
-    s: { change: !!g.s.change, play: g.s.play, speed: !!g.s.speed, tables: g.s.tables || 10 },
+    s: { change: !!g.s.change, play: g.s.play, speed: !!g.s.speed, tables: g.s.tables || 10, show: g.s.show || '' },
     ok: rev && q ? (q.type === 'number' ? { num: +q.num } : { set: okSet(g, g.qi), cpl: q.type === 'couple' ? { groom: c.groom == null ? -1 : c.groom, bride: c.bride == null ? -1 : c.bride, host: c.host == null ? -1 : c.host } : null }) : null,
     n: g.phase === 'lobby' ? 0 : Object.keys(g.players).length,
     intro: e ? { i: g.ii, of: E.length, pid: e.pid || '', table: e.table || 0, name: e.name } : null };
@@ -753,7 +768,13 @@ function scrKey(g) {
   if (g.phase === 'board') return g.id + ':b:' + g.qi + (g.final ? 'f' : '');
   return g.id + ':' + g.phase;
 }
-function isPicQ() { return false; }
+function isPicQ(q) { return !!(q && q.fact && q.opts.some(o => o.img && IMG.get(o.img))); }
+function faceHtml(id, name, cls) { const d = IMG.get(id); return `<span class="${cls || 'face'}${d ? '' : ' none'}" style="${d ? `background-image:url(${d})` : ''}">${d ? '' : esc(initial(name))}</span>`; }
+function factTiles(q) {
+  return `<div class="tiles ft n${q.opts.filter(optFilled).length}" id="tiles">` + q.opts.map((o, i) => !optFilled(o) ? '' :
+    `<div class="tile ${CL[i]}" data-i="${i}"><div class="fill" data-f="${i}"></div>${faceHtml(o.img, o.t)}<span class="t">${esc(o.t)}</span><span class="cnt" data-c="${i}"></span></div>`).join('') + '</div>';
+}
+function heroCard() { return `<div class="hero" id="hero"><div class="hcard"><div class="hback"><span>?</span><em>Кто это?</em></div><div class="hfront"><div class="hph" id="hph"></div><div class="hnm"><small>Это</small><b id="hnm"></b></div></div></div></div>`; }
 function renderScreen(box, g, snd) {
   if (!box) return;
   const key = scrKey(g), st = box._st || (box._st = {});
@@ -784,7 +805,12 @@ function tilesHtml(q, pic) {
 function buildScreen(box, g) {
   let h = '';
   if (!g) h = '<div class="sv center"><div class="kk">' + GNAME + '</div><h1>Экран проектора</h1><p class="muted" style="font-size:1.3em">Запустите игру на пульте ведущего</p></div>';
-  else if (g.phase === 'lobby') {
+  else if (g.phase === 'lobby' && isStage(g)) {
+    const hs = [...new Set(g.qs.map(q => q.hp).filter(Boolean))].slice(0, 7);
+    h = `<div class="glow"></div><div class="sv center stlob">${g.photo && IMG.get(g.photo) ? `<div class="cph" style="${bgUrl(g.photo)}"></div>` : ''}<div class="kk">${esc(g.title)}</div>${g.couple ? `<h1 class="cpl">${esc(g.couple)}</h1>` : ''}` +
+      `<div class="stn"><b>${g.qs.length}</b><span>${plural(g.qs.length, 'удивительный факт', 'удивительных факта', 'удивительных фактов')} о гостях</span></div>` +
+      `<div class="stq">${g.qs.slice(0, 7).map((q, i) => `<i style="animation-delay:${i * 120}ms">?</i>`).join('')}</div><p class="stp">Угадайте, о ком каждый</p></div>`;
+  } else if (g.phase === 'lobby') {
     h = `<div class="glow"></div><div class="sv"><div class="lob"><div class="left"><div class="ttl">${g.photo && IMG.get(g.photo) ? `<div class="cph" style="${bgUrl(g.photo)}"></div>` : ''}<div>${g.couple ? `<div class="kk">${esc(g.title)}</div><h1 class="cpl">${esc(g.couple)}</h1>` : `<h1>${esc(g.title)}</h1>`}</div></div>` +
       `<div class="kk lcount">${g.s.play === 'teams' ? 'Команды' : 'В игре'} · <b style="color:var(--ink)" id="lcnt">0</b></div><div class="chips" id="chips"></div></div>` +
       `<div class="right"><div class="join"><div class="qr" id="lqr"></div><div class="jurl">${esc(SHORT.replace(/^https?:\/\//, ''))}</div><div class="jcode" id="lcode" ${g.code ? '' : 'style="visibility:hidden"'}><span>код</span><b>${fmtCode(g.code)}</b></div></div>${g.wifi ? `<div class="wifi"><div class="wq" id="wq"></div><div>Wi‑Fi<b>${esc(g.wifi.ssid)}</b>${g.wifi.pass ? 'пароль: ' + esc(g.wifi.pass) : ''}</div></div>` : ''}</div></div></div>`;
@@ -798,14 +824,16 @@ function buildScreen(box, g) {
     const q = g.qs[g.qi], pic = isPicQ(q), img = !pic && q.img ? picHtml(q.img, 'qpic') : '';
     const [gn, bn] = coupleNames(g.couple);
     const badge = (mult(g, g.qi) > 1 ? '<span class="x2">×2 очки</span>' : '') + (q.type === 'couple' ? '<span class="ctype">💍 Угадайте ответ пары</span>' : q.type === 'number' ? '<span class="ctype">🔢 Ответ — число</span>' : '');
-    const head = `<div class="qtop2"><span class="n">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}</span>${q.fact ? '<span class="ctype">💡 Кто это?</span>' : badge}${ringSvg}</div>`;
+    const stg = isStage(g);
+    const head = `<div class="qtop2"><span class="n">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}</span>${q.fact ? '<span class="ctype">💡 Кто это?</span>' : badge}${stg ? '' : ringSvg}</div>`;
     const cst = q.type === 'couple' ? `<div class="cst" id="cst"><span data-r="groom">${esc(gn)} …</span><span data-r="bride">${esc(bn)} …</span></div><div class="cres" id="cres" style="display:none"></div>` : '';
     let body;
-    if (q.fact) body = `<div class="qbody fq"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${tilesHtml(q, false)}</div><div class="hero" id="hero"><div class="hcard"><div class="hback"><span>?</span><em>Кто это?</em></div><div class="hfront"><div class="hph" id="hph"></div><div class="hnm"><small>Это</small><b id="hnm"></b></div></div></div></div></div>`;
+    if (q.fact && stg) body = `<div class="qbody fq stg"><div class="qleft"><div class="qtext">${esc(q.text)}</div></div>${heroCard()}</div>`;
+    else if (q.fact) body = `<div class="qbody fq"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${factTiles(q)}</div>${heroCard()}</div>`;
     else if (q.type === 'number') body = `<div class="qtext" style="flex:none">${esc(q.text)}</div>${img ? `<div class="qbody" style="grid-template-columns:1fr 1fr"><div class="numq" id="numq"></div>${img}</div>` : '<div class="numq" id="numq"></div>'}`;
     else if (img) body = `<div class="qbody"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${cst}${tilesHtml(q, false)}</div>${img}</div>`;
     else body = `<div class="qtext"${pic ? ' style="flex:none;font-size:2.8em"' : ''}>${esc(q.text)}</div>${cst}${tilesHtml(q, pic)}`;
-    h = `<div class="sv${img || q.fact ? ' wimg' : ''}">${head}${body}<div class="foot"><span id="ansCnt"></span><span id="footR"></span></div></div>`;
+    h = `<div class="sv${img || q.fact ? ' wimg' : ''}${stg ? ' stgv' : ''}">${head}${body}<div class="foot"><span id="ansCnt"></span><span id="footR"></span></div></div>`;
   } else if (g.phase === 'board') {
     const fin = g.final;
     const row = (p, i, delay) => { const was = g.prevRank[p.id], d = was ? was - (i + 1) : 0; return `<div class="brow" style="animation-delay:${delay}ms"><span class="pl">${i + 1}</span><span class="nm"><span>${esc(p.name)}</span>${p.table ? `<small>стол ${p.table}</small>` : ''}${!fin && d > 0 ? `<i class="up">▲${d}</i>` : !fin && d < 0 ? `<i class="dn">▼${-d}</i>` : ''}</span><span class="sc">${p.gain && !fin ? `<span class="gain">+${nums(p.gain)}</span>` : ''}${nums(p.score)}</span></div>`; };
@@ -818,11 +846,15 @@ function buildScreen(box, g) {
       const r = ranked(g).slice(0, 8), n = r.length;
       h = `<div class="sv">${title}<div class="board">${r.map((p, i) => row(p, i, fin ? (n - 1 - i) * 350 : i * 90)).join('')}</div></div>`;
     }
+  } else if (g.phase === 'final' && isStage(g)) {
+    const seen = {}, hs = g.qs.map(q => { const nm = q.opts[q.ok[0]] ? q.opts[q.ok[0]].t : ''; return { nm, hp: q.hp }; }).filter(x => x.nm && !seen[x.nm] && (seen[x.nm] = 1));
+    h = `<div class="glow"></div><div class="sv center"><div class="kk">${esc(g.couple || g.title)}</div><h1 style="font-size:3.2em;margin:0 0 .6em">Вот они — наши герои</h1><div class="heroes n${Math.min(hs.length, 12)}">` +
+      hs.slice(0, 12).map((x, i) => `<div style="animation-delay:${300 + i * 160}ms">${faceHtml(x.hp, x.nm, 'hf')}<b>${esc(x.nm)}</b></div>`).join('') + `</div><p class="stp">Спасибо, что вы с нами!</p></div>`;
   } else if (g.phase === 'final') {
     const tables = g.s.play === 'tables' && tableRank(g).length > 1;
     const list = tables ? tableRank(g).map(t => ({ name: t.name, score: t.score, sub: 'средний балл' })) : ranked(g).map(p => ({ name: p.name, score: p.score, sub: 'очков' }));
     const top = list.slice(0, 3), order = [top[1], top[0], top[2]], hs = [62, 86, 44], pl = [2, 1, 3];
-    h = `<div class="glow"></div><div class="sv"><div class="kk" style="text-align:center">${esc(g.couple)}</div><h1 style="text-align:center;font-size:3.2em;margin-bottom:0">${tables ? 'Лучшие столы' : 'Победители'}</h1><div class="pod">` +
+    h = `<div class="glow"></div><div class="sv"><div class="kk" style="text-align:center">${esc(g.couple)}</div><h1 style="text-align:center;font-size:3.2em;margin-bottom:0">${tables ? 'Лучшие столы' : g.qs[0] && g.qs[0].fact ? 'Лучше всех знают гостей' : 'Победители'}</h1><div class="pod">` +
       order.map((p, i) => p ? `<div data-h="${hs[i]}" data-p="${pl[i]}"><div class="nm">${esc(p.name)}</div><div class="ps">${nums(p.score)} ${p.sub}</div><div class="b">${pl[i]}</div></div>` : '<div></div>').join('') +
       `</div><div class="noms">${nominations(g).map(x => `<div><i>${x[0]}</i><span>${esc(x[1])}</span><b>${esc(x[2])}</b></div>`).join('')}</div></div>`;
   }
@@ -841,7 +873,7 @@ function buildScreen(box, g) {
       z.onclick = close; document.addEventListener('keydown', esc1);
     };
   }
-  if (g && g.phase === 'lobby') { qr(box.querySelector('#lqr'), playLink(g)); if (g.wifi) qr(box.querySelector('#wq'), `WIFI:T:${g.wifi.pass ? 'WPA' : 'nopass'};S:${g.wifi.ssid.replace(/([\\;,:"])/g, '\\$1')};P:${(g.wifi.pass || '').replace(/([\\;,:"])/g, '\\$1')};;`, 256); }
+  if (g && g.phase === 'lobby' && box.querySelector('#lqr')) { qr(box.querySelector('#lqr'), playLink(g)); if (g.wifi) qr(box.querySelector('#wq'), `WIFI:T:${g.wifi.pass ? 'WPA' : 'nopass'};S:${g.wifi.ssid.replace(/([\\;,:"])/g, '\\$1')};P:${(g.wifi.pass || '').replace(/([\\;,:"])/g, '\\$1')};;`, 256); }
   if (g && g.phase === 'final') {
     const cols = [...box.querySelectorAll('.pod>div[data-h]')];
     const at = { 3: 1200, 2: 3000, 1: 5200 };
@@ -879,7 +911,7 @@ function updScreen(box, g, snd) {
   } else if (ring) ring.style.visibility = 'hidden';
   if (rev && !st.rev) { st.rev = true; if (snd) SND.play('reveal'); }
   const n = Object.keys(g.players).length, A = (g.ans && g.ans[g.qi]) || {}, a = Object.keys(A).length;
-  const ac = box.querySelector('#ansCnt'); if (ac) ac.textContent = `Ответили ${a} из ${n}`;
+  const ac = box.querySelector('#ansCnt'); if (ac) ac.textContent = isStage(g) ? '' : `Ответили ${a} из ${n}`;
   const fr = box.querySelector('#footR');
   if (q.type === 'number') {
     const nq = box.querySelector('#numq');
@@ -928,7 +960,9 @@ function updScreen(box, g, snd) {
         `${esc(gn)}: <b>${esc(t(c.groom))}</b> · ${esc(bn)}: <b>${esc(t(c.bride))}</b>${both ? (c.groom === c.bride ? '<span class="m">Совпало!</span>' : '<span class="m diff">Мнения разошлись!</span>') : ''}`;
     }
   }
-  if (fr) {
+  if (fr && isStage(g)) fr.textContent = rev ? '' : 'Угадайте вслух — кто это?';
+  else if (fr && q.fact) { if (!rev) fr.textContent = 'Выберите на телефоне, о ком этот факт'; else { let ok = 0; Object.keys(A).forEach(k => { if (okS.indexOf(A[k].o) >= 0) ok++; }); fr.textContent = `Угадали ${ok} из ${a}`; } }
+  else if (fr) {
     if (!rev) fr.textContent = q.type === 'couple' ? 'Засчитываем ответ пары' : (g.s.speed ? 'Чем быстрее — тем больше очков' : (g.s.change ? 'Можно менять ответ до конца таймера' : ''));
     else { let ok = 0, fast = null; Object.keys(A).forEach(k => { if (okS.indexOf(A[k].o) >= 0) { ok++; if (!fast || A[k].t < fast.t) fast = { t: A[k].t, id: k }; } }); fr.textContent = `Правильно ответили: ${ok}` + (fast && g.players[fast.id] ? ` · быстрее всех ${g.players[fast.id].name} (${(fast.t / 1000).toFixed(1)} с)` : ''); }
   }
@@ -958,9 +992,9 @@ function buildPhone(box, g, cl) {
   let h = '';
   const wait = (big, t, s) => `<div class="pv"><div class="wait">${big}<h2>${t}</h2>${s ? `<p class="sub">${s}</p>` : ''}</div></div>`;
   if (!g) {
-    if (cl && cl.codeEntry) h = `<div class="pv"><div class="wait" style="justify-content:flex-start;padding-top:10vh"><div class="pbrand">${MARK(48)}</div><div class="kk">Квиз о паре</div><h2>Введите код игры</h2><p class="sub">Он написан на экране рядом с QR-кодом</p>` +
+    if (cl && cl.codeEntry) h = `<div class="pv"><div class="wait" style="justify-content:flex-start;padding-top:10vh"><div class="pbrand">${MARK(48)}</div><div class="kk">${GNAME}</div><h2>Введите код игры</h2><p class="sub">Он написан на экране рядом с QR-кодом</p>` +
       `<input class="pin code" id="pCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="000 000"><button class="pbtn acc" id="pGo">Войти</button><p class="note w" id="pErr"></p></div></div>`;
-    else h = `<div class="pv"><div class="wait">${PHMSG ? '<div class="big" style="font-size:44px">' + (/Спасибо/.test(PHMSG) ? '🎉' : /удалил/.test(PHMSG) ? '👋' : '⚠️') + '</div>' : '<div class="spin"></div>'}<div class="kk">Квиз о паре</div><p class="sub" style="margin:0">${PHMSG || 'Подключаемся к игре…'}</p></div></div>`;
+    else h = `<div class="pv"><div class="wait">${PHMSG ? '<div class="big" style="font-size:44px">' + (/Спасибо/.test(PHMSG) ? '🎉' : /удалил/.test(PHMSG) ? '👋' : '⚠️') + '</div>' : '<div class="spin"></div>'}<div class="kk">${GNAME}</div><p class="sub" style="margin:0">${PHMSG || 'Подключаемся к игре…'}</p></div></div>`;
   } else if (cl.kicked) h = wait('<div class="big" style="font-size:44px">👋</div>', 'Вы вне игры', 'Ведущий убрал этого участника из игры');
   else if (cl.full) h = wait('<div class="big" style="font-size:44px">⏳</div>', 'Мест нет', cl.demo ? 'Игра в демо-режиме: до ' + DEMO_MAX + ' телефонов. Ведущему нужен полный доступ, чтобы впустить всех.' : 'В игре уже максимум гостей по тарифу ведущего. Подойдите к ведущему — он сможет расширить игру.');
   else if (cl.role) h = buildCouple(g, cl);
@@ -979,11 +1013,11 @@ function buildPhone(box, g, cl) {
       h = `<div class="pv">${head(g, me)}<div class="wait">${mine ? '<div class="big" style="font-size:56px">🎉</div><h2>Сейчас представляют вас!</h2><p class="sub">Помашите залу 👋</p>' : `<div class="big" style="font-size:48px">🎤</div><h2>Знакомимся</h2><p class="sub">На экране: ${esc(i.name || '')}</p>`}</div></div>`;
     } else if (g.phase === 'question') {
       const q = g.qs[g.qi], pic = isPicQ(q), ppic = q.img && !pic ? picHtml(q.img, 'pimg') : '';
-      const top = `<div class="pv${ppic ? ' wimg' : ''}">${head(g, me)}<div class="kk" style="text-align:left">Вопрос ${g.qi + 1} из ${g.qs.length}${mult(g, g.qi) > 1 ? ' · ×2 очки' : ''}</div><div class="pq">${esc(q.text)}</div>` +
+      const top = `<div class="pv${ppic ? ' wimg' : ''}">${head(g, me)}<div class="kk" style="text-align:left">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}${q.fact ? ' · кто это?' : mult(g, g.qi) > 1 ? ' · ×2 очки' : ''}</div><div class="pq">${esc(q.text)}</div>` +
         (q.type === 'couple' ? '<div class="hintc">💍 Угадайте, что ответила пара</div>' : '') + ppic + '<div class="tm"><i id="ptm" style="width:100%"></i></div>';
       if (q.type === 'number') h = top + `<div class="numin"><input class="pin" id="pNum" inputmode="decimal" autocomplete="off" placeholder="Ваш ответ">${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}<button class="pbtn acc" id="pNumGo">Ответить</button></div><p class="note" id="pNote"></p></div>`;
       else h = top + `<div class="ans${pic ? ' pic' : ''}" id="pAns">` + q.opts.map((o, i) => !optFilled(o) ? '' :
-        `<button class="${CL[i]}" data-o="${i}">${pic ? `<span class="im" style="${bgUrl(o.img)}"></span><span class="rw"><span class="l">${L[i]}</span><span>${esc(o.t)}</span></span>` : `<span class="l">${L[i]}</span><span>${esc(o.t)}</span>`}</button>`).join('') + '</div><p class="note" id="pNote"></p></div>';
+        `<button class="${CL[i]}" data-o="${i}">${pic ? `<span class="im" style="${bgUrl(o.img)}">${IMG.get(o.img) ? '' : `<em>${esc(initial(o.t))}</em>`}</span><span class="rw"><span class="l">${L[i]}</span><span>${esc(o.t)}</span></span>` : `<span class="l">${L[i]}</span><span>${esc(o.t)}</span>`}</button>`).join('') + '</div><p class="note" id="pNote"></p></div>';
     } else if (g.phase === 'reveal') {
       const q = g.qs[g.qi], st = me.last || 'none', mine = cl.picked[g.qi] != null || (g.ans[g.qi] && g.ans[g.qi][cl.pid]);
       const okS = g._ok ? g._ok : okSet(g, g.qi), txt = i => q.opts[i] ? (q.opts[i].t || 'вариант ' + L[i]) : '';
@@ -1166,7 +1200,7 @@ function viewPlayNet() {
       cl.codeEntry = true; cl.cur = () => null;
       cl.enterCode = (code, err) => {
         if (code.length !== 6) { if (err) err.textContent = 'Код состоит из 6 цифр'; return; }
-        ref('codes/' + code).once('value').then(s => { const v = s.val(); if (!v || !v.g) { if (err) err.textContent = 'Игра с таким кодом не найдена'; return; } location.replace(BASE + '?view=play&g=' + v.g); })
+        ref('codes/' + code).once('value').then(s => { const v = s.val(); if (!v || !v.g) { if (err) err.textContent = 'Игра с таким кодом не найдена'; return; } location.replace(v.k === 'bingo' ? '../bingo/?view=play&g=' + v.g : BASE + '?view=play&g=' + v.g); })
           .catch(() => { if (err) err.textContent = 'Нет связи, попробуйте ещё раз'; });
       };
       draw(); setTimeout(() => { const i = $('pCode'); if (i) i.focus(); }, 300);
@@ -1492,15 +1526,16 @@ function renderEditor() {
   applyAccent(CFG.accent);
   const s = CFG.s;
   $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND(GAME === 'fact' ? 'Интересный факт · редактор' : 'Квиз · редактор')}</a><span class="sp"></span><span class="muted" style="font-size:12px" id="syncSt"></span><div class="acc" id="acc"></div></div></div>` +
-    (GAME === 'fact' ? `<div class="ed"><div class="k">Новая игра</div><h1>Интересный факт</h1><p class="lead">Пара присылает имена гостей и интересные факты о них. На экране появляется факт — гости угадывают с телефонов, о ком он, а потом герой встаёт под аплодисменты.</p>` : `<div class="ed"><div class="k">Новая игра</div><h1>Соберите квиз за 5 минут</h1><p class="lead">Впишите вопросы, отметьте правильные ответы тапом по букве — и запускайте. Гости входят по QR-коду или коду игры.</p>`) + `<div id="demoN">${demoNote()}</div>` +
+    (GAME === 'fact' ? `<div class="ed"><div class="k">Новая игра</div><h1>Интересный факт</h1><p class="lead">Пара присылает имена гостей и интересные факты о них. Вы показываете факты на большом экране: зал угадывает, о ком речь, — и открываются фото и имя. Можно просто показывать, а можно устроить голосование с телефонов.</p>` : `<div class="ed"><div class="k">Новая игра</div><h1>Соберите квиз за 5 минут</h1><p class="lead">Впишите вопросы, отметьте правильные ответы тапом по букве — и запускайте. Гости входят по QR-коду или коду игры.</p>`) + `<div id="demoN">${demoNote()}</div>` +
     `<div class="panel"><div class="row2"><div class="fld"><label>Название игры</label><input class="inp" id="fTitle" maxlength="60"></div><div class="fld"><label>Имена пары</label><input class="inp" id="fCouple" maxlength="60" placeholder="Максим и Алина"></div></div></div>` +
-    `<div class="panel"><h3>Формат</h3><div class="modes" id="modes"></div><div class="lbl">Как играем</div><div class="modes" id="plays"></div><div id="tblRow"></div>` +
+    (GAME === 'fact' ? `<div class="panel"><h3>Как показываем</h3><div class="modes" id="shows"></div><div id="showTune"></div></div>` : '') +
+    (GAME === 'fact' ? '' : `<div class="panel"><h3>Формат</h3><div class="modes" id="modes"></div><div class="lbl">Как играем</div><div class="modes" id="plays"></div><div id="tblRow"></div>` +
     `<details class="tune"><summary><span>⚙️</span><span>Тонкая настройка<small>время, очки, звук, боты для проверки</small></span><span class="chev">▾</span></summary><div class="tgrid">` +
     `<div class="rng"><span>Время на вопрос</span><input type="range" id="sTime" min="10" max="90" step="5"><b id="sTimeV"></b></div>` +
     `<div class="rng"><span>Лидеры каждые</span><input type="range" id="sEvery" min="1" max="10"><b id="sEveryV"></b></div>` +
     `<label class="sw">Очки за скорость<input type="checkbox" id="sSpeed"></label><label class="sw">Можно менять ответ<input type="checkbox" id="sChange"></label>` +
     `<label class="sw">Последний вопрос ×2<input type="checkbox" id="sX2"></label><label class="sw">Звуки на экране<input type="checkbox" id="sSound"></label>` +
-    `<label class="sw">Гости-боты для проверки<input type="checkbox" id="sBots"></label></div></details></div>` +
+    `<label class="sw">Гости-боты для проверки<input type="checkbox" id="sBots"></label></div></details></div>`) +
     `<div class="panel"><h3>Оформление</h3><div class="lbl" style="margin-top:0">Основной цвет</div><div class="swatches" id="sws"></div>` +
     `<div class="lbl">Фото пары на заставку ${tip('Появится на экране, пока гости заходят.')}<span id="phLk"></span></div><div class="photoSlot"><div class="ph" id="cPh" role="button" tabindex="0" title="Загрузить фото"></div><div><button class="btn ghost sm" id="cPhB">Загрузить фото</button> <button class="btn ghost sm" id="cPhD" style="display:none">Убрать</button></div><input type="file" accept="image/*" hidden id="cPhF"></div>` +
     `<div class="lbl">Wi‑Fi для гостей (по желанию) ${tip('На экране появится QR-код для подключения к Wi‑Fi — выручает, если в зале слабая связь.')}</div><div class="row2"><input class="inp" id="wS" placeholder="Название сети" maxlength="40"><input class="inp" id="wP" placeholder="Пароль" maxlength="60"></div></div>` +
@@ -1514,7 +1549,7 @@ function renderEditor() {
   $('fTitle').value = CFG.title; $('fCouple').value = CFG.couple;
   $('fTitle').oninput = e => { CFG.title = e.target.value; STORE.save(); sum(); };
   $('fCouple').oninput = e => { CFG.couple = e.target.value; STORE.save(); };
-  paintModes(); paintTune(); paintDesign(); paintForm(); paintQs(); sum();
+  if (GAME === 'fact') paintShows(); else { paintModes(); paintTune(); } paintDesign(); paintForm(); paintQs(); sum();
   document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => b.dataset.add === 'couple' && !can('couple') ? upsell('couple') : addQ(b.dataset.add));
   if ($('bImport')) $('bImport').onclick = openImport;
   if ($('addFact')) $('addFact').onclick = () => { CFG.facts.push(normFact({})); CFG.sampleF = 0; STORE.save(); paintFacts(); sum(); const c = $('qList').lastElementChild; if (c) { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); c.querySelector('.fname').focus({ preventScroll: true }); } };
@@ -1534,6 +1569,16 @@ function paintModes() {
   if ($('sTbl')) { $('sTbl').value = CFG.s.tables; $('sTblV').textContent = CFG.s.tables; $('sTbl').oninput = e => { CFG.s.tables = +e.target.value; $('sTblV').textContent = CFG.s.tables; STORE.save(); }; }
   document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { CFG.mode = b.dataset.m; Object.assign(CFG.s, MODES[CFG.mode].s); STORE.save(); paintModes(); paintTune(); sum(); });
   document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { if (FEAT[b.dataset.p] && !can(b.dataset.p)) return upsell(b.dataset.p); CFG.s.play = b.dataset.p; STORE.save(); paintModes(); sum(); });
+}
+function paintShows() {
+  $('shows').innerHTML = Object.keys(SHOWS).map(k => { const m = SHOWS[k]; return `<button class="mode${CFG.s.show === k ? ' on' : ''}" data-sh="${k}"><i>${m.ic}</i><b>${m.t}</b><span>${m.d}</span></button>`; }).join('');
+  const st = CFG.s.show === 'stage';
+  $('showTune').innerHTML = `<div class="hint tipline">${st ? 'Телефоны гостям не нужны: вы ведёте показ с ноутбука или с телефона-пульта, зал угадывает вслух.' : 'Гости входят по QR-коду и выбирают на телефонах, о ком факт. Таблица лидеров — только в финале.'}</div>` +
+    (st ? '' : `<div class="rng" style="margin-top:12px"><span>Время на ответ</span><input type="range" id="sTime" min="10" max="60" step="5"><b id="sTimeV"></b></div>`) +
+    `<label class="sw" style="margin-top:10px">Звуки на экране<input type="checkbox" id="sSound"></label>`;
+  if ($('sTime')) { $('sTime').value = CFG.s.time; $('sTimeV').textContent = CFG.s.time + ' с'; $('sTime').oninput = e => { CFG.s.time = +e.target.value; $('sTimeV').textContent = CFG.s.time + ' с'; STORE.save(); sum(); }; }
+  $('sSound').checked = CFG.s.sound !== false; $('sSound').onchange = e => { CFG.s.sound = e.target.checked; STORE.save(); };
+  document.querySelectorAll('[data-sh]').forEach(b => b.onclick = () => { CFG.s.show = b.dataset.sh; STORE.save(); paintShows(); sum(); });
 }
 function paintTune() {
   const s = CFG.s;
@@ -1588,7 +1633,7 @@ function formToQsPreview(f) { const a = f.ans || {}, img = f.img || {}; return F
 const TRASH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.8c0-.4.4-.8.8-.8h4.4c.4 0 .8.4.8.8V7M6.5 7l.8 12.2c.1.9.8 1.8 1.8 1.8h5.8c1 0 1.7-.9 1.8-1.8L17.5 7"/></svg>';
 function factCard(f, i) {
   const d = f.img && IMG.get(f.img);
-  return `<div class="fcard" data-i="${i}"><div class="fav${d ? ' has' : ''}" data-fph title="${d ? 'Заменить фото' : 'Добавить фото (по желанию)'}" style="${d ? `background-image:url(${d})` : ''}">${d ? '' : '📷'}</div>` +
+  return `<div class="fcard" data-i="${i}"><div class="fav${d ? ' has' : ''}" data-fph title="${d ? 'Заменить фото' : 'Добавить фото (по желанию)'}" style="${d ? `background-image:url(${d})` : ''}">${d ? '' : ICON.cam}</div>` +
     `<div class="fmain"><div class="frow"><span class="fnum">${i + 1}</span><input class="inp fname" maxlength="40" placeholder="Имя гостя" value="${esc(f.name)}">` +
     (d ? `<button class="fx" data-fdelph title="Убрать фото">Без фото</button>` : '') + `<button class="fdel" data-fdel title="Удалить факт" aria-label="Удалить факт">${TRASH}</button></div>` +
     `<textarea class="inp ftext" rows="2" maxlength="220" placeholder="Интересный факт — например, «прыгал с парашютом на 30-летие»">${esc(f.fact)}</textarea></div><input type="file" accept="image/*" hidden></div>`;
@@ -1759,8 +1804,8 @@ function imgSlot(q) {
 }
 function sum() {
   if (GAME === 'fact') {
-    const n = CFG.facts.length, ok = CFG.facts.filter(factOk).length, mins = Math.max(1, Math.round(ok * (CFG.s.time + 20) / 60));
-    $('bSum').textContent = (CFG.title || GNAME) + ' · ' + PLAYS[CFG.s.play].t.toLowerCase();
+    const n = CFG.facts.length, ok = CFG.facts.filter(factOk).length, mins = Math.max(1, Math.round(ok * (CFG.s.show === 'stage' ? 50 : CFG.s.time + 25) / 60));
+    $('bSum').textContent = (CFG.title || GNAME) + ' · ' + (SHOWS[CFG.s.show] || SHOWS.stage).t.toLowerCase();
     $('bSub').textContent = `${ok} из ${n} ${plural(n, 'факта', 'фактов', 'фактов')} готово · около ${mins} мин` + (CFG.bots ? ' · с ботами' : '');
     if ($('qCount')) $('qCount').textContent = n + ' ' + plural(n, 'факт', 'факта', 'фактов');
     return;
@@ -1804,7 +1849,7 @@ function openMine() {
   });
 }
 function start() {
-  const ok = GAME === 'fact' ? factsToQs(CFG.facts) : CFG.qs.filter(validQ);
+  const ok = GAME === 'fact' ? factsToQs(CFG.facts, CFG.s.show) : CFG.qs.filter(validQ);
   if (!ok.length) { alertBar(GAME === 'fact' ? 'Добавьте хотя бы два факта о разных гостях' : 'Добавьте хотя бы один готовый вопрос'); return; }
   const used = [];
   if (FEAT[CFG.s.play] && !can(CFG.s.play)) used.push(CFG.s.play);
@@ -1857,11 +1902,14 @@ function renderLive() {
   }
   $('lTitle').textContent = G.title;
   const nl = nextLabel(G);
-  [$('bNext'), $('bNextM')].forEach(b => { b.innerHTML = esc(nl[0]) + (nl[1] ? `<small>${esc(nl[1])}</small>` : ''); b.disabled = G.phase === 'final' || (G.phase === 'lobby' && !Object.keys(G.players).length); });
+  [$('bNext'), $('bNextM')].forEach(b => { b.innerHTML = esc(nl[0]) + (nl[1] ? `<small>${esc(nl[1])}</small>` : ''); b.disabled = G.phase === 'final' || (G.phase === 'lobby' && !isStage(G) && !Object.keys(G.players).length); });
+  const stg = isStage(G);
+  document.querySelectorAll('.live .stat, #plist, #tabs [data-t="ph"], .live>[data-p="ph"]').forEach(x => { x.style.display = stg ? 'none' : ''; });
+  if (stg && tab === 'ph') { tab = 'ctl'; paintTabs(); }
   const canIntro = G.phase === 'lobby' && entities(G).length > 0;
   $('bIntro').style.display = canIntro ? '' : 'none';
   $('bIntro').textContent = '🎤 Представить ' + (G.s.play === 'teams' ? 'команды' : 'столы') + ' по очереди';
-  $('bSkip').style.display = G.phase === 'question' ? '' : 'none';
+  $('bSkip').style.display = G.phase === 'question' && !isStage(G) ? '' : 'none';
   $('bCpl').style.display = G.net && G.qs.some(q => q.type === 'couple') ? '' : 'none';
   $('bRemote2').style.display = G.net ? '' : 'none'; $('bRemote').style.display = G.net ? '' : 'none';
   $('bSnd').textContent = G.s.sound !== false ? (soundHere() ? '🔊 Звук тут' : '🔊 Звук на экране') : '🔇 Звук выкл.';
@@ -1872,13 +1920,16 @@ function renderLive() {
   if ($('capUp')) $('capUp').onclick = e => { e.preventDefault(); upsellCap(); };
   const q = G.qi >= 0 ? G.qs[G.qi] : null, c = (q && G.cpl[G.qi]) || {};
   let cur = '';
-  if (G.phase === 'lobby') cur = `<div class="k">Лобби</div><div class="q">Гости сканируют QR или вводят код ${G.code ? '<b style="color:var(--gold)">' + fmtCode(G.code) + '</b>' : ''} на ${esc(SHORT)}</div><div class="muted" style="font-size:13px">${G.qs.length} ${plural(G.qs.length, 'вопрос', 'вопроса', 'вопросов')} готово. ${canIntro ? 'Можно представить участников перед стартом.' : 'Нажмите «Начать игру», когда все войдут.'}</div>`;
+  if (stg && G.phase === 'lobby') cur = `<div class="k">Заставка на экране</div><div class="q">${G.qs.length} ${plural(G.qs.length, 'факт', 'факта', 'фактов')} о гостях</div><div class="muted" style="font-size:13px">Телефоны гостям не нужны. Нажмите «Начать показ» — на экране появится первый факт, зал угадывает вслух.</div>`;
+  else if (stg && G.phase === 'final') cur = `<div class="k">Финал</div><div class="q">На экране все герои вечера. Спасибо!</div>`;
+  else if (G.phase === 'lobby') cur = `<div class="k">Лобби</div><div class="q">Гости сканируют QR или вводят код ${G.code ? '<b style="color:var(--gold)">' + fmtCode(G.code) + '</b>' : ''} на ${esc(SHORT)}</div><div class="muted" style="font-size:13px">${G.qs.length} ${plural(G.qs.length, 'вопрос', 'вопроса', 'вопросов')} готово. ${canIntro ? 'Можно представить участников перед стартом.' : 'Нажмите «Начать игру», когда все войдут.'}</div>`;
   else if (G.phase === 'intro') { const E = entities(G); cur = `<div class="k">Знакомство · ${G.ii + 1} из ${E.length}</div><div class="q">${esc((E[G.ii] || {}).name || '')}</div>`; }
   else if (G.phase === 'final') cur = `<div class="k">Финал</div><div class="q">Победители на экране. Спасибо за игру!</div>` + '<div class="links" style="margin-top:6px">' + (!can('keepsake') ? '<button class="btn ghost sm" id="bResL">💌 Итоги для пары ' + lockTag('keepsake') + '</button>' : G.res ? '<button class="btn gold sm" id="bRes">💌 Итоги для пары</button>' : G.net ? '<span class="muted" style="font-size:13px">Готовим итоги для пары…</span>' : '') +
       '<button class="btn ghost sm" id="bXls">⬇ Excel ' + lockTag('excel') + '</button></div>';
   else if (q) {
     const okT = q.type === 'number' ? `✓ ${nums(q.num)} ${esc(q.unit || '')}` : q.type === 'couple' ? '💍 ответ даст пара' : '✓ ' + q.ok.map(i => L[i] + ' — ' + esc(q.opts[i].t || 'фото')).join(', ');
-    cur = `<div class="k">Вопрос ${G.qi + 1} из ${G.qs.length}${G.phase === 'board' ? ' · таблица' : ''}${mult(G, G.qi) > 1 ? ' · ×2' : ''}</div><div class="q">${esc(q.text)}</div><div class="a">${okT}</div>`;
+    if (q.fact) cur = `<div class="k">Факт ${G.qi + 1} из ${G.qs.length}</div><div class="q">${esc(q.text)}</div><div class="a">✓ ${esc((q.opts[q.ok[0]] || {}).t || '')}</div>`;
+    else cur = `<div class="k">Вопрос ${G.qi + 1} из ${G.qs.length}${G.phase === 'board' ? ' · таблица' : ''}${mult(G, G.qi) > 1 ? ' · ×2' : ''}</div><div class="q">${esc(q.text)}</div><div class="a">${okT}</div>`;
     if (q.type === 'couple' && (G.phase === 'question' || G.phase === 'reveal')) {
       const [gn, bn] = coupleNames(G.couple), t = i => i != null ? L[i] : '—';
       cur += `<div class="muted" style="font-size:12px;margin-top:8px">${esc(gn)}: ${t(c.groom)} · ${esc(bn)}: ${t(c.bride)}${!hasCoupleDevices() ? ' · телефоны пары не подключены — отметьте ответ пары:' : ' · или отметьте сами:'}</div><div class="cpl">${q.opts.map((o, i) => optFilled(o) ? `<button data-cpl="${i}" class="${c.host === i ? 'on' : ''}">${L[i]} · ${esc(o.t || 'фото')}</button>` : '').join('')}</div>`;

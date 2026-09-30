@@ -96,14 +96,14 @@ h1{font-size:clamp(28px,4.6vw,44px)!important}.ev h3{font-size:20px!important}.e
       loginLead: 'Введите почту, на которую оформляли покупку, — пришлём ссылку для входа.', email: 'Email', send: 'Прислать ссылку',
       sent: 'Если такая покупка есть, письмо уже летит. Проверьте почту и папку «Спам».', loading: 'Загружаем…',
       pro: 'Подписка', proOff: 'Подписка неактивна', event: 'Одно мероприятие', newEv: '+ Новая игра', creating: 'Создаём…',
-      admin: 'Панель ведущего', quizT: 'Квиз о паре', quizD: 'Редактор вопросов, запуск по коду и итоги. Квизы сохраняются в аккаунте.', factT: 'Интересный факт', factD: 'Факты о гостях от пары — гости угадывают, о ком они. Игры сохраняются в аккаунте.', factB: 'Открыть игру', quizB: 'Открыть квиз', guests: 'Ссылка для гостей', copied: 'Ссылка скопирована', created: 'Создана', until: 'до', guestsMax: 'до {n} гостей',
+      admin: 'Панель ведущего', quizT: 'Квиз о паре', quizD: 'Редактор вопросов, запуск по коду и итоги. Квизы сохраняются в аккаунте.', factT: 'Интересный факт', factD: 'Факты о гостях от пары — гости угадывают, о ком они. Игры сохраняются в аккаунте.', factB: 'Открыть игру', bingoT: 'Человеческое бинго', bingoD: 'Карточки с чертами гостей на телефонах, «БИНГО!» на большом экране и призы.', bingoB: 'Открыть', quizB: 'Открыть квиз', guests: 'Ссылка для гостей', copied: 'Ссылка скопирована', created: 'Создана', until: 'до', guestsMax: 'до {n} гостей',
       noCouple: 'Секретная миссия', empty: 'Игр пока нет.', buy: 'Тарифы', expired: 'срок закончился', err: 'Ошибка: ',
       proLead: 'Создавайте игру под каждое событие — все они будут здесь.', evLead: 'Ваша игра — ниже. Для нескольких событий удобнее подписка.', getPro: 'Оформить подписку' },
     en: { brand: 'Beloglazov', k: 'For hosts', h: 'My games', out: 'Sign out',
       loginLead: 'Enter the email you used at checkout — we’ll send you a sign-in link.', email: 'Email', send: 'Send link',
       sent: 'If there’s a purchase with this email, the message is on its way. Check your inbox and spam.', loading: 'Loading…',
       pro: 'Subscription', proOff: 'Subscription inactive', event: 'One event', newEv: '+ New game', creating: 'Creating…',
-      admin: 'Host panel', quizT: 'Couple Quiz', quizD: 'Question editor, code-based launch and results. Quizzes are saved to your account.', factT: 'Interesting Fact', factD: 'Facts about guests from the couple — guests guess who they’re about. Games are saved to your account.', factB: 'Open the game', quizB: 'Open the quiz', guests: 'Guest link', copied: 'Link copied', created: 'Created', until: 'until', guestsMax: 'up to {n} guests',
+      admin: 'Host panel', quizT: 'Couple Quiz', quizD: 'Question editor, code-based launch and results. Quizzes are saved to your account.', factT: 'Interesting Fact', factD: 'Facts about guests from the couple — guests guess who they’re about. Games are saved to your account.', factB: 'Open the game', bingoT: 'Human Bingo', bingoD: 'Guest trait cards on phones, “BINGO!” on the big screen and prizes.', bingoB: 'Open', quizB: 'Open the quiz', guests: 'Guest link', copied: 'Link copied', created: 'Created', until: 'until', guestsMax: 'up to {n} guests',
       noCouple: 'Secret Mission', empty: 'No games yet.', buy: 'Pricing', expired: 'expired', err: 'Error: ',
       proLead: 'Create a game for every event — they’ll all live here.', evLead: 'Your game is below. For several events, a subscription is the better fit.', getPro: 'Subscribe' }
   };
@@ -154,6 +154,7 @@ h1{font-size:clamp(28px,4.6vw,44px)!important}.ev h3{font-size:20px!important}.e
       '<p class="lead">' + esc(pro ? T('proLead') : T('evLead')) + '</p>';
     h += '<div class="ev tool"><div><h3>' + esc(T('quizT')) + '</h3><div class="meta">' + esc(T('quizD')) + '</div><div class="acts"><a class="btn gold" href="../quiz/">' + esc(T('quizB')) + '</a></div></div><div class="qmark">' + (window.PB_BRAND ? PB_BRAND.mark(64) : '') + '</div></div>';
     h += '<div class="ev tool"><div><h3>' + esc(T('factT')) + '</h3><div class="meta">' + esc(T('factD')) + '</div><div class="acts"><a class="btn gold" href="../fact/">' + esc(T('factB')) + '</a></div></div><div class="qmark">' + (window.PB_BRAND ? PB_BRAND.mark(64) : '') + '</div></div>';
+    h += '<div class="ev tool"><div><h3>' + esc(T('bingoT')) + '</h3><div class="meta">' + esc(T('bingoD')) + '</div><div class="acts"><a class="btn gold" href="../bingo/">' + esc(T('bingoB')) + '</a></div></div><div class="qmark">' + (window.PB_BRAND ? PB_BRAND.mark(64) : '') + '</div></div>';
     if (!data.events.length) h += '<div class="empty">' + esc(T('empty')) + '</div>';
     else h += '<div class="list">' + data.events.map(function (ev, i) {
       var old = ev.exp && ev.exp < Date.now();
@@ -190,7 +191,7 @@ h1{font-size:clamp(28px,4.6vw,44px)!important}.ev h3{font-size:20px!important}.e
   var q = new URLSearchParams(location.search), t = q.get('t');
   if (t) { store('set', t); try { history.replaceState(null, '', location.pathname); } catch (e) {} }
   token = store('get');
-  try { var nx = token && localStorage.getItem('pb_next'); if (nx === 'quiz' || nx === 'fact') { localStorage.removeItem('pb_next'); location.replace('../' + nx + '/'); return; } } catch (e) {}
+  try { var nx = token && localStorage.getItem('pb_next'); if (nx === 'quiz' || nx === 'fact' || nx === 'bingo') { localStorage.removeItem('pb_next'); location.replace('../' + nx + '/'); return; } } catch (e) {}
   paintStatic();
   if (token) load(); else login();
 })();
