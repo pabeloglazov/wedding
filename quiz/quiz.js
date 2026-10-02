@@ -18,7 +18,8 @@ function toast(t) { const el = $('toast'); if (!el) return; el.textContent = t; 
 function copy(t) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('Ссылка скопирована'), () => window.prompt('Скопируйте ссылку', t)); }
 function qr(el, text, size = 512) { if (!el || !window.QRCode) return; el.innerHTML = ''; try { new QRCode(el, { text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {} }
 function modal(html, onReady) { $('mbox').innerHTML = html; $('modal').classList.add('on'); if (onReady) onReady($('mbox')); }
-function closeModal() { $('modal').classList.remove('on'); }
+let onModalClose = null;
+function closeModal() { $('modal').classList.remove('on'); const f = onModalClose; onModalClose = null; if (f) f(); }
 document.addEventListener('click', e => { if (e.target && e.target.id === 'modal') closeModal(); if (e.target && e.target.closest && e.target.closest('[data-close]')) closeModal(); });
 const L = ['A', 'B', 'C', 'D'], CL = ['ca', 'cb', 'cc', 'cd'];
 const BASE = location.origin + location.pathname;
@@ -174,6 +175,73 @@ const IMG = (() => {
   }
   return { ready, put, get, mem, del, fetchNet, load, shrink, keys: () => Object.keys(cache) };
 })();
+/* ---------- кадрирование фото ----------
+   cropImage(src, { aspect: 1 | null, round, free, max, target, replace }) → Promise<dataURL | '' (отмена) | 'replace'> */
+const CROP_AR = [['Свободно', 0], ['1:1', 1], ['4:3', 4 / 3], ['16:9', 16 / 9], ['3:4', 3 / 4]];
+function cropImage(src, o) {
+  o = o || {};
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => {
+      const W = im.naturalWidth, H = im.naturalHeight;
+      let asp = o.aspect || 0, r = null, done = false;
+      const fit = () => { if (asp) { let w = W, h = w / asp; if (h > H) { h = H; w = h * asp; } w *= .9; h *= .9; r = { x: (W - w) / 2, y: (H - h) / 2, w, h }; } else r = { x: W * .05, y: H * .05, w: W * .9, h: H * .9 }; };
+      fit();
+      const fin = v => { if (done) return; done = true; onModalClose = null; closeModal(); res(v); };
+      modal(`<h3>Кадрирование</h3><p class="muted" style="margin:0 0 12px;font-size:14px">Перетащите рамку и потяните за уголки${o.round ? ' — на экране фото будет в круге' : ''}.</p>` +
+        `<div class="crp"><div class="cst" id="cSt"><img id="cIm" src="${src}" alt="" draggable="false"><div class="cbox${o.round ? ' round' : ''}" id="cBx"><span class="g"></span><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div></div>` +
+        (o.free ? `<div class="car" id="cAr">${CROP_AR.map(([t, v]) => `<button data-ar="${v}" class="${v === asp ? 'on' : ''}">${t}</button>`).join('')}</div>` : '') +
+        `<div class="cbt"><button class="btn ghost" id="cNo">Отмена</button>${o.replace ? '<button class="btn ghost" id="cRep">Другое фото</button>' : ''}<button class="btn gold" id="cOk">Готово</button></div>`, b => {
+        onModalClose = () => { if (!done) { done = true; res(''); } };
+        const img = b.querySelector('#cIm'), bx = b.querySelector('#cBx');
+        const sc = () => img.clientWidth / W;
+        const draw = () => { const k = sc(); bx.style.left = r.x * k + 'px'; bx.style.top = r.y * k + 'px'; bx.style.width = r.w * k + 'px'; bx.style.height = r.h * k + 'px'; };
+        if (img.complete) draw(); else img.onload = draw;
+        const ro = window.ResizeObserver ? new ResizeObserver(draw) : null; if (ro) ro.observe(img);
+        let drag = null;
+        bx.addEventListener('pointerdown', e => {
+          e.preventDefault(); bx.setPointerCapture(e.pointerId);
+          const h = e.target.dataset && e.target.dataset.h;
+          drag = { h, x0: e.clientX, y0: e.clientY, r0: Object.assign({}, r) };
+        });
+        bx.addEventListener('pointermove', e => {
+          if (!drag) return;
+          const k = sc(), dx = (e.clientX - drag.x0) / k, dy = (e.clientY - drag.y0) / k, s0 = drag.r0, min = 48 / k;
+          if (!drag.h) { r.x = clamp(s0.x + dx, 0, W - s0.w); r.y = clamp(s0.y + dy, 0, H - s0.h); }
+          else {
+            const sx = /e/.test(drag.h) ? 1 : -1, sy = /s/.test(drag.h) ? 1 : -1;
+            const ax = sx > 0 ? s0.x : s0.x + s0.w, ay = sy > 0 ? s0.y : s0.y + s0.h;
+            const px = (sx > 0 ? s0.x + s0.w : s0.x) + dx, py = (sy > 0 ? s0.y + s0.h : s0.y) + dy;
+            const mw = sx > 0 ? W - ax : ax, mh = sy > 0 ? H - ay : ay;
+            let w = Math.max(min, (px - ax) * sx), hh = Math.max(min, (py - ay) * sy);
+            if (asp) { w = Math.min(Math.max(w, hh * asp), mw, mh * asp); hh = w / asp; } else { w = Math.min(w, mw); hh = Math.min(hh, mh); }
+            r = { x: sx > 0 ? ax : ax - w, y: sy > 0 ? ay : ay - hh, w, h: hh };
+          }
+          draw();
+        });
+        const end = () => { drag = null; };
+        bx.addEventListener('pointerup', end); bx.addEventListener('pointercancel', end);
+        if (o.free) b.querySelectorAll('[data-ar]').forEach(x => x.onclick = () => { asp = +x.dataset.ar; fit(); draw(); b.querySelectorAll('[data-ar]').forEach(y => y.classList.toggle('on', y === x)); });
+        b.querySelector('#cNo').onclick = () => fin('');
+        if (o.replace) b.querySelector('#cRep').onclick = () => fin('replace');
+        b.querySelector('#cOk').onclick = () => {
+          try {
+            const max = o.max || 1600, k = Math.min(1, max / Math.max(r.w, r.h)), cw = Math.max(1, Math.round(r.w * k)), ch = Math.max(1, Math.round(r.h * k));
+            const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+            const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cw, ch); x.drawImage(im, r.x, r.y, r.w, r.h, 0, 0, cw, ch);
+            let q = .85, out = c.toDataURL('image/jpeg', q);
+            while (o.target && out.length > o.target && q > .5) { q -= .07; out = c.toDataURL('image/jpeg', q); }
+            fin(out);
+          } catch (err) { toast('Не получилось обрезать это фото'); fin(''); }
+        };
+      });
+    };
+    im.onerror = () => res('');
+    im.src = src;
+  });
+}
+/* загрузить файл и сразу предложить кадрирование */
+function loadCrop(file, o) { return IMG.load(file, 2400, 2400000).then(d => cropImage(d, o)); }
 function picHtml(id, cls) { const d = IMG.get(id); if (!d) return ''; return `<div class="${cls}"><div class="bgb" style="background-image:url(${d})"></div><img src="${d}" alt=""></div>`; }
 function bgUrl(id) { const d = IMG.get(id); return d ? `background-image:url(${d})` : ''; }
 
@@ -1364,8 +1432,9 @@ function viewFactForm() {
           const n = +c.dataset.n, x = A.items[n], inp = c.querySelector('input[type=file]'), ph = c.querySelector('[data-ph]');
           c.querySelectorAll('[data-k]').forEach(i => i.oninput = () => { x[i.dataset.k] = i.value; save(); });
           c.querySelector('[data-del]').onclick = () => { A.items.splice(n, 1); if (IM[x.id]) { fr.child('img/' + x.id).remove(); delete IM[x.id]; } paint(); save(); };
-          ph.onclick = () => { inp.value = ''; inp.click(); };
-          inp.onchange = () => { const file = inp.files && inp.files[0]; if (!file) return; ph.textContent = '…'; IMG.load(file, 700, 120000).then(data => fr.child('img/' + x.id).set(data).then(() => { IM[x.id] = data; ph.textContent = ''; ph.classList.add('has'); ph.style.backgroundImage = `url(${data})`; })).catch(() => { ph.textContent = '📷'; toast('Не получилось — попробуйте другое фото'); }); };
+          ph.onclick = () => { if (!IM[x.id]) { inp.value = ''; inp.click(); return; } cropImage(IM[x.id], { aspect: 1, round: true, max: 700, target: 120000, replace: true }).then(r => { if (r === 'replace') { inp.value = ''; inp.click(); } else if (r) setPh(r); }); };
+          const setPh = data => { ph.textContent = '…'; return fr.child('img/' + x.id).set(data).then(() => { IM[x.id] = data; ph.textContent = ''; ph.classList.add('has'); ph.style.backgroundImage = `url(${data})`; }, () => { ph.textContent = IM[x.id] ? '' : '📷'; toast('Нет связи — попробуйте ещё раз'); }); };
+          inp.onchange = () => { const file = inp.files && inp.files[0]; if (!file) return; loadCrop(file, { aspect: 1, round: true, max: 700, target: 120000 }).then(data => data ? setPh(data) : null).catch(() => { ph.textContent = '📷'; toast('Не получилось — попробуйте другое фото'); }); };
         });
       };
       paint();
@@ -1434,7 +1503,7 @@ function viewForm() {
       app.querySelectorAll('[data-ph]').forEach(d => {
         const inp = app.querySelector(`[data-file="${d.dataset.ph}"]`);
         d.onclick = () => inp.click();
-        inp.onchange = () => { const file = inp.files && inp.files[0]; if (!file) return; d.textContent = 'Загружаем…'; IMG.load(file, 900, 160000).then(data => fr.child('img/' + d.dataset.ph).set(data).then(() => { d.textContent = ''; d.style.backgroundImage = `url(${data})`; })).catch(() => { d.textContent = 'Не получилось — попробуйте другое фото'; }); };
+        inp.onchange = () => { const file = inp.files && inp.files[0]; inp.value = ''; if (!file) return; loadCrop(file, { free: true, max: 900, target: 160000 }).then(data => { if (!data) return; d.textContent = 'Загружаем…'; return fr.child('img/' + d.dataset.ph).set(data).then(() => { d.textContent = ''; d.style.backgroundImage = `url(${data})`; }); }).catch(() => { d.textContent = 'Не получилось — попробуйте другое фото'; }); };
       });
       $('done').onclick = () => { fr.child('ans').set(A).then(() => fr.child('done').set(TS())).then(() => { app.innerHTML = `<div class="lt" style="text-align:center;padding-top:14vh"><div style="font-size:64px">💌</div><h1>Спасибо!</h1><p>Ответы у ведущего. Увидимся на празднике — гостей ждёт квиз о вас.</p><p><a href="" style="color:var(--gdark);font-weight:800">Изменить ответы</a></p></div>`; }, () => toast('Нет связи — попробуйте ещё раз')); };
     });
@@ -1599,9 +1668,10 @@ function paintDesign() {
   $('cCust').oninput = e => set(e.target.value);
   const ph = () => { const d = IMG.get(CFG.photo); $('cPh').style.backgroundImage = d ? `url(${d})` : ''; $('cPh').textContent = d ? '' : '💍'; $('cPhD').style.display = d ? '' : 'none'; };
   ph(); if ($('phLk')) $('phLk').innerHTML = lockTag('photo');
-  $('cPhB').onclick = $('cPh').onclick = () => can('photo') ? $('cPhF').click() : upsell('photo');
+  $('cPhB').onclick = () => can('photo') ? $('cPhF').click() : upsell('photo');
+  $('cPh').onclick = () => { if (!can('photo')) return upsell('photo'); const d = IMG.get(CFG.photo); if (!d) return $('cPhF').click(); cropImage(d, { aspect: 1, round: true, max: 1000, target: 220000, replace: true }).then(r => { if (r === 'replace') $('cPhF').click(); else if (r) { CFG.photo = IMG.put(r); STORE.upImg(CFG.photo); STORE.save(); ph(); } }); };
   $('cPhD').onclick = () => { CFG.photo = ''; STORE.save(); ph(); };
-  $('cPhF').onchange = e => { const f = e.target.files && e.target.files[0]; if (!f) return; IMG.load(f, 1000, 220000).then(d => { CFG.photo = IMG.put(d); STORE.upImg(CFG.photo); STORE.save(); ph(); }, () => toast('Не получилось открыть фото')); e.target.value = ''; };
+  $('cPhF').onchange = e => { const f = e.target.files && e.target.files[0]; if (!f) return; loadCrop(f, { aspect: 1, round: true, max: 1000, target: 220000 }).then(d => { if (!d) return; CFG.photo = IMG.put(d); STORE.upImg(CFG.photo); STORE.save(); ph(); }, () => toast('Не получилось открыть фото')); e.target.value = ''; };
   $('wS').value = CFG.wifi.ssid || ''; $('wP').value = CFG.wifi.pass || '';
   $('wS').oninput = e => { CFG.wifi.ssid = e.target.value; STORE.save(); };
   $('wP').oninput = e => { CFG.wifi.pass = e.target.value; STORE.save(); };
@@ -1648,8 +1718,8 @@ function paintFacts() {
     c.querySelector('.ftext').oninput = e => { f.fact = e.target.value; CFG.sampleF = 0; STORE.save(); sum(); };
     c.querySelector('[data-fdel]').onclick = () => { CFG.facts.splice(i, 1); STORE.save(); paintFacts(); sum(); };
     const dp = c.querySelector('[data-fdelph]'); if (dp) dp.onclick = () => { f.img = ''; STORE.save(); paintFacts(); };
-    c.querySelector('[data-fph]').onclick = () => { inp.value = ''; inp.click(); };
-    inp.onchange = () => { const file = inp.files && inp.files[0]; if (!file) return; IMG.load(file, 700, 120000).then(d => { f.img = IMG.put(d); STORE.upImg(f.img); STORE.save(); paintFacts(); }, () => toast('Не получилось открыть фото')); };
+    c.querySelector('[data-fph]').onclick = () => { const d = f.img && IMG.get(f.img); if (!d) { inp.value = ''; inp.click(); return; } cropImage(d, Object.assign({ replace: true }, AVCROP)).then(r => { if (r === 'replace') { inp.value = ''; inp.click(); } else if (r) { f.img = IMG.put(r); STORE.upImg(f.img); STORE.save(); paintFacts(); } }); };
+    inp.onchange = () => { const file = inp.files && inp.files[0]; if (!file) return; loadCrop(file, AVCROP).then(d => { if (!d) return; f.img = IMG.put(d); STORE.upImg(f.img); STORE.save(); paintFacts(); }, () => toast('Не получилось открыть фото')); };
   });
   sum();
 }
@@ -1789,9 +1859,9 @@ function bindCard(c) {
   const take = file => {
     if (!file) return;
     box.innerHTML = '<div class="busy">Обрабатываем фото…</div>';
-    IMG.load(file).then(d => { q.img = IMG.put(d); STORE.upImg(q.img); STORE.save(); repaintCard(i); }, () => { box.innerHTML = imgSlot(q) + '<div class="err">Не удалось открыть файл — нужна картинка JPG или PNG</div>'; wireImg(); });
+    loadCrop(file, QCROP).then(d => { if (!d) { repaintCard(i); return; } q.img = IMG.put(d); STORE.upImg(q.img); STORE.save(); repaintCard(i); }, () => { box.innerHTML = imgSlot(q) + '<div class="err">Не удалось открыть файл — нужна картинка JPG или PNG</div>'; wireImg(); });
   };
-  const wireImg = () => box.querySelectorAll('[data-im]').forEach(b => b.onclick = e => { e.preventDefault(); if (b.dataset.im === 'del') { q.img = ''; STORE.save(); repaintCard(i); } else { inp.value = ''; inp.click(); } });
+  const wireImg = () => box.querySelectorAll('[data-im]').forEach(b => b.onclick = e => { e.preventDefault(); if (b.dataset.im === 'del') { q.img = ''; STORE.save(); repaintCard(i); } else if (b.dataset.im === 'crop') { cropImage(IMG.get(q.img), QCROP).then(d => { if (d) { q.img = IMG.put(d); STORE.upImg(q.img); STORE.save(); repaintCard(i); } }); } else { inp.value = ''; inp.click(); } });
   wireImg();
   inp.onchange = () => take(inp.files && inp.files[0]);
   c.addEventListener('paste', e => { const it = [...((e.clipboardData || {}).items || [])].find(x => x.kind === 'file' && /^image\//.test(x.type)); if (it) { e.preventDefault(); take(it.getAsFile()); } });
@@ -1799,8 +1869,9 @@ function bindCard(c) {
   c.addEventListener('dragleave', e => { if (!c.contains(e.relatedTarget)) c.classList.remove('drag'); });
   c.addEventListener('drop', e => { c.classList.remove('drag'); const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) { e.preventDefault(); take(f); } });
 }
+const QCROP = { free: true, max: 1600, target: 380000 }, AVCROP = { aspect: 1, round: true, max: 700, target: 120000 };
 function imgSlot(q) {
-  if (q.img && IMG.get(q.img)) return `<div class="has">${picHtml(q.img, 'has-in')}<div class="acts"><button data-im="rep">Заменить</button><button data-im="del">Убрать</button></div></div>`;
+  if (q.img && IMG.get(q.img)) return `<div class="has">${picHtml(q.img, 'has-in')}<div class="acts"><button data-im="crop">Кадрировать</button><button data-im="rep">Заменить</button><button data-im="del">Убрать</button></div></div>`;
   return `<button class="add" data-im="add">${ICON.cam} Добавить фото к вопросу</button>`;
 }
 function sum() {

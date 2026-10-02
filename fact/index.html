@@ -184,6 +184,23 @@ body.sorting,body.sorting *{-webkit-user-select:none;user-select:none;cursor:gra
 .modal.on{display:flex}
 .modal .box{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;width:100%;max-width:560px;max-height:92vh;overflow:auto}
 .modal h3{font-family:var(--hf);font-stretch:125%;font-size:22px;text-transform:uppercase;margin:0 0 6px;color:var(--ink);font-weight:600}
+.crp{display:flex;justify-content:center;background:#0b0b0a;border-radius:14px;padding:10px;user-select:none;-webkit-user-select:none}
+.cst{position:relative;display:inline-block;line-height:0;overflow:hidden;border-radius:6px;touch-action:none}
+.cst img{display:block;max-width:100%;max-height:min(58vh,520px);pointer-events:none}
+.cbox{position:absolute;box-shadow:0 0 0 2000px rgba(0,0,0,.6);outline:2px solid #fff;cursor:move;touch-action:none}
+.cbox.round{border-radius:50%;outline:none;box-shadow:0 0 0 2px #fff,0 0 0 2000px rgba(0,0,0,.6)}
+.cbox .g{position:absolute;inset:0;pointer-events:none;border:0;border-radius:0;box-shadow:none;background:linear-gradient(rgba(255,255,255,.28),rgba(255,255,255,.28)) 33.33% 0/1px 100% no-repeat,linear-gradient(rgba(255,255,255,.28),rgba(255,255,255,.28)) 66.66% 0/1px 100% no-repeat,linear-gradient(rgba(255,255,255,.28),rgba(255,255,255,.28)) 0 33.33%/100% 1px no-repeat,linear-gradient(rgba(255,255,255,.28),rgba(255,255,255,.28)) 0 66.66%/100% 1px no-repeat}
+.cbox.round .g{border-radius:50%!important}
+.cbox i{position:absolute;width:22px;height:22px;border:3px solid #fff;touch-action:none}
+.cbox i[data-h=nw]{left:-4px;top:-4px;border-right:0;border-bottom:0;cursor:nwse-resize}
+.cbox i[data-h=ne]{right:-4px;top:-4px;border-left:0;border-bottom:0;cursor:nesw-resize}
+.cbox i[data-h=sw]{left:-4px;bottom:-4px;border-right:0;border-top:0;cursor:nesw-resize}
+.cbox i[data-h=se]{right:-4px;bottom:-4px;border-left:0;border-top:0;cursor:nwse-resize}
+.cbox i:after{content:"";position:absolute;inset:-12px}
+.car{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.car button{border:1px solid var(--line);background:none;color:var(--muted);border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.car button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cbt{display:flex;gap:8px;margin-top:14px}.cbt .btn{flex:1}
 .modal pre{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--muted);margin:8px 0 12px;white-space:pre-wrap}
 .qrbox{background:#fff;border-radius:16px;padding:12px;width:210px;height:210px;margin:12px auto;display:grid;place-items:center}
 .qrbox img,.qrbox canvas{width:100%!important;height:100%!important}
@@ -605,6 +622,6 @@ body.solo-play #ph>.pv{flex:1}
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
 <script>window.PB_GAME = 'fact';</script>
-<script src="../quiz/quiz.js?v=20"></script>
+<script src="../quiz/quiz.js?v=21"></script>
 </body>
 </html>
