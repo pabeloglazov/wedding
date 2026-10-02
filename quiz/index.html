@@ -569,6 +569,19 @@ body.solo-play #ph>.pv{flex:1}
 .fcard .fx{border:1px solid var(--line);background:none;color:var(--muted);border-radius:10px;padding:0 10px;height:34px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 .fcard .fdel{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--muted);display:grid;place-items:center;flex:none;cursor:pointer}
 .fcard .fdel:hover,.fcard .fx:hover{color:var(--ink);border-color:rgba(255,255,255,.35)}
+.qbody.pq{grid-template-columns:1fr 1.25fr}
+.pqw{position:relative;display:grid;min-height:0}
+.pqw>.qpic{grid-area:1/1}
+.pqw.bl .qa img{animation:unblur var(--dur) linear var(--del) both}
+@keyframes unblur{from{filter:blur(36px)}to{filter:blur(8px)}}
+.pqw.rv .qa img{animation:none;filter:none}
+.pqw .qb{opacity:0;transform:scale(.97);transition:opacity .9s .4s,transform .9s .4s;z-index:2}
+.pqw.rv .qb{opacity:1;transform:none}
+.pqw .atag{position:absolute;left:.9em;top:.9em;z-index:3;background:var(--gold,#f2efe9);color:#131312;border-radius:99em;padding:.3em .9em;font-weight:800;font-size:.9em;letter-spacing:.12em;text-transform:uppercase;opacity:0;transition:opacity .5s 1s}
+.pqw.rv .atag{opacity:1}
+.pimg.bl img,.pimg.bl .bgb{filter:blur(16px)}.pv .pimg.bl{cursor:default}
+.pqx{margin-top:12px}.pqx .lbl{margin-top:4px}.pqx .sw{margin-top:8px}
+.qimg .add.need{border-color:rgba(242,239,233,.45);color:var(--ink)}
 .qbody.fq{grid-template-columns:1.35fr 1fr}
 .hero{perspective:60em;min-height:0;display:flex}
 .hero .hcard{position:relative;flex:1;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.2,.8,.2,1)}
@@ -621,6 +634,6 @@ body.solo-play #ph>.pv{flex:1}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=21"></script>
+<script src="quiz.js?v=22"></script>
 </body>
 </html>

@@ -41,7 +41,8 @@ const ACCENTS = ['#f2efe9', '#e2cd92', '#e8a0a8', '#9cc5a1', '#9db8e8', '#c7a4e8
 const BRAND = sub => window.PB_BRAND ? PB_BRAND.lockup(sub) : '<b>Beloglazov Event</b>';
 const MARK = n => window.PB_BRAND ? PB_BRAND.mark(n) : '';
 const BOTS = ['Аня', 'Максим К.', 'Оля', 'Дима', 'Лиза', 'Артём', 'Катя', 'Игорь', 'Маша', 'Саша', 'Вера', 'Паша'];
-const TYPES = { choice: 'Обычный', couple: 'Угадай ответ пары', number: 'Число' };
+const TYPES = { choice: 'Обычный', photo: 'Фото-вопрос', couple: 'Угадай ответ пары', number: 'Число' };
+const isCh = q => !!q && (q.type === 'choice' || q.type === 'photo');
 
 function coupleNames(s) { const p = String(s || '').split(/\s+(?:и|&|and|\+)\s+/i).map(x => x.trim()).filter(Boolean); return [p[0] || 'Жених', p[1] || 'Невеста']; }
 const O = t => ({ t: t || '' });
@@ -333,8 +334,9 @@ function normQ(q) {
     while (q.opts.length > 2 && !optFilled(q.opts[q.opts.length - 1]) && q.ok.indexOf(q.opts.length - 1) < 0) q.opts.pop();
     while (q.opts.length < 2) q.opts.push(O());
   }
-  if (q.type === 'choice' && !q.ok.length) q.ok = [0];
-  if (q.type !== 'choice') q.ok = [];
+  if (isCh(q) && !q.ok.length) q.ok = [0];
+  if (!isCh(q)) q.ok = [];
+  if (q.type !== 'photo') { delete q.aimg; delete q.blur; }
   return q;
 }
 function defaultCfg(blank) {
@@ -382,14 +384,16 @@ function validQ(q) {
   if (q.type === 'number') return q.num !== '' && q.num != null && isFinite(+q.num);
   const f = q.opts.filter(optFilled).length;
   if (f < 2) return false;
-  if (q.type === 'choice') return q.ok.some(i => optFilled(q.opts[i]));
+  if (q.type === 'photo' && !q.img) return false;
+  if (isCh(q)) return q.ok.some(i => optFilled(q.opts[i]));
   return true;
 }
 function qIssue(q) {
   if (!((q.text || '').trim() || q.img)) return 'Добавьте текст вопроса или фото';
+  if (q.type === 'photo' && !q.img) return 'Добавьте фото — это фото-вопрос';
   if (q.type === 'number') return q.num === '' || q.num == null || !isFinite(+q.num) ? 'Укажите правильное число' : '';
   if (q.opts.filter(optFilled).length < 2) return 'Нужно минимум два варианта ответа';
-  if (q.type === 'choice' && !q.ok.some(i => optFilled(q.opts[i]))) return 'Отметьте правильный ответ — нажмите на букву';
+  if (isCh(q) && !q.ok.some(i => optFilled(q.opts[i]))) return 'Отметьте правильный ответ — нажмите на букву';
   return '';
 }
 
@@ -415,7 +419,7 @@ const STORE = {
     if (done[id]) return;
     ref(`ws/${k}/img/${id}`).set(d).then(() => { done[id] = 1; ls('set', 'pbq_up_' + k.slice(0, 8), done); });
   },
-  imgsOf(c) { const s = new Set(); if (c.photo) s.add(c.photo); (c.facts || []).forEach(f => { if (f.img) s.add(f.img); }); c.qs.forEach(q => { if (q.img) s.add(q.img); (q.opts || []).forEach(o => { if (o.img) s.add(o.img); }); }); return [...s]; },
+  imgsOf(c) { const s = new Set(); if (c.photo) s.add(c.photo); (c.facts || []).forEach(f => { if (f.img) s.add(f.img); }); c.qs.forEach(q => { if (q.img) s.add(q.img); if (q.aimg) s.add(q.aimg); (q.opts || []).forEach(o => { if (o.img) s.add(o.img); }); }); return [...s]; },
   pushAll() { this.save(); this.imgsOf(CFG).forEach(id => this.upImg(id)); },
   list() { const k = wsKey(); if (!k || !NET.ok) return Promise.resolve([]); return ref(`ws/${k}/${WSL}`).once('value').then(s => { const v = s.val() || {}; return Object.keys(v).map(id => Object.assign({ id }, v[id])).sort((a, b) => (b.updated || 0) - (a.updated || 0)); }); },
   open(id) {
@@ -532,7 +536,7 @@ function startQuestion(i) {
 }
 function okSet(g, i) {
   const q = g.qs[i];
-  if (q.type === 'choice') return q.ok.slice();
+  if (isCh(q)) return q.ok.slice();
   if (q.type === 'couple') { const c = g.cpl[i] || {}; const a = [c.groom, c.bride].filter(x => x != null); if (!a.length && c.host != null) a.push(c.host); return [...new Set(a)]; }
   return [];
 }
@@ -666,7 +670,7 @@ let REM = {}, ONLINE = {};
 const doneCmd = {};
 const coupleRoles = () => [...new Set(Object.values(REM).map(r => r.role).filter(r => r === 'groom' || r === 'bride'))];
 const hasCoupleDevices = () => coupleRoles().length > 0;
-function pubQs(g) { return g.qs.map((q, i) => ({ type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: o.t || '', img: o.img || '' })), unit: q.unit || '', x2: mult(g, i) > 1 })); }
+function pubQs(g) { return g.qs.map((q, i) => ({ type: q.type, text: q.text || '', img: q.img || '', blur: q.blur ? 1 : 0, opts: (q.opts || []).map(o => ({ t: o.t || '', img: o.img || '' })), unit: q.unit || '', x2: mult(g, i) > 1 })); }
 async function allocCode(gid) {
   for (let i = 0; i < 8; i++) {
     const c = String(100000 + Math.floor(Math.random() * 900000));
@@ -734,7 +738,7 @@ function endNet() {
 function uploadImgs(gid) {
   const ids = [];
   const add = id => { if (id && id.slice(0, 2) !== 'u:' && ids.indexOf(id) < 0 && IMG.get(id)) ids.push(id); };
-  add(G.photo); G.qs.forEach(q => { add(q.img); add(q.hp); (q.opts || []).forEach(o => add(o.img)); });
+  add(G.photo); G.qs.forEach(q => { add(q.img); add(q.hp); add(q.aimg); (q.opts || []).forEach(o => add(o.img)); });
   ids.reduce((pr, id) => pr.then(() => { const d = IMG.get(id); return IMG.shrink(d, 900, .72).then(ph => { if (!G || G.id !== gid) return; return gref(gid, 'img/' + id).set({ p: ph || d, s: d }); }); }), Promise.resolve()).catch(e => console.warn('quiz img', e));
 }
 function coreOf(g) {
@@ -751,7 +755,7 @@ function scrOf(g) {
   const rev = g.phase === 'reveal' || g.phase === 'board' || g.phase === 'final';
   const v = JSON.parse(JSON.stringify(g));
   delete v.snap; delete v.rkey; delete v.banned;
-  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '' }; if (rev && i === g.qi) { o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; } return o; });
+  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0 }; if (rev && i === g.qi) { o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; } return o; });
   const a = {}; if (g.qi >= 0) a['q' + g.qi] = g.ans[g.qi] || {}; v.ans = a;
   const c = g.cpl[g.qi] || {};
   v.cpl = {}; if (g.qi >= 0) v.cpl['q' + g.qi] = rev ? c : { groom: c.groom != null ? 9 : null, bride: c.bride != null ? 9 : null };
@@ -765,7 +769,7 @@ function fixScr(v) {
   Object.keys(v.players).forEach(k => { const p = v.players[k]; p.times = p.times || []; p.score = p.score || 0; });
   const a = {}; if (v.ans && v.ans['q' + v.qi]) a[v.qi] = v.ans['q' + v.qi]; v.ans = a;
   const c = {}; if (v.cpl && v.cpl['q' + v.qi]) c[v.qi] = v.cpl['q' + v.qi]; v.cpl = c;
-  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '' }; });
+  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0 }; });
   return v;
 }
 function netPush(force) {
@@ -892,17 +896,18 @@ function buildScreen(box, g) {
   } else if (g.phase === 'question' || g.phase === 'reveal') {
     const q = g.qs[g.qi], pic = isPicQ(q), img = !pic && q.img ? picHtml(q.img, 'qpic') : '';
     const [gn, bn] = coupleNames(g.couple);
-    const badge = (mult(g, g.qi) > 1 ? '<span class="x2">×2 очки</span>' : '') + (q.type === 'couple' ? '<span class="ctype">💍 Угадайте ответ пары</span>' : q.type === 'number' ? '<span class="ctype">🔢 Ответ — число</span>' : '');
+    const badge = (mult(g, g.qi) > 1 ? '<span class="x2">×2 очки</span>' : '') + (q.type === 'photo' ? '<span class="ctype">📷 Фото-вопрос</span>' : q.type === 'couple' ? '<span class="ctype">💍 Угадайте ответ пары</span>' : q.type === 'number' ? '<span class="ctype">🔢 Ответ — число</span>' : '');
     const stg = isStage(g);
     const head = `<div class="qtop2"><span class="n">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}</span>${q.fact ? '<span class="ctype">💡 Кто это?</span>' : badge}${stg ? '' : ringSvg}</div>`;
     const cst = q.type === 'couple' ? `<div class="cst" id="cst"><span data-r="groom">${esc(gn)} …</span><span data-r="bride">${esc(bn)} …</span></div><div class="cres" id="cres" style="display:none"></div>` : '';
     let body;
     if (q.fact && stg) body = `<div class="qbody fq stg"><div class="qleft"><div class="qtext">${esc(q.text)}</div></div>${heroCard()}</div>`;
     else if (q.fact) body = `<div class="qbody fq"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${factTiles(q)}</div>${heroCard()}</div>`;
+    else if (q.type === 'photo') { const dur = Math.max(1000, g.t1 - g.t0); body = `<div class="qbody pq"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${tilesHtml(q, false)}</div><div class="pqw${q.blur ? ' bl' : ''}${g.phase === 'reveal' ? ' rv' : ''}" style="--dur:${dur}ms;--del:${g.phase === 'question' ? (g.t0 - now()) : 0}ms">${picHtml(q.img, 'qpic qa')}${q.aimg ? picHtml(q.aimg, 'qpic qb') : ''}${q.aimg ? '<span class="atag">Ответ</span>' : ''}</div></div>`; }
     else if (q.type === 'number') body = `<div class="qtext" style="flex:none">${esc(q.text)}</div>${img ? `<div class="qbody" style="grid-template-columns:1fr 1fr"><div class="numq" id="numq"></div>${img}</div>` : '<div class="numq" id="numq"></div>'}`;
     else if (img) body = `<div class="qbody"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${cst}${tilesHtml(q, false)}</div>${img}</div>`;
     else body = `<div class="qtext"${pic ? ' style="flex:none;font-size:2.8em"' : ''}>${esc(q.text)}</div>${cst}${tilesHtml(q, pic)}`;
-    h = `<div class="sv${img || q.fact ? ' wimg' : ''}${stg ? ' stgv' : ''}">${head}${body}<div class="foot"><span id="ansCnt"></span><span id="footR"></span></div></div>`;
+    h = `<div class="sv${img || q.fact || q.type === 'photo' ? ' wimg' : ''}${stg ? ' stgv' : ''}">${head}${body}<div class="foot"><span id="ansCnt"></span><span id="footR"></span></div></div>`;
   } else if (g.phase === 'board') {
     const fin = g.final;
     const row = (p, i, delay) => { const was = g.prevRank[p.id], d = was ? was - (i + 1) : 0; return `<div class="brow" style="animation-delay:${delay}ms"><span class="pl">${i + 1}</span><span class="nm"><span>${esc(p.name)}</span>${p.table ? `<small>стол ${p.table}</small>` : ''}${!fin && d > 0 ? `<i class="up">▲${d}</i>` : !fin && d < 0 ? `<i class="dn">▼${-d}</i>` : ''}</span><span class="sc">${p.gain && !fin ? `<span class="gain">+${nums(p.gain)}</span>` : ''}${nums(p.score)}</span></div>`; };
@@ -997,6 +1002,7 @@ function updScreen(box, g, snd) {
     return;
   }
   const D = dist(g), okS = rev ? okSet(g, g.qi) : [];
+  const pw = box.querySelector('.pqw'); if (pw && rev && !pw.classList.contains('rv')) pw.classList.add('rv');
   const tiles = box.querySelector('#tiles');
   if (tiles) {
     tiles.classList.toggle('rev', rev);
@@ -1081,7 +1087,7 @@ function buildPhone(box, g, cl) {
       const mine = (i.pid && i.pid === cl.pid) || (i.table && i.table === me.table);
       h = `<div class="pv">${head(g, me)}<div class="wait">${mine ? '<div class="big" style="font-size:56px">🎉</div><h2>Сейчас представляют вас!</h2><p class="sub">Помашите залу 👋</p>' : `<div class="big" style="font-size:48px">🎤</div><h2>Знакомимся</h2><p class="sub">На экране: ${esc(i.name || '')}</p>`}</div></div>`;
     } else if (g.phase === 'question') {
-      const q = g.qs[g.qi], pic = isPicQ(q), ppic = q.img && !pic ? picHtml(q.img, 'pimg') : '';
+      const q = g.qs[g.qi], pic = isPicQ(q), ppic = q.img && !pic ? picHtml(q.img, 'pimg' + (q.blur ? ' bl' : '')) : '';
       const top = `<div class="pv${ppic ? ' wimg' : ''}">${head(g, me)}<div class="kk" style="text-align:left">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}${q.fact ? ' · кто это?' : mult(g, g.qi) > 1 ? ' · ×2 очки' : ''}</div><div class="pq">${esc(q.text)}</div>` +
         (q.type === 'couple' ? '<div class="hintc">💍 Угадайте, что ответила пара</div>' : '') + ppic + '<div class="tm"><i id="ptm" style="width:100%"></i></div>';
       if (q.type === 'number') h = top + `<div class="numin"><input class="pin" id="pNum" inputmode="decimal" autocomplete="off" placeholder="Ваш ответ">${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}<button class="pbtn acc" id="pNumGo">Ответить</button></div><p class="note" id="pNote"></p></div>`;
@@ -1144,7 +1150,7 @@ function wirePhone(box, g, cl) {
   const cg = box.querySelector('#pGo');
   if (cg) { const inp = box.querySelector('#pCode'); const go = () => cl.enterCode(inp.value.replace(/\D/g, ''), box.querySelector('#pErr')); cg.onclick = go; inp.oninput = () => { const d = inp.value.replace(/\D/g, '').slice(0, 6); inp.value = d.length > 3 ? d.slice(0, 3) + ' ' + d.slice(3) : d; if (d.length === 6) go(); }; }
   const pz = box.querySelector('.pimg');
-  if (pz) pz.onclick = () => { const z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = `<img src="${pz.querySelector('img').src}" alt="">`; z.onclick = () => z.remove(); document.body.appendChild(z); };
+  if (pz && !pz.classList.contains('bl')) pz.onclick = () => { const z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = `<img src="${pz.querySelector('img').src}" alt="">`; z.onclick = () => z.remove(); document.body.appendChild(z); };
   [...box.querySelectorAll('#pAns button')].forEach(b => b.onclick = () => {
     const cur = cl.cur(); if (!cur || cur.phase !== 'question' || now() > cur.t1 + 300) return;
     const mine = cl.picked[cur.qi];
@@ -1230,7 +1236,7 @@ function viewScreenNet() {
       LIVE = fixScr(x.val());
       if (!LIVE) { if (!gone) { box._st = {}; box.innerHTML = '<div class="sv center"><div class="kk">' + GNAME + '</div><h1>Игра завершена</h1></div>'; } return; }
       applyAccent(LIVE.accent);
-      const ids = new Set(); if (LIVE.photo) ids.add(LIVE.photo); LIVE.qs.forEach(q => { if (q.img) ids.add(q.img); if (q.hp) ids.add(q.hp); q.opts.forEach(o => { if (o.img) ids.add(o.img); }); });
+      const ids = new Set(); if (LIVE.photo) ids.add(LIVE.photo); LIVE.qs.forEach(q => { if (q.img) ids.add(q.img); if (q.hp) ids.add(q.hp); if (q.aimg) ids.add(q.aimg); q.opts.forEach(o => { if (o.img) ids.add(o.img); }); });
       ids.forEach(id => IMG.fetchNet('g/' + GID + '/img/' + id + '/s', id, redraw));
       renderScreen(box, LIVE, true);
     });
@@ -1292,7 +1298,7 @@ function viewPlayNet() {
     }
     cl.cur = () => {
       if (!C || !Q || gone) return null;
-      const qs = Q.map((q, i) => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', x2: !!q.x2,
+      const qs = Q.map((q, i) => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', x2: !!q.x2, blur: !!q.blur,
         ok: i === C.qi && C.ok && C.ok.set ? C.ok.set : [], num: i === C.qi && C.ok && C.ok.num != null ? C.ok.num : null }; });
       const g = { id: C.id, phase: C.phase, qi: C.qi, ii: C.ii, t0: C.t0, t1: C.t1, s: C.s || {}, title: C.title, couple: C.couple, final: C.final, res: C.res, players: {}, ans: {}, cpl: {}, qs, ok: C.ok, _intro: C.intro };
       const cur = SC && SC.qi === C.qi;
@@ -1560,6 +1566,7 @@ const ICON = {
 function tip(text) { return `<span class="tip" tabindex="0" role="button" aria-label="Подсказка"><i>i</i><span class="tipb">${text}</span></span>`; }
 const QTIP = {
   choice: 'Нажмите на букву, чтобы отметить правильный ответ — правильных может быть несколько.',
+  photo: 'Фото на экране, гости выбирают ответ. Можно размыть фото — оно проясняется по таймеру, — и добавить фото-ответ, который откроется вместе с правильным вариантом.',
   couple: 'Правильный ответ даст пара прямо во время игры — со своих телефонов или через ваш пульт.',
   number: 'Гости вводят число. Точный ответ — 1200 очков, чем ближе — тем больше.'
 };
@@ -1612,7 +1619,7 @@ function renderEditor() {
     `<div class="panel" id="formP"></div>` +
     (GAME === 'fact' ? `<div class="qhead"><h2>Факты о гостях</h2><span class="muted" id="qCount"></span></div><div class="hint tipline" style="margin:-4px 0 12px">Имя гостя и факт о нём. Фото — по желанию: появится на экране, когда откроется ответ.</div><div id="qList"></div><div class="addrow one"><button class="btn ghost" id="addFact">+ Факт о госте</button></div></div>` :
     `<div class="qhead"><h2>Вопросы</h2><span class="muted" id="qCount"></span><span class="sp"></span><button class="btn ghost sm" id="bImport">Вставить списком</button></div><div id="qList"></div>` +
-    `<div class="addrow"><button class="btn ghost" data-add="choice">+ Вопрос</button><button class="btn ghost" data-add="couple">+ Угадай ответ пары${lockTag('couple')}</button><button class="btn ghost" data-add="number">+ Ответ числом</button></div></div>`) +
+    `<div class="addrow"><button class="btn ghost" data-add="choice">+ Вопрос</button><button class="btn ghost" data-add="photo">+ Фото-вопрос</button><button class="btn ghost" data-add="couple">+ Угадай ответ пары${lockTag('couple')}</button><button class="btn ghost" data-add="number">+ Ответ числом</button></div></div>`) +
     `<div class="bar"><div class="in"><div style="min-width:0;flex:1"><div style="font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="bSum"></div><div class="muted" style="font-size:12px" id="bSub"></div></div><button class="btn gold" id="bStart">Запустить ▶</button></div></div>`;
   renderTop(); paintSync();
   if ($('bLogin2')) $('bLogin2').onclick = goLogin;
@@ -1627,7 +1634,7 @@ function renderEditor() {
 }
 function addQ(type) {
   const [g, b] = coupleNames(CFG.couple);
-  const q = normQ({ type, opts: type === 'couple' ? [O(g), O(b)] : type === 'number' ? [] : [O(), O(), O(), O()], ok: type === 'choice' ? [0] : [] });
+  const q = normQ({ type, opts: type === 'couple' ? [O(g), O(b)] : type === 'number' ? [] : [O(), O(), O(), O()], ok: type === 'choice' || type === 'photo' ? [0] : [], text: type === 'photo' ? 'Кто на фото?' : '' });
   CFG.qs.push(q); STORE.save(); paintQs(); sum();
   const ts = document.querySelectorAll('.qcard textarea'), t = ts[ts.length - 1];
   if (t) { t.focus(); t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
@@ -1765,11 +1772,13 @@ function cardHtml(q, i) {
   let body = `<textarea class="inp" rows="2" placeholder="${q.type === 'couple' ? 'Например: «Кто первым написал сообщение?»' : 'Текст вопроса'}" data-f="text">${esc(q.text)}</textarea><div class="qimg">${imgSlot(q)}</div><input type="file" accept="image/*" class="qfile" hidden>`;
   if (q.type === 'number') body += `<div class="numrow"><input class="inp" data-f="num" inputmode="decimal" placeholder="Правильное число" value="${esc(q.num == null ? '' : q.num)}"><input class="inp" data-f="unit" placeholder="ед., напр. мес." maxlength="16" value="${esc(q.unit || '')}"></div>`;
   else {
-    body += '<div class="opts">' + q.opts.map((o, j) => `<div class="opt${q.type === 'choice' && q.ok.indexOf(j) >= 0 ? ' ok' : ''}" data-j="${j}"><span class="grip og" title="Перетащить">${ICON.grip}</span><button class="ch ${CL[j]}" data-ok="${j}" title="${q.type === 'choice' ? 'Отметить правильным' : ''}">${L[j]}</button>` +
+    body += '<div class="opts">' + q.opts.map((o, j) => `<div class="opt${isCh(q) && q.ok.indexOf(j) >= 0 ? ' ok' : ''}" data-j="${j}"><span class="grip og" title="Перетащить">${ICON.grip}</span><button class="ch ${CL[j]}" data-ok="${j}" title="${isCh(q) ? 'Отметить правильным' : ''}">${L[j]}</button>` +
       `<input data-o="${j}" maxlength="80" placeholder="Вариант ${L[j]}" value="${esc(o.t)}">` +
       (q.opts.length > 2 ? `<button class="ic" data-del="${j}" title="Удалить вариант">${ICON.trash}</button>` : '') + '</div>').join('') + '</div>' +
       (q.opts.length < 4 ? '<button class="btn ghost sm" data-addopt style="margin-top:8px">+ Вариант</button>' : '');
   }
+  if (q.type === 'photo') body += `<div class="pqx"><div class="lbl">Фото-ответ <span class="muted">· по желанию</span> ${tip('Откроется на экране вместе с правильным ответом — например, то же фото целиком или фото героя сейчас.')}</div><div class="qimg aimg">${aimgSlot(q)}</div><input type="file" accept="image/*" class="afile" hidden>` +
+    `<label class="sw">Размыть фото — проясняется по таймеру<input type="checkbox" data-blur${q.blur ? ' checked' : ''}></label></div>`;
   if (issue) body += `<div class="hint w">⚠ ${esc(issue)}</div>`;
   return `<div class="qcard${issue ? ' warn' : ''}" data-i="${i}"><div class="qtop"><span class="grip qg" title="Перетащить вопрос">${ICON.grip}</span><span class="qnum">${i + 1}</span><div class="seg">${Object.keys(TYPES).map(t => `<button data-t="${t}" class="${q.type === t ? 'on' : ''}">${TYPES[t]}${t === 'couple' && !can('couple') ? '<em class="lk sm">' + ICON_LOCK + '</em>' : ''}</button>`).join('')}</div><button class="x2b${q.x2 ? ' on' : ''}" data-x2 title="Двойные очки">×2</button>` +
     `<div class="qtools">${qTip(q)}<button class="ic" data-a="dup" title="Копия">⧉</button><button class="ic" data-a="del" title="Удалить вопрос">${ICON.trash}</button></div></div>${body}</div>`;
@@ -1821,7 +1830,7 @@ function bindCard(c) {
   c.querySelectorAll('[data-f]').forEach(inp => inp.oninput = () => { const f = inp.dataset.f; q[f] = f === 'num' ? inp.value.replace(',', '.').replace(/\s/g, '') : inp.value; STORE.save(); refreshWarn(c, q); });
   c.querySelectorAll('[data-o]').forEach(inp => inp.oninput = () => { q.opts[+inp.dataset.o].t = inp.value; STORE.save(); refreshWarn(c, q); });
   c.querySelectorAll('[data-ok]').forEach(b => b.onclick = () => {
-    if (q.type !== 'choice') return;
+    if (!isCh(q)) return;
     const j = +b.dataset.ok, k = q.ok.indexOf(j);
     if (k >= 0) { if (q.ok.length > 1) q.ok.splice(k, 1); else { toast('Хотя бы один ответ должен быть правильным'); return; } } else q.ok.push(j);
     q.ok.sort(); STORE.save();
@@ -1836,13 +1845,13 @@ function bindCard(c) {
   c.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
     const j = +b.dataset.del; if (q.opts.length <= 2) return;
     q.opts.splice(j, 1); q.ok = q.ok.filter(x => x !== j).map(x => x > j ? x - 1 : x);
-    if (q.type === 'choice' && !q.ok.length) q.ok = [0];
+    if (isCh(q) && !q.ok.length) q.ok = [0];
     STORE.save(); repaintCard(i);
   });
   const ao = c.querySelector('[data-addopt]'); if (ao) ao.onclick = () => { if (q.opts.length >= 4) return; q.opts.push(O()); STORE.save(); repaintCard(i, `[data-o="${q.opts.length - 1}"]`); };
   c.querySelectorAll('[data-t]').forEach(b => b.onclick = () => {
     const t = b.dataset.t; if (t === q.type) return; if (t === 'couple' && !can('couple')) return upsell('couple');
-    q.type = t;
+    q.type = t; if (t === 'photo' && !(q.text || '').trim()) q.text = 'Кто на фото?';
     if (t === 'number') { q.ok = []; }
     else { if (q.opts.length < 2) q.opts = [O(), O()]; if (t === 'couple') { q.ok = []; if (!q.opts.some(optFilled)) { const [g, bn] = coupleNames(CFG.couple); q.opts = [O(g), O(bn)]; } } else if (!q.ok.length) q.ok = [0]; }
     STORE.save(); repaintCard(i);
@@ -1864,15 +1873,25 @@ function bindCard(c) {
   const wireImg = () => box.querySelectorAll('[data-im]').forEach(b => b.onclick = e => { e.preventDefault(); if (b.dataset.im === 'del') { q.img = ''; STORE.save(); repaintCard(i); } else if (b.dataset.im === 'crop') { cropImage(IMG.get(q.img), QCROP).then(d => { if (d) { q.img = IMG.put(d); STORE.upImg(q.img); STORE.save(); repaintCard(i); } }); } else { inp.value = ''; inp.click(); } });
   wireImg();
   inp.onchange = () => take(inp.files && inp.files[0]);
+  const ainp = c.querySelector('.afile');
+  if (ainp) {
+    c.querySelectorAll('[data-am]').forEach(b => b.onclick = e => { e.preventDefault(); const a = b.dataset.am; if (a === 'del') { q.aimg = ''; STORE.save(); repaintCard(i); } else if (a === 'crop') { cropImage(IMG.get(q.aimg), QCROP).then(d => { if (d) { q.aimg = IMG.put(d); STORE.upImg(q.aimg); STORE.save(); repaintCard(i); } }); } else { ainp.value = ''; ainp.click(); } });
+    ainp.onchange = () => { const f = ainp.files && ainp.files[0]; if (!f) return; loadCrop(f, QCROP).then(d => { if (d) { q.aimg = IMG.put(d); STORE.upImg(q.aimg); STORE.save(); repaintCard(i); } }, () => toast('Не получилось открыть фото')); };
+    const bl = c.querySelector('[data-blur]'); if (bl) bl.onchange = () => { q.blur = bl.checked; STORE.save(); };
+  }
   c.addEventListener('paste', e => { const it = [...((e.clipboardData || {}).items || [])].find(x => x.kind === 'file' && /^image\//.test(x.type)); if (it) { e.preventDefault(); take(it.getAsFile()); } });
   c.addEventListener('dragover', e => { if (e.dataTransfer && [...(e.dataTransfer.types || [])].indexOf('Files') >= 0) { e.preventDefault(); c.classList.add('drag'); } });
   c.addEventListener('dragleave', e => { if (!c.contains(e.relatedTarget)) c.classList.remove('drag'); });
   c.addEventListener('drop', e => { c.classList.remove('drag'); const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) { e.preventDefault(); take(f); } });
 }
 const QCROP = { free: true, max: 1600, target: 380000 }, AVCROP = { aspect: 1, round: true, max: 700, target: 120000 };
+function aimgSlot(q) {
+  if (q.aimg && IMG.get(q.aimg)) return `<div class="has">${picHtml(q.aimg, 'has-in')}<div class="acts"><button data-am="crop">Кадрировать</button><button data-am="rep">Заменить</button><button data-am="del">Убрать</button></div></div>`;
+  return `<button class="add" data-am="add">${ICON.cam} Добавить фото-ответ</button>`;
+}
 function imgSlot(q) {
   if (q.img && IMG.get(q.img)) return `<div class="has">${picHtml(q.img, 'has-in')}<div class="acts"><button data-im="crop">Кадрировать</button><button data-im="rep">Заменить</button><button data-im="del">Убрать</button></div></div>`;
-  return `<button class="add" data-im="add">${ICON.cam} Добавить фото к вопросу</button>`;
+  return `<button class="add${q.type === 'photo' ? ' need' : ''}" data-im="add">${ICON.cam} ${q.type === 'photo' ? 'Добавить фото для вопроса' : 'Добавить фото к вопросу'}</button>`;
 }
 function sum() {
   if (GAME === 'fact') {
