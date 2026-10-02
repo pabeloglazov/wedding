@@ -5,115 +5,189 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Мои игры · Белоглазов</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#131312">
+<meta name="theme-color" content="#0e0e0d">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/brand.css">
 <script src="../assets/brand.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
 <style>
-:root{--bg:#131312;--bg2:#181817;--card:#1c1c1b;--line:rgba(255,255,255,.1);--ink:#ffffff;--text:#e8e8e6;--muted:#a3a3a3;--gold:#f2efe9;--gold2:#d9d6d0}
+:root{
+  --bg:#0e0e0d;--surface:#161615;--card:#1b1b1a;--raise:#232322;
+  --ink:#f2efe9;--muted:#9d9b96;--faint:#6a6864;--line:rgba(242,239,233,.09);--line2:rgba(242,239,233,.18);
+  --ok:#7fc79a;--warn:#e5b45c;--bad:#e07a5f;
+  --t-quiz:#c27078;--t-fact:#d9a441;--t-bingo:#6f9fc6;--t-sm:#a7ae86;
+  --hf:Archivo,Manrope,system-ui,sans-serif;--bf:Manrope,system-ui,-apple-system,sans-serif;
+  color-scheme:dark
+}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,system-ui,sans-serif;line-height:1.55}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--bf);line-height:1.45;font-size:15px}
 a{color:inherit}
-.top{position:sticky;top:0;z-index:5;background:rgba(19,19,18,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.top .in{max-width:980px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:14px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-.brand i{width:30px;height:30px;border-radius:9px;background:#f2efe9;display:grid;place-items:center;font-style:normal;color:#131312;font-weight:800;font-size:14px}
-.brand b{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:22px;font-weight:600;color:var(--ink)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+.top{position:sticky;top:0;z-index:10;background:rgba(14,14,13,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.top .in{max-width:980px;margin:0 auto;padding:0 22px;height:64px;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff}
+.brand .pb-word{height:13px}
 .sp{flex:1}
-.lang,.out{border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:800;font-size:12px;height:40px;border-radius:999px;cursor:pointer;padding:0 14px}
-.lang{width:40px;padding:0}
-.out{color:var(--muted);font-weight:700}
-.wrap{max-width:980px;margin:0 auto;padding:40px 24px 80px}
-.k{color:var(--gold2);letter-spacing:.24em;text-transform:uppercase;font-weight:700;font-size:12px}
-h1{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-weight:600;font-size:clamp(38px,6vw,56px);line-height:1.02;margin:10px 0 10px;color:var(--ink)}
-.lead{color:var(--muted);margin:0 0 28px;max-width:560px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:14px;padding:13px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;transition:transform .15s}
-.btn:active{transform:scale(.97)}
-.btn.gold{background:#f2efe9;color:#131312}
-.btn.ghost{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line)}
+.lang{border:1px solid var(--line2);background:none;border-radius:99px;height:36px;width:36px;font-weight:800;font-size:12px}
+.acct{position:relative}
+.me{display:flex;align-items:center;gap:10px;border:0;background:none;border-radius:99px;padding:3px 3px 3px 10px}
+.me:hover{background:var(--surface)}
+.mt{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}
+.mt .pl{font-size:13px;font-weight:700;white-space:nowrap}
+.left{font-size:12px;font-weight:700;color:var(--warn)}
+.left.ok{color:var(--muted)}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--bad);color:#fff;font-weight:800;font-size:15px;flex:none;text-transform:uppercase}
+.amenu{position:absolute;right:0;top:calc(100% + 8px);z-index:12;width:260px;background:var(--raise);border:1px solid var(--line2);border-radius:16px;padding:8px;box-shadow:0 18px 40px rgba(0,0,0,.5);display:flex;flex-direction:column}
+.amenu .who{padding:8px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:6px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.amenu .who b{font-size:15px}.amenu .who span{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.amenu .aplan{display:none;padding:0 10px 8px;flex-direction:column;font-size:13px;font-weight:700}
+.amenu button,.amenu a{border:0;background:none;text-align:left;border-radius:9px;padding:9px 10px;font-size:14.5px;font-weight:700;text-decoration:none}
+.amenu button:hover,.amenu a:hover{background:var(--card)}
+.amenu .out{color:var(--muted);font-weight:600}
+
+.wrap{max-width:760px;margin:0 auto;padding:34px 22px 90px;display:flex;flex-direction:column;gap:14px}
+.mhead{display:flex;align-items:center;gap:12px}
+h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:uppercase;font-size:30px;line-height:1;margin:0;letter-spacing:-.01em}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line2);background:none;border-radius:99px;padding:10px 18px;font-weight:700;font-size:14px;white-space:nowrap;text-decoration:none}
+.btn:hover{background:var(--surface)}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.pri:hover{background:#fff}
 .btn[disabled]{opacity:.5;cursor:default}
-.login{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px;max-width:460px}
-.login input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--ink);font:inherit;font-size:16px;outline:none;margin:6px 0 12px}
-.login input:focus{border-color:var(--gold2)}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;height:44px}
+.search:focus-within{border-color:var(--line2)}
+.search svg{flex:none;color:var(--faint)}
+.search input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:15px}
+.search input::placeholder{color:var(--faint)}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -22px;padding:0 22px}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:0;background:none;border-radius:99px;padding:6px 12px;font-size:13.5px;font-weight:700;color:var(--muted);white-space:nowrap;display:inline-flex;gap:7px;align-items:center}
+.chip:hover{color:var(--ink)}
+.chip.on{background:var(--raise);color:var(--ink)}
+.chip i{width:7px;height:7px;border-radius:50%}
+
+.list{display:flex;flex-direction:column}
+.lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);font-weight:800;margin:18px 0 4px}
+.row{position:relative;display:flex;align-items:center;gap:14px;padding:12px 6px 12px 4px;border-bottom:1px solid var(--line);cursor:pointer;color:inherit;text-decoration:none}
+.row:hover{background:var(--surface)}
+.row .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--c);margin-left:6px}
+.row .tx{flex:1;min-width:0}
+.row b{display:block;font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row b mark{background:rgba(229,180,92,.35);color:inherit;border-radius:3px}
+.row small{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .st{font-size:12.5px;font-weight:700;color:var(--faint);white-space:nowrap}
+.row .st.live{color:var(--ok)}
+.row .more{border:0;background:none;color:var(--faint);width:34px;height:34px;border-radius:9px;font-size:18px;line-height:1;flex:none}
+.row .more:hover{background:var(--raise);color:var(--ink)}
+.past .row{opacity:.6}
+.menu{position:absolute;right:6px;top:48px;z-index:8;background:var(--raise);border:1px solid var(--line2);border-radius:14px;padding:6px;min-width:210px;box-shadow:0 18px 40px rgba(0,0,0,.45);display:flex;flex-direction:column;cursor:default}
+.menu button{border:0;background:none;text-align:left;border-radius:9px;padding:9px 10px;font-size:14px;font-weight:600}
+.menu button:hover{background:var(--card)}
+.menu .del{color:var(--bad)}
+.note{color:var(--muted);font-size:14px;padding:26px 4px;text-align:center}
+.note .btn{margin-top:12px}
+.skel{height:64px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);background-size:200% 100%;animation:sk 1.4s linear infinite}
+@keyframes sk{from{background-position:200% 0}to{background-position:-200% 0}}
+.fab{display:none;position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:9;border:0;background:var(--ink);color:var(--bg);border-radius:99px;width:58px;height:58px;font-size:30px;line-height:1;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+
+.login{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;max-width:440px}
+.login p{color:var(--muted);margin:0 0 14px}
+.login label{font-size:13px;color:var(--muted)}
+.login input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px;font-size:16px;outline:none;margin:6px 0 12px}
+.login input:focus{border-color:var(--line2)}
 .login .btn{width:100%}
 .msg{margin-top:12px;font-size:14px;color:var(--muted);min-height:20px}
-.msg.ok{color:#9fd3b0}.msg.err{color:#e89a8a}
-.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
-.plan{border:1px solid rgba(242,239,233,.35);color:var(--gold);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-.plan.off{color:var(--muted);border-color:var(--line)}
-.list{display:grid;gap:16px}
-.ev{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}
-.ev h3{font-family:var(--hf);font-stretch:125%;letter-spacing:-.01em;font-size:28px;font-weight:600;margin:0;color:var(--ink);line-height:1.1}
-.ev .meta{color:var(--muted);font-size:13px;margin:4px 0 14px}
-.ev .acts{display:flex;gap:8px;flex-wrap:wrap}
-.ev .acts .btn{padding:10px 14px;font-size:14px;border-radius:12px}
-.ev .qr{background:#fff;border-radius:14px;padding:8px;width:112px;height:112px}
-.ev .qr img,.ev .qr canvas{width:96px!important;height:96px!important;display:block}
-.ev.old{opacity:.6}
-.empty{color:var(--muted);background:var(--bg2);border:1px dashed var(--line);border-radius:22px;padding:28px;text-align:center}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#ffffff;color:#131312;border-radius:12px;padding:10px 16px;font-weight:700;font-size:14px;opacity:0;transition:all .25s;pointer-events:none;z-index:9}
-.toast.on{opacity:1;transform:translateX(-50%)}
-@media (max-width:640px){.wrap{padding:28px 16px 64px}.top .in{padding:0 16px}.ev{grid-template-columns:1fr}.ev .qr{display:none}}
+.msg.ok{color:var(--ok)}.msg.err{color:var(--bad)}
 
-/* Beloglazov Event */
-:root{--hf:Archivo,Manrope,system-ui,sans-serif}
-h1,.h2,h3{text-transform:uppercase}
-h1,.h2,.hero h1{font-weight:500!important}
-h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
-.brand{gap:10px!important;color:#fff}
-.brand .pb-word{height:13px}
-.brand span{border-left:1px solid rgba(255,255,255,.18);padding-left:10px;font-size:12px!important;letter-spacing:.02em}
-.btn{border-radius:999px!important}
-.btn.gold:hover{background:#fff}
-.btn.ghost{background:transparent!important;border:1px solid rgba(255,255,255,.28)!important}
-.btn.ghost:hover{background:rgba(255,255,255,.08)!important}
-.k{color:var(--muted)!important}
-@media (max-width:560px){.brand .pb-word{height:11px}.brand span{display:none}}
-h1{font-size:clamp(28px,4.6vw,44px)!important}.ev h3{font-size:20px!important}.ev.tool{margin-bottom:16px;border-color:rgba(255,255,255,.22)}.ev .qmark{width:112px;display:grid;place-items:center;color:#fff;opacity:.9}.plan{color:#fff!important;border-color:rgba(255,255,255,.3)!important}
-@media (max-width:640px){.ev .qmark{display:none}}
+.scrim{position:fixed;inset:0;z-index:30;background:rgba(8,8,8,.62);display:flex;align-items:flex-start;justify-content:center;padding:90px 16px 16px;animation:fade .15s ease}
+@keyframes fade{from{opacity:0}}
+.dlg{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--line2);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:4px;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.dlg h3{margin:0 0 8px;font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:uppercase;font-size:18px}
+.opt{border:0;background:none;text-align:left;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;font-weight:700;font-size:15px;text-decoration:none}
+.opt:hover{background:var(--card)}
+.opt i{width:10px;height:10px;border-radius:50%;flex:none}
+.opt small{display:block;font-weight:600;font-size:12.5px;color:var(--muted)}
+.opt.lock{opacity:.55}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line);font-size:14px;align-items:center}
+.kv span{color:var(--muted)}
+.kv b{text-align:right;overflow-wrap:anywhere}
+.kv .seg{display:inline-flex;border:1px solid var(--line2);border-radius:99px;padding:2px}
+.kv .seg button{border:0;background:none;border-radius:99px;padding:4px 12px;font-weight:700;font-size:13px;color:var(--muted)}
+.kv .seg button.on{background:var(--ink);color:var(--bg)}
+.dlg .acts{display:flex;gap:8px;margin-top:14px}.dlg .acts .btn{flex:1}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,14px);opacity:0;z-index:40;background:var(--ink);color:var(--bg);font-weight:700;font-size:14px;border-radius:99px;padding:10px 16px;transition:all .25s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:640px){
+  .top .in{padding:0 16px}
+  .brand .pb-word{height:11px}
+  .mt{display:none}.me{padding:3px}
+  .acct{position:static}.amenu{right:12px;top:calc(64px + env(safe-area-inset-top,0px))}.amenu .aplan{display:flex}
+  .wrap{padding:22px 16px 110px}
+  .chips{margin:0 -16px;padding:0 16px}
+  .mhead .new{display:none}
+  h1{font-size:24px}
+  .row .st{display:none}
+  .fab{display:block}
+  .scrim{align-items:flex-end;padding:0}
+  .dlg{max-width:none;border-radius:22px 22px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="top"><div class="in">
-  <a class="brand" href="../" aria-label="Beloglazov Event"><svg class="pb-mark" viewBox="0 0 100 100" width="30" height="30" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M0,50a50,50 0 1,0 100,0a50,50 0 1,0 -100,0Z M9.76,50a40.24,35.68 0 1,0 80.48,0a40.24,35.68 0 1,0 -80.48,0Z M14.25,50a35.75,31.27 0 1,0 71.5,0a35.75,31.27 0 1,0 -71.5,0Z M40.48,50a9.52,9.52 0 1,0 19.04,0a9.52,9.52 0 1,0 -19.04,0Z"/></svg><img class="pb-word" src="../assets/wordmark-white.png" alt="Beloglazov Event"></a><span class="sp"></span>
-  <button class="out" id="out" hidden data-t="out"></button>
-  <button class="lang" id="lang">EN</button>
+  <a class="brand" href="../" aria-label="Beloglazov Event"><svg class="pb-mark" viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M0,50a50,50 0 1,0 100,0a50,50 0 1,0 -100,0Z M9.76,50a40.24,35.68 0 1,0 80.48,0a40.24,35.68 0 1,0 -80.48,0Z M14.25,50a35.75,31.27 0 1,0 71.5,0a35.75,31.27 0 1,0 -71.5,0Z M40.48,50a9.52,9.52 0 1,0 19.04,0a9.52,9.52 0 1,0 -19.04,0Z"/></svg><img class="pb-word" src="../assets/wordmark-white.png" alt="Beloglazov Event"></a>
+  <span class="sp"></span>
+  <div class="acct" id="acct" hidden></div>
+  <button class="lang" id="lang" aria-label="Language">EN</button>
 </div></div>
-<div class="wrap">
-  <div class="k" data-t="k"></div>
-  <h1 data-t="h"></h1>
-  <div id="view"></div>
-</div>
+<div class="wrap" id="view"></div>
+<button class="fab" id="fab" hidden aria-label="+">+</button>
 <div class="toast" id="toast"></div>
 <script>
 (function () {
   var API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
+  var FB = { apiKey: 'AIzaSyADi9iG0ZtHg9zGBomUKpTpgaANStenR3Y', authDomain: 'beloglazov-games.firebaseapp.com', databaseURL: 'https://beloglazov-games-default-rtdb.firebaseio.com', projectId: 'beloglazov-games' };
   var I = {
-    ru: { brand: 'Белоглазов', k: 'Для ведущих', h: 'Мои игры', out: 'Выйти',
+    ru: { brand: 'Белоглазов', h: 'Мои игры', newG: '+ Новая игра', newT: 'Новая игра', search: 'Поиск по названию или паре', all: 'Все', past: 'Проведённые',
+      quiz: 'Квиз о паре', fact: 'Интересный факт', bingo: 'Человеческое бинго', bingoS: 'Бинго', sm: 'Секретная миссия',
+      quizD: 'Вопросы о паре, ответы с телефонов', factD: 'Факты о гостях от пары', bingoD: 'Карточки примет, знакомство в зале', smD: 'Тайные задания для welcome-зоны',
+      smLock: 'Новые миссии — по подписке', open: 'Открыть', dup: 'Дублировать', del: 'Удалить', sure: 'Точно удалить?', copy: ' (копия)', admin: 'Панель ведущего', guests: 'Ссылка для гостей',
+      copied: 'Ссылка скопирована', duped: 'Копия создана', deleted: 'Игра удалена', active: 'Активна', until: 'до', empty: 'Игр пока нет — создайте первую.', none: 'Ничего не нашли по «{q}»',
       loginLead: 'Введите почту, на которую оформляли покупку, — пришлём ссылку для входа.', email: 'Email', send: 'Прислать ссылку',
-      sent: 'Если такая покупка есть, письмо уже летит. Проверьте почту и папку «Спам».', loading: 'Загружаем…',
-      pro: 'Подписка', proOff: 'Подписка неактивна', event: 'Одно мероприятие', newEv: '+ Новая игра', creating: 'Создаём…',
-      admin: 'Панель ведущего', quizT: 'Квиз о паре', quizD: 'Редактор вопросов, запуск по коду и итоги. Квизы сохраняются в аккаунте.', factT: 'Интересный факт', factD: 'Факты о гостях от пары — гости угадывают, о ком они. Игры сохраняются в аккаунте.', factB: 'Открыть игру', bingoT: 'Человеческое бинго', bingoD: 'Карточки с чертами гостей на телефонах, «БИНГО!» на большом экране и призы.', bingoB: 'Открыть', quizB: 'Открыть квиз', guests: 'Ссылка для гостей', copied: 'Ссылка скопирована', created: 'Создана', until: 'до', guestsMax: 'до {n} гостей',
-      noCouple: 'Секретная миссия', empty: 'Игр пока нет.', buy: 'Тарифы', expired: 'срок закончился', err: 'Ошибка: ',
-      proLead: 'Создавайте игру под каждое событие — все они будут здесь.', evLead: 'Ваша игра — ниже. Для нескольких событий удобнее подписка.', getPro: 'Оформить подписку' },
-    en: { brand: 'Beloglazov', k: 'For hosts', h: 'My games', out: 'Sign out',
+      sent: 'Если такая покупка есть, письмо уже летит. Проверьте почту и папку «Спам».', settings: 'Настройки', plans: 'Тарифы', extend: 'Продлить тариф', out: 'Выйти',
+      name: 'Имя', mail: 'Почта для входа', plan: 'Тариф', lang: 'Язык', noPlan: 'Без тарифа', sub: 'Подписка', event: 'Одно мероприятие', left: 'Осталось {n}', subOff: 'подписка неактивна', tariff: 'Тариф',
+      creating: 'Создаём…', err: 'Ошибка: ', noSync: 'Не получилось загрузить игры из аккаунта — обновите страницу', edited: 'изменён', created: 'создана', d1: 'день', d2: 'дня', d5: 'дней', today: 'меньше дня' },
+    en: { brand: 'Beloglazov', h: 'My games', newG: '+ New game', newT: 'New game', search: 'Search by title or couple', all: 'All', past: 'Past',
+      quiz: 'Couple Quiz', fact: 'Interesting Fact', bingo: 'Human Bingo', bingoS: 'Bingo', sm: 'Secret Mission',
+      quizD: 'Questions about the couple, answers from phones', factD: 'Facts about guests from the couple', bingoD: 'Trait cards, guests mingle', smD: 'Secret tasks for the welcome area',
+      smLock: 'New missions need a subscription', open: 'Open', dup: 'Duplicate', del: 'Delete', sure: 'Delete for good?', copy: ' (copy)', admin: 'Host panel', guests: 'Guest link',
+      copied: 'Link copied', duped: 'Copy created', deleted: 'Game deleted', active: 'Active', until: 'until', empty: 'No games yet — create your first one.', none: 'Nothing found for “{q}”',
       loginLead: 'Enter the email you used at checkout — we’ll send you a sign-in link.', email: 'Email', send: 'Send link',
-      sent: 'If there’s a purchase with this email, the message is on its way. Check your inbox and spam.', loading: 'Loading…',
-      pro: 'Subscription', proOff: 'Subscription inactive', event: 'One event', newEv: '+ New game', creating: 'Creating…',
-      admin: 'Host panel', quizT: 'Couple Quiz', quizD: 'Question editor, code-based launch and results. Quizzes are saved to your account.', factT: 'Interesting Fact', factD: 'Facts about guests from the couple — guests guess who they’re about. Games are saved to your account.', factB: 'Open the game', bingoT: 'Human Bingo', bingoD: 'Guest trait cards on phones, “BINGO!” on the big screen and prizes.', bingoB: 'Open', quizB: 'Open the quiz', guests: 'Guest link', copied: 'Link copied', created: 'Created', until: 'until', guestsMax: 'up to {n} guests',
-      noCouple: 'Secret Mission', empty: 'No games yet.', buy: 'Pricing', expired: 'expired', err: 'Error: ',
-      proLead: 'Create a game for every event — they’ll all live here.', evLead: 'Your game is below. For several events, a subscription is the better fit.', getPro: 'Subscribe' }
+      sent: 'If there’s a purchase with this email, the message is on its way. Check your inbox and spam.', settings: 'Settings', plans: 'Pricing', extend: 'Extend plan', out: 'Sign out',
+      name: 'Name', mail: 'Sign-in email', plan: 'Plan', lang: 'Language', noPlan: 'No plan', sub: 'Subscription', event: 'One event', left: '{n} left', subOff: 'subscription inactive', tariff: 'Plan',
+      creating: 'Creating…', err: 'Error: ', noSync: 'Couldn’t load your games — refresh the page', edited: 'edited', created: 'created', d1: 'day', d2: 'days', d5: 'days', today: 'under a day' }
   };
+  var TYPES = { quiz: { c: 'var(--t-quiz)', p: 'q', l: 'list', href: '../quiz/' }, fact: { c: 'var(--t-fact)', p: 'fq', l: 'flist', href: '../fact/' }, bingo: { c: 'var(--t-bingo)', p: 'bq', l: 'blist', href: '../bingo/' }, sm: { c: 'var(--t-sm)' } };
   var L = (function () { try { var s = localStorage.getItem('pb_lang'); if (s === 'ru' || s === 'en') return s; } catch (e) {} return /^(ru|uk|be|kk)/i.test(navigator.language || 'ru') ? 'ru' : 'en'; })();
-  var TK = 'pb_host_token', token = null, data = null;
+  var TK = 'pb_host_token', token = null, ev = null, acc = null, lists = { quiz: null, fact: null, bingo: null }, db = null, wsk = '';
+  var S = { type: 'all', q: '', menu: null, sure: null };
   function T(k) { return I[L][k] || k; }
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function store(op, v) { try { if (op === 'get') return localStorage.getItem(TK); if (op === 'set') localStorage.setItem(TK, v); if (op === 'del') localStorage.removeItem(TK); } catch (e) {} return null; }
   function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function () { el.classList.remove('on'); }, 2200); }
+  function uid(n) { var a = 'abcdefghijklmnopqrstuvwxyz0123456789', s = ''; for (var i = 0; i < (n || 10); i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+  function days(n) { var a = n % 10, b = n % 100; return n + ' ' + (L === 'en' ? (n === 1 ? T('d1') : T('d5')) : a === 1 && b !== 11 ? T('d1') : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? T('d2') : T('d5')); }
+  function day(t) { return t ? new Date(t).toLocaleDateString(L === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'short' }).replace('.', '') : ''; }
   function api(fn, args, n) {
     n = n || 0;
     return fetch(API, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args }) })
@@ -124,18 +198,11 @@ h1{font-size:clamp(28px,4.6vw,44px)!important}.ev h3{font-size:20px!important}.e
         return j.data;
       }, function (e) { if (n < 2) return new Promise(function (r) { setTimeout(r, 1500); }).then(function () { return api(fn, args, n + 1); }); throw e; });
   }
-  function fmt(t) { return t ? new Date(t).toLocaleDateString(L === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
-  function paintStatic() {
-    document.documentElement.lang = L;
-    [].forEach.call(document.querySelectorAll('[data-t]'), function (el) { el.textContent = T(el.dataset.t); });
-    $('lang').textContent = L === 'ru' ? 'EN' : 'RU';
-    $('out').hidden = !token;
-    document.title = T('h') + ' · ' + T('brand');
-  }
-  function login() {
-    $('view').innerHTML = '<div class="login"><p class="lead" style="margin:0 0 14px">' + esc(T('loginLead')) + '</p>' +
-      '<label style="font-size:13px;color:var(--muted)">' + esc(T('email')) + '</label><input id="em" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com">' +
-      '<button class="btn gold" id="send">' + esc(T('send')) + '</button><div class="msg" id="msg"></div></div>';
+
+  /* ---------- вход ---------- */
+  function login(err) {
+    $('acct').hidden = true; $('fab').hidden = true; $('lang').hidden = false;
+    $('view').innerHTML = '<h1>' + esc(T('h')) + '</h1><div class="login"><p>' + esc(T('loginLead')) + '</p><label for="em">' + esc(T('email')) + '</label><input id="em" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"><button class="btn pri" id="send">' + esc(T('send')) + '</button><div class="msg' + (err ? ' err' : '') + '" id="msg">' + esc(err || '') + '</div></div>';
     var go = function () {
       var v = $('em').value.trim(); if (!v) return $('em').focus();
       var b = $('send'); b.disabled = true; $('msg').className = 'msg'; $('msg').textContent = '';
@@ -145,49 +212,163 @@ h1{font-size:clamp(28px,4.6vw,44px)!important}.ev h3{font-size:20px!important}.e
     };
     $('send').onclick = go; $('em').onkeydown = function (e) { if (e.key === 'Enter') go(); };
   }
-  function render() {
-    if (!data) { $('view').innerHTML = '<p class="lead">' + esc(T('loading')) + '</p>'; return; }
-    var pro = data.plan === 'pro';
-    var h = '<div class="bar"><span class="plan' + (pro && !data.active ? ' off' : '') + '">' + esc(pro ? (data.active ? T('pro') + (data.tierName ? ' · ' + data.tierName : '') : T('proOff')) : T('event')) + '</span>' +
-      '<span style="color:var(--muted);font-size:14px">' + esc(data.email) + '</span><span class="sp" style="flex:1"></span>' +
-      (pro && data.active ? '<button class="btn gold" id="newEv">' + esc(T('newEv')) + '</button>' : '<a class="btn ghost" href="../#pricing">' + esc(pro ? T('buy') : T('getPro')) + '</a>') + '</div>' +
-      '<p class="lead">' + esc(pro ? T('proLead') : T('evLead')) + '</p>';
-    h += '<div class="ev tool"><div><h3>' + esc(T('quizT')) + '</h3><div class="meta">' + esc(T('quizD')) + '</div><div class="acts"><a class="btn gold" href="../quiz/">' + esc(T('quizB')) + '</a></div></div><div class="qmark">' + (window.PB_BRAND ? PB_BRAND.mark(64) : '') + '</div></div>';
-    h += '<div class="ev tool"><div><h3>' + esc(T('factT')) + '</h3><div class="meta">' + esc(T('factD')) + '</div><div class="acts"><a class="btn gold" href="../fact/">' + esc(T('factB')) + '</a></div></div><div class="qmark">' + (window.PB_BRAND ? PB_BRAND.mark(64) : '') + '</div></div>';
-    h += '<div class="ev tool"><div><h3>' + esc(T('bingoT')) + '</h3><div class="meta">' + esc(T('bingoD')) + '</div><div class="acts"><a class="btn gold" href="../bingo/">' + esc(T('bingoB')) + '</a></div></div><div class="qmark">' + (window.PB_BRAND ? PB_BRAND.mark(64) : '') + '</div></div>';
-    if (!data.events.length) h += '<div class="empty">' + esc(T('empty')) + '</div>';
-    else h += '<div class="list">' + data.events.map(function (ev, i) {
-      var old = ev.exp && ev.exp < Date.now();
-      return '<div class="ev' + (old ? ' old' : '') + '"><div><h3>' + esc(ev.couple || T('noCouple')) + '</h3>' +
-        '<div class="meta">' + esc(T('created')) + ' ' + esc(fmt(ev.created)) + ' · ' + esc(T('guestsMax').replace('{n}', ev.max)) +
-        (ev.exp ? ' · ' + (old ? esc(T('expired')) : esc(T('until')) + ' ' + esc(fmt(ev.exp))) : '') + '</div>' +
-        '<div class="acts"><a class="btn gold" target="_blank" rel="noopener" href="' + esc(ev.adminUrl) + '">' + esc(T('admin')) + '</a>' +
-        '<button class="btn ghost" data-copy="' + esc(ev.playUrl) + '">' + esc(T('guests')) + '</button></div></div>' +
-        '<div class="qr" data-qr="' + esc(ev.playUrl) + '" id="qr' + i + '"></div></div>';
-    }).join('') + '</div>';
-    $('view').innerHTML = h;
-    [].forEach.call(document.querySelectorAll('[data-qr]'), function (el) {
-      try { new QRCode(el, { text: el.dataset.qr, width: 96, height: 96, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
+
+  /* ---------- аккаунт ---------- */
+  function planInfo() {
+    var a = acc || {}, e = ev || {};
+    if (a.pro) return { name: T('tariff') + ' «' + (a.tierName || e.tierName || T('sub')) + '»', sub: T('sub'), warn: false };
+    if (a.eventUntil && a.eventUntil > Date.now()) { var ms = a.eventUntil - Date.now(), d = Math.ceil(ms / 864e5); return { name: T('tariff') + ' «' + (a.tierName || T('event')) + '»', sub: T('left').replace('{n}', ms < 864e5 ? T('today') : days(d)), warn: d <= 3 }; }
+    if (e.plan === 'pro') return { name: T('noPlan'), sub: T('subOff'), warn: true };
+    if (!acc) return { name: e.plan === 'pro' ? T('sub') : T('event'), sub: '', warn: false };
+    return { name: T('noPlan'), sub: T('plans'), warn: false };
+  }
+  function who() { var a = acc || {}, e = ev || {}; var email = a.email || e.email || ''; return { name: a.name || e.name || email.split('@')[0], email: email }; }
+  function paintAcct() {
+    if (!ev && !acc) { $('acct').hidden = true; return; }
+    var p = planInfo(), w = who();
+    $('acct').hidden = false; $('lang').hidden = true;
+    $('acct').innerHTML = '<button class="me" id="meBtn" aria-haspopup="menu"><span class="mt"><span class="pl">' + esc(p.name) + '</span><span class="left' + (p.warn ? '' : ' ok') + '">' + esc(p.sub) + '</span></span><span class="av">' + esc((w.name || '?').trim().charAt(0)) + '</span></button>' +
+      '<div class="amenu" id="amenu" hidden role="menu"><div class="who"><b>' + esc(w.name) + '</b><span>' + esc(w.email) + '</span></div><div class="aplan"><span>' + esc(p.name) + '</span><span class="left' + (p.warn ? '' : ' ok') + '">' + esc(p.sub) + '</span></div>' +
+      '<button data-acct="settings">' + esc(T('settings')) + '</button><a href="../#pricing">' + esc(p.warn ? T('extend') : T('plans')) + '</a><button data-acct="out" class="out">' + esc(T('out')) + '</button></div>';
+  }
+  function settings() {
+    var p = planInfo(), w = who();
+    dlg('<h3>' + esc(T('settings')) + '</h3><div class="kv"><span>' + esc(T('name')) + '</span><b>' + esc(w.name) + '</b></div><div class="kv"><span>' + esc(T('mail')) + '</span><b>' + esc(w.email) + '</b></div>' +
+      '<div class="kv"><span>' + esc(T('plan')) + '</span><b>' + esc(p.name) + (p.sub ? '<br><span class="left' + (p.warn ? '' : ' ok') + '">' + esc(p.sub) + '</span>' : '') + '</b></div>' +
+      '<div class="kv"><span>' + esc(T('lang')) + '</span><span class="seg"><button data-l="ru" class="' + (L === 'ru' ? 'on' : '') + '">RU</button><button data-l="en" class="' + (L === 'en' ? 'on' : '') + '">EN</button></span></div>' +
+      '<div class="acts"><a class="btn" href="../#pricing">' + esc(p.warn ? T('extend') : T('plans')) + '</a><button class="btn" data-x="out">' + esc(T('out')) + '</button></div>', function (box, close) {
+      [].forEach.call(box.querySelectorAll('[data-l]'), function (b) { b.onclick = function () { close(); setLang(b.dataset.l); settings(); }; });
+      box.querySelector('[data-x="out"]').onclick = function () { close(); logout(); };
     });
-    [].forEach.call(document.querySelectorAll('[data-copy]'), function (b) {
-      b.onclick = function () {
-        var u = b.dataset.copy;
-        (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function () { toast(T('copied')); }, function () { window.prompt(T('guests'), u); });
+  }
+  function logout() { store('del'); token = null; ev = acc = null; lists = { quiz: null, fact: null, bingo: null }; login(); }
+  function setLang(l) { L = l; try { localStorage.setItem('pb_lang', L); } catch (e) {} paintStatic(); if (token) { paintAcct(); render(); } else login(); }
+
+  /* ---------- список игр ---------- */
+  function items() {
+    var out = [];
+    ['quiz', 'fact', 'bingo'].forEach(function (k) {
+      var m = lists[k]; if (!m) return;
+      Object.keys(m).forEach(function (id) { var x = m[id] || {}; out.push({ k: k, id: id, title: x.title || T(k), sub: x.couple || '', t: x.updated || 0, href: TYPES[k].href + '?open=' + encodeURIComponent(id) }); });
+    });
+    ((ev && ev.events) || []).forEach(function (e) { var old = !!(e.exp && e.exp < Date.now()); out.push({ k: 'sm', id: e.id, title: e.couple || T('sm'), sub: '', t: e.created || 0, exp: e.exp, old: old, href: e.adminUrl, play: e.playUrl }); });
+    return out;
+  }
+  function hl(s) { if (!S.q) return esc(s); var i = s.toLowerCase().indexOf(S.q.toLowerCase()); if (i < 0) return esc(s); return esc(s.slice(0, i)) + '<mark>' + esc(s.slice(i, i + S.q.length)) + '</mark>' + esc(s.slice(i + S.q.length)); }
+  function row(g) {
+    var key = g.k + ':' + g.id, typeName = g.k === 'bingo' ? T('bingoS') : T(g.k);
+    var meta = typeName + (g.sub ? ' · ' + g.sub : '') + (g.t ? ' · ' + (g.k === 'sm' ? T('created') : T('edited')) + ' ' + day(g.t) : '');
+    var st = g.k === 'sm' && !g.old ? '<span class="st live">' + esc(T('active')) + (g.exp ? ' ' + esc(T('until')) + ' ' + esc(day(g.exp)) : '') + '</span>' : '';
+    var menu = S.menu === key ? '<div class="menu" role="menu">' + (g.k === 'sm' ? '<button data-act="open">' + esc(T('admin')) + '</button><button data-act="link">' + esc(T('guests')) + '</button>' :
+      '<button data-act="open">' + esc(T('open')) + '</button><button data-act="dup">' + esc(T('dup')) + '</button><button class="del" data-act="del">' + esc(S.sure === key ? T('sure') : T('del')) + '</button>') + '</div>' : '';
+    return '<div class="row" style="--c:' + TYPES[g.k].c + '" data-key="' + esc(key) + '" role="link" tabindex="0"><span class="dot"></span><span class="tx"><b>' + hl(g.title) + '</b><small>' + esc(meta) + '</small></span>' + st +
+      '<button class="more" data-menu="' + esc(key) + '" aria-label="…">⋯</button>' + menu + '</div>';
+  }
+  function render() {
+    var busy = !ev || (!lists.err && (!lists.quiz || !lists.fact || !lists.bingo));
+    var types = [['all', T('all'), '']].concat(['quiz', 'fact', 'bingo', 'sm'].map(function (k) { return [k, k === 'bingo' ? T('bingoS') : T(k), TYPES[k].c]; }));
+    var all = items(), q = S.q.toLowerCase();
+    var vis = all.filter(function (g) { return (S.type === 'all' || g.k === S.type) && (!q || (g.title + ' ' + g.sub).toLowerCase().indexOf(q) >= 0); }).sort(function (a, b) { return (a.old ? 1 : 0) - (b.old ? 1 : 0) || b.t - a.t; });
+    var up = vis.filter(function (g) { return !g.old; }), old = vis.filter(function (g) { return g.old; });
+    var h = '<div class="mhead"><h1>' + esc(T('h')) + '</h1><span class="sp"></span><button class="btn pri new" data-new>' + esc(T('newG')) + '</button></div>';
+    if (all.length || S.q) h += '<label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="' + esc(T('search')) + '" autocomplete="off" value="' + esc(S.q) + '"></label>' +
+      '<div class="chips">' + types.map(function (x) { return '<button class="chip' + (S.type === x[0] ? ' on' : '') + '" data-type="' + x[0] + '">' + (x[2] ? '<i style="background:' + x[2] + '"></i>' : '') + esc(x[1]) + '</button>'; }).join('') + '</div>';
+    h += '<div class="list">';
+    if (!vis.length && busy) h += '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+    else if (!all.length) h += '<div class="note">' + esc(T('empty')) + '<br><button class="btn pri" data-new>' + esc(T('newG')) + '</button></div>';
+    else if (!vis.length) h += '<div class="note">' + esc(S.q ? T('none').replace('{q}', S.q) : T('empty')) + '</div>';
+    else h += up.map(row).join('') + (old.length ? '<div class="lab">' + esc(T('past')) + '</div><div class="past">' + old.map(row).join('') + '</div>' : '');
+    if (vis.length && busy) h += '<div class="skel"></div>';
+    h += '</div>';
+    var ae = document.activeElement, hadFocus = ae && ae.id === 'q', pos = hadFocus ? ae.selectionStart : 0;
+    $('view').innerHTML = h; $('fab').hidden = false;
+    var qi = $('q'); if (qi) { qi.oninput = function () { S.q = qi.value.trim(); S.menu = null; render(); }; if (hadFocus) { qi.focus(); try { qi.setSelectionRange(pos, pos); } catch (e) {} } }
+  }
+  function find(key) { return items().filter(function (g) { return g.k + ':' + g.id === key; })[0]; }
+  function act(a, g) {
+    var key = g.k + ':' + g.id;
+    if (a === 'open') { if (g.k === 'sm') window.open(g.href, '_blank', 'noopener'); else location.href = g.href; return; }
+    if (a === 'link') { S.menu = null; render(); (navigator.clipboard ? navigator.clipboard.writeText(g.play) : Promise.reject()).then(function () { toast(T('copied')); }, function () { window.prompt(T('guests'), g.play); }); return; }
+    if (!db || !wsk) return;
+    var P = TYPES[g.k], base = 'ws/' + wsk + '/';
+    if (a === 'dup') {
+      S.menu = null; render();
+      db.ref(base + P.p + '/' + g.id).once('value').then(function (s) {
+        var c = s.val(); if (!c) throw new Error('empty');
+        var id = uid(10), now = Date.now(); c.id = id; c.title = (c.title || T(g.k)) + T('copy'); c.updated = now;
+        var meta = Object.assign({}, (lists[g.k] || {})[g.id] || {}, { title: c.title, updated: now });
+        return Promise.all([db.ref(base + P.p + '/' + id).set(c), db.ref(base + P.l + '/' + id).set(meta)]);
+      }).then(function () { toast(T('duped')); }, function (e) { toast(T('err') + (e.message || e)); });
+      return;
+    }
+    if (a === 'del') {
+      if (S.sure !== key) { S.sure = key; render(); setTimeout(function () { if (S.sure === key) { S.sure = null; render(); } }, 3500); return; }
+      S.sure = null; S.menu = null;
+      Promise.all([db.ref(base + P.p + '/' + g.id).remove(), db.ref(base + P.l + '/' + g.id).remove()]).then(function () { toast(T('deleted')); }, function (e) { toast(T('err') + e.message); });
+    }
+  }
+  function newDlg() {
+    var canSm = ev && ev.plan === 'pro' && ev.active;
+    dlg('<h3>' + esc(T('newT')) + '</h3>' + ['quiz', 'fact', 'bingo'].map(function (k) { return '<a class="opt" href="' + TYPES[k].href + '?new=1"><i style="background:' + TYPES[k].c + '"></i><span>' + esc(T(k)) + '<small>' + esc(T(k + 'D')) + '</small></span></a>'; }).join('') +
+      '<button class="opt' + (canSm ? '' : ' lock') + '" data-x="sm"><i style="background:' + TYPES.sm.c + '"></i><span>' + esc(T('sm')) + '<small>' + esc(canSm ? T('smD') : T('smLock')) + '</small></span></button>', function (box, close) {
+      box.querySelector('[data-x="sm"]').onclick = function () {
+        if (!canSm) { location.href = '../#pricing'; return; }
+        var b = this; b.disabled = true; b.querySelector('small').textContent = T('creating');
+        api('pfHostNewEvent', [token]).then(function (d) { ev = d; close(); render(); }).catch(function (e) { toast(T('err') + e.message); close(); });
       };
     });
-    var nb = $('newEv');
-    if (nb) nb.onclick = function () {
-      nb.disabled = true; nb.textContent = T('creating');
-      api('pfHostNewEvent', [token]).then(function (d) { data = d; render(); }).catch(function (e) { toast(T('err') + e.message); nb.disabled = false; nb.textContent = T('newEv'); });
-    };
+  }
+  function dlg(html, onReady) {
+    var s = document.createElement('div'); s.className = 'scrim'; s.innerHTML = '<div class="dlg" role="dialog" aria-modal="true">' + html + '</div>';
+    function close() { s.remove(); document.removeEventListener('keydown', k); }
+    function k(e) { if (e.key === 'Escape') close(); }
+    s.addEventListener('click', function (e) { if (e.target === s) close(); });
+    document.addEventListener('keydown', k); document.body.appendChild(s); if (onReady) onReady(s, close);
+  }
+
+  /* ---------- клики ---------- */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('.scrim')) return;
+    var am = $('amenu');
+    if (am && !e.target.closest('.acct')) am.hidden = true;
+    var t = e.target.closest('button,a,[data-key]');
+    if (!t) { if (S.menu) { S.menu = null; render(); } return; }
+    if (t.id === 'meBtn') { am.hidden = !am.hidden; return; }
+    if (t.dataset.acct === 'settings') { am.hidden = true; settings(); return; }
+    if (t.dataset.acct === 'out') { logout(); return; }
+    if (t.hasAttribute('data-new') || t.id === 'fab') { newDlg(); return; }
+    if (t.dataset.type) { S.type = t.dataset.type; S.menu = null; render(); return; }
+    if (t.dataset.menu) { S.menu = S.menu === t.dataset.menu ? null : t.dataset.menu; S.sure = null; render(); return; }
+    if (t.dataset.act) { var g = find(S.menu); if (g) act(t.dataset.act, g); return; }
+    if (t.dataset.key) { if (S.menu) { S.menu = null; render(); return; } var g2 = find(t.dataset.key); if (g2) act('open', g2); return; }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.key) e.target.click(); });
+  $('lang').onclick = function () { setLang(L === 'ru' ? 'en' : 'ru'); };
+
+  function paintStatic() { document.documentElement.lang = L; $('lang').textContent = L === 'ru' ? 'EN' : 'RU'; document.title = T('h') + ' · ' + T('brand'); }
+  function fbStart() {
+    return new Promise(function (res) {
+      try {
+        if (!firebase.apps.length) firebase.initializeApp(FB);
+        var done = false, to = setTimeout(function () { if (!done) { done = true; res(null); } }, 12000);
+        firebase.auth().onAuthStateChanged(function (u) { if (u && !done) { done = true; clearTimeout(to); res(firebase.database()); } });
+        firebase.auth().signInAnonymously().catch(function () { if (!done) { done = true; clearTimeout(to); res(null); } });
+      } catch (e) { res(null); }
+    });
   }
   function load() {
-    data = null; render();
-    api('pfHostEvents', [token]).then(function (d) { data = d; render(); })
-      .catch(function (e) { store('del'); token = null; paintStatic(); login(); $('msg').className = 'msg err'; $('msg').textContent = e.message; });
+    render();
+    api('pfHostEvents', [token]).then(function (d) { ev = d; paintAcct(); render(); }).catch(function (e) { store('del'); token = null; login(e.message); });
+    Promise.all([api('pfQuizAccess', [token]).catch(function () { return null; }), fbStart()]).then(function (r) {
+      acc = r[0]; db = r[1]; if (token) paintAcct();
+      wsk = acc && /^[0-9a-f]{64}$/.test(acc.ws || '') ? acc.ws : '';
+      if (!wsk || !db) { lists.err = 1; if (token) { render(); if (acc && !db) toast(T('noSync')); } return; }
+      ['quiz', 'fact', 'bingo'].forEach(function (k) {
+        db.ref('ws/' + wsk + '/' + TYPES[k].l).on('value', function (s) { lists[k] = s.val() || {}; if (token) render(); }, function () { lists[k] = {}; if (token) render(); });
+      });
+    });
   }
-  $('lang').onclick = function () { L = L === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('pb_lang', L); } catch (e) {} paintStatic(); if (token) render(); else login(); };
-  $('out').onclick = function () { store('del'); token = null; data = null; paintStatic(); login(); };
+
   var q = new URLSearchParams(location.search), t = q.get('t');
   if (t) { store('set', t); try { history.replaceState(null, '', location.pathname); } catch (e) {} }
   token = store('get');

@@ -2099,8 +2099,9 @@ function bootHost() {
   else { ls('del', KEY_LIVE); send({ type: 'reset' }); }
   const KEY_BAK = GAME === 'fact' ? 'pbf_cfg_bak' : 'pbq_cfg_bak';
   // ?demo=1 — сразу запускаем готовый демо-квиз (черновик ведущего сохраняем в резерв)
-  const DEMO_GO = !!P.get('demo') && !G;
-  if (P.get('demo')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  const DEMO_GO = !!P.get('demo') && !G, OPEN = !G && P.get('open'), NEWG = !!P.get('new') && !G;
+  if (P.get('demo') || P.get('open') || P.get('new')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (NEWG) { CFG = normCfg(defaultCfg(true)); CFG.couple = ''; CFG.title = GNAME; ls('set', KEY_CFG, CFG); }
   if (DEMO_GO) {
     const cur = ls('get', KEY_CFG); if (cur && !cur.isDemo) ls('set', KEY_BAK, cur);
     CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = GAME === 'fact' ? 'Демо: интересный факт' : 'Демо-квиз'; if (GAME !== 'fact') CFG.qs = sampleQs(CFG.couple).filter(q => q.type !== 'couple').map(normQ); CFG.isDemo = 1; ls('set', KEY_CFG, CFG);
@@ -2124,7 +2125,8 @@ function bootHost() {
       accLoad().then(() => {
         if (G) { if (unlocked() && (G.demo || G.cap !== guestCap())) { G.demo = false; G.cap = guestCap(); G.capHit = 0; publish(); } return; }
         renderTop(); if (edBuilt) { if (GAME === 'fact') paintShows(); else paintModes(); paintDesign(); paintForm(); paintQs(); const ac = document.querySelector('[data-add=couple]'); if (ac) ac.innerHTML = '+ Угадай ответ пары' + lockTag('couple'); } const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
-        if (wsKey() && ok) {
+        if (wsKey() && ok && OPEN && OPEN !== CFG.id) { STORE.open(OPEN).then(c => { CFG = c; ls('set', KEY_CFG, CFG); renderEditor(); window.scrollTo(0, 0); STORE.synced = 'ok'; paintSync(); }, () => toast('Не получилось открыть игру')); }
+        else if (wsKey() && ok) {
           const pushed = ls('get', 'pbq_pushed') || {};
           if (!pushed[CFG.id]) { STORE.pushAll(); pushed[CFG.id] = 1; ls('set', 'pbq_pushed', pushed); } else { STORE.synced = 'ok'; paintSync(); }
         }

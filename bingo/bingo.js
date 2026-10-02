@@ -167,7 +167,14 @@ function normCfg(c) {
     bots: !!c.bots, sound: c.sound !== false, isDemo: !!c.isDemo };
 }
 let CFG = normCfg(ls('get', KEY_CFG));
-const saveCfg = () => ls('set', KEY_CFG, CFG);
+let syncT = null;
+const wsKey = () => ACC.info && /^[0-9a-f]{64}$/.test(ACC.info.ws || '') ? ACC.info.ws : '';
+const saveCfg = () => {
+  ls('set', KEY_CFG, CFG);
+  const k = wsKey(); if (!k || !NET.ok || CFG.isDemo) return;
+  clearTimeout(syncT);
+  syncT = setTimeout(() => { const c = JSON.parse(JSON.stringify(CFG)), u = Date.now(); Promise.all([ref(`ws/${k}/bq/${c.id}`).set(c), ref(`ws/${k}/blist/${c.id}`).set({ title: c.title || 'Человеческое бинго', couple: c.couple || '', n: c.traits.length, updated: u })]).catch(() => {}); }, 800);
+};
 function goodTraits(c) { const seen = new Set(), out = []; c.traits.forEach(x => { const t = x.t.replace(/\s+/g, ' ').trim(); if (t && !seen.has(norm(t))) { seen.add(norm(t)); out.push(t); } }); return out; }
 
 /* ================= движок игры (у ведущего) ================= */
@@ -909,8 +916,9 @@ function bootHost() {
   const saved = ls('get', KEY_LIVE);
   if (saved && saved.phase !== 'final' && Date.now() - (saved.ts || 0) < 6 * 3600e3 && Array.isArray(saved.traits)) { G = saved; ['players', 'finds', 'banned'].forEach(k => { G[k] = G[k] || {}; }); G.feed = G.feed || []; G.ev = G.ev || []; }
   else { ls('del', KEY_LIVE); send({ type: 'reset' }); }
-  const DEMO_GO = !!P.get('demo') && !G;
-  if (P.get('demo')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  const DEMO_GO = !!P.get('demo') && !G, OPEN = P.get('open'), NEWG = !!P.get('new') && !G;
+  if (P.get('demo') || OPEN || P.get('new')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (NEWG) { CFG = normCfg(defaultCfg()); ls('set', KEY_CFG, CFG); }
   if (DEMO_GO) {
     const c = ls('get', KEY_CFG); if (c && !c.isDemo) ls('set', 'pbb_cfg_bak', c);
     CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = 'Демо: человеческое бинго'; CFG.bots = true; CFG.isDemo = 1; saveCfg();
@@ -932,6 +940,9 @@ function bootHost() {
     accLoad().then(() => {
       if (G) { if (unlocked() && (G.demo || G.cap !== guestCap())) { G.demo = false; G.cap = guestCap(); G.capHit = 0; publish(); } return; }
       renderTop(); const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
+      const k = wsKey();
+      if (k && ok && OPEN) ref(`ws/${k}/bq/${OPEN}`).once('value').then(s => { if (s.val()) { CFG = normCfg(s.val()); ls('set', KEY_CFG, CFG); renderEditor(); window.scrollTo(0, 0); } }, () => {});
+      else if (k && ok) saveCfg();
     });
   });
 }
