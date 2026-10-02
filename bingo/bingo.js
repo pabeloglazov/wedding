@@ -915,6 +915,7 @@ function bootHost() {
     const c = ls('get', KEY_CFG); if (c && !c.isDemo) ls('set', 'pbb_cfg_bak', c);
     CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = 'Демо: человеческое бинго'; CFG.bots = true; CFG.isDemo = 1; saveCfg();
   }
+  else if (!G && CFG.isDemo) { const b = ls('get', 'pbb_cfg_bak'); if (b) { CFG = normCfg(b); saveCfg(); ls('del', 'pbb_cfg_bak'); } }
   setInterval(() => {
     if (!G) return;
     if (G.demo && G.demoEnd && Date.now() > G.demoEnd) { demoOver(); return; }

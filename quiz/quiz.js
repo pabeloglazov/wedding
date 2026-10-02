@@ -332,7 +332,7 @@ const STORE = {
     CFG.updated = Date.now();
     ls('set', KEY_CFG, CFG);
     const k = wsKey();
-    if (!k || !NET.ok) return;
+    if (!k || !NET.ok || CFG.isDemo) return;
     clearTimeout(this.timer); this.synced = 'saving'; paintSync();
     this.timer = setTimeout(() => {
       const c = JSON.parse(JSON.stringify(CFG));
@@ -2007,13 +2007,16 @@ function bootHost() {
   const saved = ls('get', KEY_LIVE);
   if (saved && saved.net && saved.phase !== 'final' && Date.now() - (saved.ts || 0) < 6 * 3600e3) { G = saved; ['players', 'ans', 'cpl', 'prevRank', 'banned'].forEach(k => { G[k] = G[k] || {}; }); }
   else { ls('del', KEY_LIVE); send({ type: 'reset' }); }
+  const KEY_BAK = GAME === 'fact' ? 'pbf_cfg_bak' : 'pbq_cfg_bak';
   // ?demo=1 — сразу запускаем готовый демо-квиз (черновик ведущего сохраняем в резерв)
   const DEMO_GO = !!P.get('demo') && !G;
   if (P.get('demo')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
   if (DEMO_GO) {
-    const cur = ls('get', KEY_CFG); if (cur && !cur.isDemo) ls('set', 'pbq_cfg_bak', cur);
+    const cur = ls('get', KEY_CFG); if (cur && !cur.isDemo) ls('set', KEY_BAK, cur);
     CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = GAME === 'fact' ? 'Демо: интересный факт' : 'Демо-квиз'; if (GAME !== 'fact') CFG.qs = sampleQs(CFG.couple).filter(q => q.type !== 'couple').map(normQ); CFG.isDemo = 1; ls('set', KEY_CFG, CFG);
   }
+  // обычный вход после демо — возвращаем черновик ведущего
+  else if (!G && CFG.isDemo) { const b = ls('get', KEY_BAK); if (b) { CFG = normCfg(b); ls('set', KEY_CFG, CFG); ls('del', KEY_BAK); } }
   setInterval(() => {
     if (!G) return;
     if (G.demo && G.demoEnd && Date.now() > G.demoEnd) { demoOver(); return; }
@@ -2030,7 +2033,7 @@ function bootHost() {
       if (DEMO_GO && !G) { newGame(); window.scrollTo(0, 0); }
       accLoad().then(() => {
         if (G) { if (unlocked() && (G.demo || G.cap !== guestCap())) { G.demo = false; G.cap = guestCap(); G.capHit = 0; publish(); } return; }
-        renderTop(); if (edBuilt) { paintModes(); paintDesign(); paintForm(); paintQs(); const ac = document.querySelector('[data-add=couple]'); if (ac) ac.innerHTML = '+ Угадай ответ пары' + lockTag('couple'); } const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
+        renderTop(); if (edBuilt) { if (GAME === 'fact') paintShows(); else paintModes(); paintDesign(); paintForm(); paintQs(); const ac = document.querySelector('[data-add=couple]'); if (ac) ac.innerHTML = '+ Угадай ответ пары' + lockTag('couple'); } const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
         if (wsKey() && ok) {
           const pushed = ls('get', 'pbq_pushed') || {};
           if (!pushed[CFG.id]) { STORE.pushAll(); pushed[CFG.id] = 1; ls('set', 'pbq_pushed', pushed); } else { STORE.synced = 'ok'; paintSync(); }
