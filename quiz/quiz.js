@@ -26,6 +26,9 @@ const BASE = location.origin + location.pathname;
 const SHORT = location.host.replace(/^www\./, '') + '/q';
 const fmtCode = c => c ? String(c).replace(/(\d{3})(\d{3})/, '$1 $2') : '';
 const nums = n => Number(n).toLocaleString('ru-RU');
+const hasRng = q => !!(q && q.rng && q.num2 !== '' && q.num2 != null && isFinite(+q.num2));
+const numTxt = (a, b) => b != null && b !== '' && isFinite(+b) && +b !== +a ? nums(a) + '–' + nums(b) : nums(a);
+const numErr = (q, v) => { const lo = +q.num, hi = hasRng(q) ? +q.num2 : lo; return v < lo ? lo - v : v > hi ? v - hi : 0; };
 
 const MODES = {
   wedding: { ic: '💍', t: 'Свадьба', d: 'Быстрые вопросы, очки за скорость', s: { time: 20, speed: true, every: 3, change: false } },
@@ -176,6 +179,41 @@ const IMG = (() => {
   }
   return { ready, put, get, mem, del, fetchNet, load, shrink, keys: () => Object.keys(cache) };
 })();
+
+/* ---------- видео и аудио к вопросам: YouTube или файл (файл живёт в IndexedDB этого устройства) ---------- */
+const MEDIA = (() => {
+  let db = null; const urls = {};
+  const open = new Promise(res => { try { const r = indexedDB.open('pbmedia', 1); r.onupgradeneeded = () => r.result.createObjectStore('m'); r.onsuccess = () => { db = r.result; res(); }; r.onerror = () => res(); setTimeout(res, 3000); } catch (e) { res(); } });
+  function put(blob) { const id = 'm' + uid(10); return open.then(() => new Promise((res, rej) => { if (!db) return rej(new Error('db')); try { const tx = db.transaction('m', 'readwrite'); tx.objectStore('m').put(blob, id); tx.oncomplete = () => { urls[id] = URL.createObjectURL(blob); res(id); }; tx.onerror = () => rej(tx.error || new Error('db')); } catch (e) { rej(e); } })); }
+  function url(id) { if (!id) return Promise.resolve(''); if (urls[id]) return Promise.resolve(urls[id]); return open.then(() => new Promise(res => { if (!db) return res(''); try { const rq = db.transaction('m').objectStore('m').get(id); rq.onsuccess = () => { const b = rq.result; if (!b) return res(''); urls[id] = URL.createObjectURL(b); res(urls[id]); }; rq.onerror = () => res(''); } catch (e) { res(''); } })); }
+  return { put, url };
+})();
+const ytId = s => { s = String(s || '').trim(); const m = s.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/|v\/))([\w-]{11})/); return m ? m[1] : /^[\w-]{11}$/.test(s) ? s : ''; };
+const ytT = s => { const m = String(s || '').match(/[?&#](?:t|start)=([0-9hms]+)/); if (!m) return 0; const v = m[1]; if (/^\d+$/.test(v)) return +v; const h = v.match(/(\d+)h/), mi = v.match(/(\d+)m/), se = v.match(/(\d+)s/); return (h ? +h[1] * 3600 : 0) + (mi ? +mi[1] * 60 : 0) + (se ? +se[1] : 0); };
+const mmss = s => { s = Math.max(0, Math.round(+s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const parseT = v => { v = String(v || '').trim(); if (!v) return 0; const p = v.split(/[:.]/).map(Number); if (p.some(x => !isFinite(x))) return 0; return p.length > 1 ? p[0] * 60 + p[1] : p[0]; };
+const mdOk = m => !!(m && (m.k === 'video' || m.k === 'audio') && (m.yt || m.fid));
+function mountMedia(box, m, snd) {
+  if (!box) return;
+  box.className = 'mdw' + (m.k === 'audio' ? ' aud' : '');
+  const cover = m.k === 'audio' ? '<div class="cover"><div class="eq"><i></i><i></i><i></i><i></i><i></i></div><span>Слушаем</span></div>' : '';
+  if (m.yt) {
+    const t0 = Math.round(+m.t0 || 0), t1 = Math.round(+m.t1 || 0);
+    box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(m.yt)}?autoplay=1&mute=${snd ? 0 : 1}&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&start=${t0}${t1 > t0 ? '&end=' + t1 : ''}" allow="autoplay; encrypted-media" title="video"></iframe>` + cover;
+    return;
+  }
+  box.innerHTML = '<div class="mph">Загружаем…</div>';
+  MEDIA.url(m.fid).then(u => {
+    if (!box.isConnected) return;
+    if (!u) { box.innerHTML = `<div class="mph">${m.k === 'audio' ? '🎧' : '🎬'}<span>Файл «${esc(m.name || '')}» есть только на устройстве, где его загрузили. Откройте экран на этом ноутбуке или используйте ссылку YouTube.</span></div>`; return; }
+    const el = document.createElement(m.k === 'audio' ? 'audio' : 'video');
+    el.src = u; el.autoplay = true; el.playsInline = true; el.muted = !snd; el.preload = 'auto';
+    const t0 = +m.t0 || 0, t1 = +m.t1 || 0;
+    el.addEventListener('loadedmetadata', () => { if (t0) el.currentTime = t0; el.play().catch(() => {}); });
+    if (t1 > t0) el.addEventListener('timeupdate', () => { if (el.currentTime >= t1) el.pause(); });
+    box.innerHTML = cover; box.insertBefore(el, box.firstChild);
+  });
+}
 /* ---------- кадрирование фото ----------
    cropImage(src, { aspect: 1 | null, round, free, max, target, replace }) → Promise<dataURL | '' (отмена) | 'replace'> */
 const CROP_AR = [['Свободно', 0], ['1:1', 1], ['4:3', 4 / 3], ['16:9', 16 / 9], ['3:4', 3 / 4]];
@@ -381,7 +419,7 @@ function factsToQs(facts, show) {
 }
 function validQ(q) {
   if (!((q.text || '').trim() || q.img)) return false;
-  if (q.type === 'number') return q.num !== '' && q.num != null && isFinite(+q.num);
+  if (q.type === 'number') return q.num !== '' && q.num != null && isFinite(+q.num) && (!q.rng || (hasRng(q) && +q.num2 >= +q.num));
   const f = q.opts.filter(optFilled).length;
   if (f < 2) return false;
   if (q.type === 'photo' && !q.img) return false;
@@ -391,7 +429,7 @@ function validQ(q) {
 function qIssue(q) {
   if (!((q.text || '').trim() || q.img)) return 'Добавьте текст вопроса или фото';
   if (q.type === 'photo' && !q.img) return 'Добавьте фото — это фото-вопрос';
-  if (q.type === 'number') return q.num === '' || q.num == null || !isFinite(+q.num) ? 'Укажите правильное число' : '';
+  if (q.type === 'number') return q.num === '' || q.num == null || !isFinite(+q.num) ? (q.rng ? 'Укажите диапазон: от и до' : 'Укажите правильное число') : q.rng && !hasRng(q) ? 'Укажите, до какого числа засчитывать' : q.rng && +q.num2 < +q.num ? '«До» должно быть больше, чем «от»' : '';
   if (q.opts.filter(optFilled).length < 2) return 'Нужно минимум два варианта ответа';
   if (isCh(q) && !q.ok.some(i => optFilled(q.opts[i]))) return 'Отметьте правильный ответ — нажмите на букву';
   return '';
@@ -522,7 +560,7 @@ function startQuestion(i) {
       const right = Math.random() < p.skill;
       const at = 1500 + 1000 + Math.random() * dur * (right ? .55 : .8);
       let a;
-      if (q.type === 'number') a = { v: Math.round(+q.num * (1 + (Math.random() - .5) * (right ? .3 : 1.2))) };
+      if (q.type === 'number') a = { v: Math.round((hasRng(q) ? (+q.num + +q.num2) / 2 : +q.num) * (1 + (Math.random() - .5) * (right ? .3 : 1.2))) };
       else if (q.type === 'couple') a = { o: filled[Math.floor(Math.random() * filled.length)] };
       else { const wrong = filled.filter(k => q.ok.indexOf(k) < 0); a = { o: right || !wrong.length ? q.ok[Math.floor(Math.random() * q.ok.length)] : wrong[Math.floor(Math.random() * wrong.length)] }; }
       botTimers.push(setTimeout(() => { if (G && G.phase === 'question' && G.qi === i) answer(id, i, a); }, at));
@@ -543,12 +581,12 @@ function okSet(g, i) {
 function scoreQuestion() {
   const i = G.qi, q = G.qs[i], A = G.ans[i] || {}, dur = G.t1 - G.t0, m = mult(G, i);
   if (q.type === 'number') {
-    const c = +q.num, tol = Math.max(Math.abs(c) * .5, 1);
-    let best = Infinity; Object.values(A).forEach(x => { best = Math.min(best, Math.abs(x.v - c)); });
+    const lo = +q.num, hi = hasRng(q) ? +q.num2 : lo, tol = Math.max(Math.abs((lo + hi) / 2) * .5, hi - lo, 1);
+    let best = Infinity; Object.values(A).forEach(x => { best = Math.min(best, numErr(q, x.v)); });
     Object.keys(G.players).forEach(id => {
       const p = G.players[id], x = A[id]; p.gain = 0; p.lv = x ? x.v : null;
       if (!x) { p.last = 'none'; p.streak = 0; return; }
-      const err = Math.abs(x.v - c);
+      const err = numErr(q, x.v);
       let g = Math.round(1000 * Math.max(0, 1 - err / tol));
       if (err === best && g > 0) g += 200;
       g = Math.round(g * m);
@@ -670,7 +708,7 @@ let REM = {}, ONLINE = {};
 const doneCmd = {};
 const coupleRoles = () => [...new Set(Object.values(REM).map(r => r.role).filter(r => r === 'groom' || r === 'bride'))];
 const hasCoupleDevices = () => coupleRoles().length > 0;
-function pubQs(g) { return g.qs.map((q, i) => ({ type: q.type, text: q.text || '', img: q.img || '', blur: q.blur ? 1 : 0, opts: (q.opts || []).map(o => ({ t: o.t || '', img: o.img || '' })), unit: q.unit || '', x2: mult(g, i) > 1 })); }
+function pubQs(g) { return g.qs.map((q, i) => ({ type: q.type, text: q.text || '', img: q.img || '', blur: q.blur ? 1 : 0, mk: mdOk(q.qm) ? q.qm.k : '', opts: (q.opts || []).map(o => ({ t: o.t || '', img: o.img || '' })), unit: q.unit || '', x2: mult(g, i) > 1 })); }
 async function allocCode(gid) {
   for (let i = 0; i < 8; i++) {
     const c = String(100000 + Math.floor(Math.random() * 900000));
@@ -747,7 +785,7 @@ function coreOf(g) {
   const c = (g.cpl && g.cpl[g.qi]) || {};
   return { id: g.id, phase: g.phase, qi: g.qi, ii: g.ii, t0: g.t0, t1: g.t1, nq: g.qs.length, title: g.title || '', couple: g.couple || '', accent: g.accent || '', final: !!g.final, code: g.code || '', res: g.res || '', demo: !!g.demo,
     s: { change: !!g.s.change, play: g.s.play, speed: !!g.s.speed, tables: g.s.tables || 10, show: g.s.show || '' },
-    ok: rev && q ? (q.type === 'number' ? { num: +q.num } : { set: okSet(g, g.qi), cpl: q.type === 'couple' ? { groom: c.groom == null ? -1 : c.groom, bride: c.bride == null ? -1 : c.bride, host: c.host == null ? -1 : c.host } : null }) : null,
+    ok: rev && q ? (q.type === 'number' ? (hasRng(q) ? { num: +q.num, num2: +q.num2 } : { num: +q.num }) : { set: okSet(g, g.qi), cpl: q.type === 'couple' ? { groom: c.groom == null ? -1 : c.groom, bride: c.bride == null ? -1 : c.bride, host: c.host == null ? -1 : c.host } : null }) : null,
     n: g.phase === 'lobby' ? 0 : Object.keys(g.players).length,
     intro: e ? { i: g.ii, of: E.length, pid: e.pid || '', table: e.table || 0, name: e.name } : null };
 }
@@ -755,7 +793,7 @@ function scrOf(g) {
   const rev = g.phase === 'reveal' || g.phase === 'board' || g.phase === 'final';
   const v = JSON.parse(JSON.stringify(g));
   delete v.snap; delete v.rkey; delete v.banned;
-  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0 }; if (rev && i === g.qi) { o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; } return o; });
+  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: mdOk(q.qm) ? q.qm : null, am: mdOk(q.am) ? q.am : null }; if (rev && i === g.qi) { o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; if (hasRng(q)) { o.rng = 1; o.num2 = +q.num2; } } return o; });
   const a = {}; if (g.qi >= 0) a['q' + g.qi] = g.ans[g.qi] || {}; v.ans = a;
   const c = g.cpl[g.qi] || {};
   v.cpl = {}; if (g.qi >= 0) v.cpl['q' + g.qi] = rev ? c : { groom: c.groom != null ? 9 : null, bride: c.bride != null ? 9 : null };
@@ -769,7 +807,7 @@ function fixScr(v) {
   Object.keys(v.players).forEach(k => { const p = v.players[k]; p.times = p.times || []; p.score = p.score || 0; });
   const a = {}; if (v.ans && v.ans['q' + v.qi]) a[v.qi] = v.ans['q' + v.qi]; v.ans = a;
   const c = {}; if (v.cpl && v.cpl['q' + v.qi]) c[v.qi] = v.cpl['q' + v.qi]; v.cpl = c;
-  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0 }; });
+  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, rng: q.rng ? 1 : 0, num2: q.num2 == null ? null : q.num2, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: q.qm || null, am: q.am || null }; });
   return v;
 }
 function netPush(force) {
@@ -813,9 +851,9 @@ function saveResults() {
     const A = g.ans[i] || {}, ids = Object.keys(A), tot = ids.length;
     if (i > g.qi) return null;
     if (q.type === 'number') {
-      const arr = ids.map(id => ({ name: (g.players[id] || {}).name || 'Гость', v: A[id].v })).sort((a, b) => Math.abs(a.v - q.num) - Math.abs(b.v - q.num));
+      const arr = ids.map(id => ({ name: (g.players[id] || {}).name || 'Гость', v: A[id].v })).sort((a, b) => numErr(q, a.v) - numErr(q, b.v));
       const avg = tot ? Math.round(ids.reduce((s, id) => s + A[id].v, 0) / tot * 10) / 10 : null;
-      return { type: 'number', text: q.text || 'Вопрос с фото', num: +q.num, unit: q.unit || '', tot, best: arr[0] || null, avg };
+      return { type: 'number', text: q.text || 'Вопрос с фото', num: +q.num, num2: hasRng(q) ? +q.num2 : null, unit: q.unit || '', tot, best: arr[0] || null, avg };
     }
     const cnt = q.opts.map(() => 0); ids.forEach(id => { if (A[id].o < cnt.length) cnt[A[id].o]++; });
     const c = g.cpl[i] || {};
@@ -855,6 +893,7 @@ function renderScreen(box, g, snd) {
     const prevPhase = st.phase;
     st.key = key; st.phase = g && g.phase; st.tick = -1; st.up = false; st.rev = false; st.nPlayers = g ? Object.keys(g.players).length : 0; st.code = '';
     buildScreen(box, g);
+    if (g && (g.phase === 'question' || g.phase === 'reveal')) { const q = g.qs[g.qi], mw = box.querySelector('#mdw'); if (mw) { const ans = g.phase === 'reveal' && mdOk(q.am); if (ans || mdOk(q.qm)) { mw.dataset.s = ans ? 'a' : 'q'; mountMedia(mw, ans ? q.am : q.qm, !!snd); } } }
     if (snd && g) {
       if (g.phase === 'question') setTimeout(() => SND.play('start'), Math.max(0, g.t0 - now() - 400));
       else if (g.phase === 'reveal') { st.rev = true; SND.play('reveal'); }
@@ -894,7 +933,7 @@ function buildScreen(box, g) {
       (e.members && e.members.length ? `<div class="mem">${e.members.slice(0, 16).map(m => `<span>${esc(m)}</span>`).join('')}</div>` : '') +
       `<div class="dots">${E.map((x, i) => `<i class="${i <= g.ii ? 'on' : ''}"></i>`).join('')}</div></div></div>`;
   } else if (g.phase === 'question' || g.phase === 'reveal') {
-    const q = g.qs[g.qi], pic = isPicQ(q), img = !pic && q.img ? picHtml(q.img, 'qpic') : '';
+    const q = g.qs[g.qi], pic = isPicQ(q), hasMd = !q.fact && q.type !== 'photo' && (mdOk(q.qm) || mdOk(q.am)), img = !pic && !hasMd && q.img ? picHtml(q.img, 'qpic') : '';
     const [gn, bn] = coupleNames(g.couple);
     const badge = (mult(g, g.qi) > 1 ? '<span class="x2">×2 очки</span>' : '') + (q.type === 'photo' ? '<span class="ctype">📷 Фото-вопрос</span>' : q.type === 'couple' ? '<span class="ctype">💍 Угадайте ответ пары</span>' : q.type === 'number' ? '<span class="ctype">🔢 Ответ — число</span>' : '');
     const stg = isStage(g);
@@ -907,7 +946,8 @@ function buildScreen(box, g) {
     else if (q.type === 'number') body = `<div class="qtext" style="flex:none">${esc(q.text)}</div>${img ? `<div class="qbody" style="grid-template-columns:1fr 1fr"><div class="numq" id="numq"></div>${img}</div>` : '<div class="numq" id="numq"></div>'}`;
     else if (img) body = `<div class="qbody"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${cst}${tilesHtml(q, false)}</div>${img}</div>`;
     else body = `<div class="qtext"${pic ? ' style="flex:none;font-size:2.8em"' : ''}>${esc(q.text)}</div>${cst}${tilesHtml(q, pic)}`;
-    h = `<div class="sv${img || q.fact || q.type === 'photo' ? ' wimg' : ''}${stg ? ' stgv' : ''}">${head}${body}<div class="foot"><span id="ansCnt"></span><span id="footR"></span></div></div>`;
+    if (hasMd) body = `<div class="qbody md"><div class="qleft">${body}</div><div class="mdw${mdOk(q.qm) || g.phase === 'reveal' ? '' : ' wait'}" id="mdw">${mdOk(q.qm) || g.phase === 'reveal' ? '' : '<div class="mph">🎬<span>Видео-ответ покажем вместе с правильным ответом</span></div>'}</div></div>`;
+    h = `<div class="sv${img || q.fact || q.type === 'photo' || hasMd ? ' wimg' : ''}${stg ? ' stgv' : ''}">${head}${body}<div class="foot"><span id="ansCnt"></span><span id="footR"></span></div></div>`;
   } else if (g.phase === 'board') {
     const fin = g.final;
     const row = (p, i, delay) => { const was = g.prevRank[p.id], d = was ? was - (i + 1) : 0; return `<div class="brow" style="animation-delay:${delay}ms"><span class="pl">${i + 1}</span><span class="nm"><span>${esc(p.name)}</span>${p.table ? `<small>стол ${p.table}</small>` : ''}${!fin && d > 0 ? `<i class="up">▲${d}</i>` : !fin && d < 0 ? `<i class="dn">▼${-d}</i>` : ''}</span><span class="sc">${p.gain && !fin ? `<span class="gain">+${nums(p.gain)}</span>` : ''}${nums(p.score)}</span></div>`; };
@@ -987,14 +1027,15 @@ function updScreen(box, g, snd) {
   const n = Object.keys(g.players).length, A = (g.ans && g.ans[g.qi]) || {}, a = Object.keys(A).length;
   const ac = box.querySelector('#ansCnt'); if (ac) ac.textContent = isStage(g) ? '' : `Ответили ${a} из ${n}`;
   const fr = box.querySelector('#footR');
+  const mw = box.querySelector('#mdw'); if (mw && rev && mdOk(q.am) && mw.dataset.s !== 'a') { mw.dataset.s = 'a'; mountMedia(mw, q.am, !!snd); }
   if (q.type === 'number') {
     const nq = box.querySelector('#numq');
     if (nq && nq.dataset.st !== (rev ? 'r' : 'q')) {
       nq.dataset.st = rev ? 'r' : 'q';
       if (!rev) nq.innerHTML = `<div class="ph">Введите ответ на телефоне</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}`;
       else {
-        const c = +q.num, arr = Object.keys(A).map(id => ({ name: (g.players[id] || {}).name || 'Гость', v: A[id].v, gain: (g.players[id] || {}).gain || 0 })).sort((x, y) => Math.abs(x.v - c) - Math.abs(y.v - c)).slice(0, 3);
-        nq.innerHTML = `<div class="ph">Правильный ответ</div><div class="big">${esc(nums(c))}</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}` +
+        const arr = Object.keys(A).map(id => ({ name: (g.players[id] || {}).name || 'Гость', v: A[id].v, gain: (g.players[id] || {}).gain || 0 })).sort((x, y) => numErr(q, x.v) - numErr(q, y.v)).slice(0, 3);
+        nq.innerHTML = `<div class="ph">${hasRng(q) ? 'Засчитываем от и до' : 'Правильный ответ'}</div><div class="big${hasRng(q) ? ' rg' : ''}">${esc(numTxt(q.num, hasRng(q) ? q.num2 : null))}</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}` +
           (arr.length ? `<div class="close3">${arr.map((x, i) => `<div><small>${i === 0 ? 'Ближе всех' : (i + 1) + '-е место'}</small><b>${esc(x.name)}</b>${esc(nums(x.v))} · <em>+${nums(x.gain)}</em></div>`).join('')}</div>` : '');
       }
     }
@@ -1089,7 +1130,7 @@ function buildPhone(box, g, cl) {
     } else if (g.phase === 'question') {
       const q = g.qs[g.qi], pic = isPicQ(q), ppic = q.img && !pic ? picHtml(q.img, 'pimg' + (q.blur ? ' bl' : '')) : '';
       const top = `<div class="pv${ppic ? ' wimg' : ''}">${head(g, me)}<div class="kk" style="text-align:left">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}${q.fact ? ' · кто это?' : mult(g, g.qi) > 1 ? ' · ×2 очки' : ''}</div><div class="pq">${esc(q.text)}</div>` +
-        (q.type === 'couple' ? '<div class="hintc">💍 Угадайте, что ответила пара</div>' : '') + ppic + '<div class="tm"><i id="ptm" style="width:100%"></i></div>';
+        (q.type === 'couple' ? '<div class="hintc">💍 Угадайте, что ответила пара</div>' : '') + (q.mk || mdOk(q.qm) ? `<div class="hintc">${(q.mk || q.qm.k) === 'audio' ? '🎧 Слушайте — звук на большом экране' : '🎬 Смотрите видео на большом экране'}</div>` : '') + ppic + '<div class="tm"><i id="ptm" style="width:100%"></i></div>';
       if (q.type === 'number') h = top + `<div class="numin"><input class="pin" id="pNum" inputmode="decimal" autocomplete="off" placeholder="Ваш ответ">${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}<button class="pbtn acc" id="pNumGo">Ответить</button></div><p class="note" id="pNote"></p></div>`;
       else h = top + `<div class="ans${pic ? ' pic' : ''}" id="pAns">` + q.opts.map((o, i) => !optFilled(o) ? '' :
         `<button class="${CL[i]}" data-o="${i}">${pic ? `<span class="im" style="${bgUrl(o.img)}">${IMG.get(o.img) ? '' : `<em>${esc(initial(o.t))}</em>`}</span><span class="rw"><span class="l">${L[i]}</span><span>${esc(o.t)}</span></span>` : `<span class="l">${L[i]}</span><span>${esc(o.t)}</span>`}</button>`).join('') + '</div><p class="note" id="pNote"></p></div>';
@@ -1097,7 +1138,7 @@ function buildPhone(box, g, cl) {
       const q = g.qs[g.qi], st = me.last || 'none', mine = cl.picked[g.qi] != null || (g.ans[g.qi] && g.ans[g.qi][cl.pid]);
       const okS = g._ok ? g._ok : okSet(g, g.qi), txt = i => q.opts[i] ? (q.opts[i].t || 'вариант ' + L[i]) : '';
       let sub = '';
-      if (q.type === 'number') sub = `Правильный ответ: <b>${esc(nums(g._num != null ? g._num : q.num))}</b>${q.unit ? ' ' + esc(q.unit) : ''}${me.lv != null ? `<small>Ваш ответ: ${esc(nums(me.lv))}</small>` : ''}`;
+      if (q.type === 'number') sub = `Правильный ответ: <b>${esc(g._num != null ? numTxt(g._num, g._num2) : numTxt(q.num, hasRng(q) ? q.num2 : null))}</b>${q.unit ? ' ' + esc(q.unit) : ''}${me.lv != null ? `<small>Ваш ответ: ${esc(nums(me.lv))}</small>` : ''}`;
       else if (st !== 'ok') sub = okS.length ? `Правильный ответ: ${okS.map(i => L[i] + ' — ' + esc(txt(i))).join(', ')}` : '';
       let title = st === 'ok' ? 'Верно!' : st === 'bad' ? 'Мимо' : st === 'nocpl' ? 'Пара не ответила' : 'Не успели';
       if (st === 'ok' && q.type === 'number') title = me.gain >= 1000 ? 'В точку!' : 'Близко!';
@@ -1298,12 +1339,12 @@ function viewPlayNet() {
     }
     cl.cur = () => {
       if (!C || !Q || gone) return null;
-      const qs = Q.map((q, i) => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', x2: !!q.x2, blur: !!q.blur,
+      const qs = Q.map((q, i) => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', x2: !!q.x2, blur: !!q.blur, mk: q.mk || '',
         ok: i === C.qi && C.ok && C.ok.set ? C.ok.set : [], num: i === C.qi && C.ok && C.ok.num != null ? C.ok.num : null }; });
       const g = { id: C.id, phase: C.phase, qi: C.qi, ii: C.ii, t0: C.t0, t1: C.t1, s: C.s || {}, title: C.title, couple: C.couple, final: C.final, res: C.res, players: {}, ans: {}, cpl: {}, qs, ok: C.ok, _intro: C.intro };
       const cur = SC && SC.qi === C.qi;
       g._np = C.n || (SC && SC.n) || 0; g._rank = SC && SC.rank; g._trank = SC && SC.trank; g._tn = SC && SC.tn;
-      g._ok = C.ok && C.ok.set ? C.ok.set : []; g._num = C.ok && C.ok.num != null ? C.ok.num : null;
+      g._ok = C.ok && C.ok.set ? C.ok.set : []; g._num = C.ok && C.ok.num != null ? C.ok.num : null; g._num2 = C.ok && C.ok.num2 != null ? C.ok.num2 : null;
       if (J) g.players[me] = { name: J.name, table: J.table || 0, score: SC ? SC.score || 0 : 0, gain: cur ? SC.gain : 0, last: C.phase === 'reveal' ? (cur ? SC.last : 'wait') : (SC ? SC.last : 'none'), streak: SC ? SC.streak : 0, ok: SC ? SC.ok : 0, lv: cur ? SC.lv : null, times: [] };
       if (MYA && C.qi >= 0 && MYA[C.qi] != null) { g.ans[C.qi] = {}; g.ans[C.qi][me] = MYA[C.qi]; }
       return g;
@@ -1338,7 +1379,7 @@ function viewRemote() {
       const v = RV;
       if (!v) { $('rm').innerHTML = '<div class="cur"><div class="k">Пульт ведущего</div><div class="q">Ждём ноутбук ведущего… Держите пульт открытым на ноутбуке.</div></div>'; return; }
       const q = v.q, ph = { lobby: 'Лобби', intro: 'Знакомство', question: 'Идёт вопрос', reveal: 'Ответ', board: 'Таблица', final: 'Финал' }[v.phase] || '';
-      const okTxt = q ? (q.type === 'number' ? `✓ ${nums(q.num)} ${q.unit || ''}` : q.type === 'couple' ? '💍 правильный ответ даст пара' : '✓ ' + (q.ok || []).map(i => L[i] + ' — ' + (q.opts[i] || '')).join(', ')) : '';
+      const okTxt = q ? (q.type === 'number' ? `✓ ${numTxt(q.num, q.rng ? q.num2 : null)} ${q.unit || ''}` : q.type === 'couple' ? '💍 правильный ответ даст пара' : '✓ ' + (q.ok || []).map(i => L[i] + ' — ' + (q.opts[i] || '')).join(', ')) : '';
       const c = v.cpl || {};
       let h = `<div class="hd"><b>${esc(v.title)}</b>${v.code ? `<span class="tag">${fmtCode(v.code)}</span>` : ''}</div>` +
         `<div class="netline"><i class="${!NET.connected ? 'off' : v.rtt > 600 ? 'slow' : ''}"></i>${NET.connected ? 'На связи' : 'Нет связи'} · онлайн ${v.online} из ${v.n}${v.rtt ? ' · ноутбук ' + v.rtt + ' мс' : ''}</div>`;
@@ -1537,7 +1578,7 @@ function viewResult() {
       h += '<h2>Как гости знают вас</h2>';
       (r.qs || []).forEach(q => {
         if (q.type === 'number') {
-          h += `<div class="card"><div class="q">${esc(q.text)}</div><div class="qq"><span>Правильно: <b>${nums(q.num)} ${esc(q.unit || '')}</b></span><span class="small">в среднем гости ответили ${q.avg == null ? '—' : nums(q.avg)}</span></div>${q.best ? `<div class="small" style="margin-top:6px">Ближе всех — ${esc(q.best.name)} (${nums(q.best.v)})</div>` : ''}</div>`;
+          h += `<div class="card"><div class="q">${esc(q.text)}</div><div class="qq"><span>Правильно: <b>${numTxt(q.num, q.num2)} ${esc(q.unit || '')}</b></span><span class="small">в среднем гости ответили ${q.avg == null ? '—' : nums(q.avg)}</span></div>${q.best ? `<div class="small" style="margin-top:6px">Ближе всех — ${esc(q.best.name)} (${nums(q.best.v)})</div>` : ''}</div>`;
           return;
         }
         const tot = q.tot || 0, okc = (q.ok || []).reduce((s, i) => s + ((q.cnt || [])[i] || 0), 0), pct = tot ? Math.round(okc / tot * 100) : 0;
@@ -1770,7 +1811,9 @@ function confirmTwice(btn, label) { if (btn.dataset.sure) return true; const old
 function cardHtml(q, i) {
   const issue = qIssue(q), n = CFG.qs.length;
   let body = `<textarea class="inp" rows="2" placeholder="${q.type === 'couple' ? 'Например: «Кто первым написал сообщение?»' : 'Текст вопроса'}" data-f="text">${esc(q.text)}</textarea><div class="qimg">${imgSlot(q)}</div><input type="file" accept="image/*" class="qfile" hidden>`;
-  if (q.type === 'number') body += `<div class="numrow"><input class="inp" data-f="num" inputmode="decimal" placeholder="Правильное число" value="${esc(q.num == null ? '' : q.num)}"><input class="inp" data-f="unit" placeholder="ед., напр. мес." maxlength="16" value="${esc(q.unit || '')}"></div>`;
+  if (q.type === 'number') body += `<div class="nmode"><button data-nm="0" class="${q.rng ? '' : 'on'}">Точное число</button><button data-nm="1" class="${q.rng ? 'on' : ''}">Диапазон</button></div>` + (q.rng ?
+    `<div class="numrow rng"><span class="nl">от</span><input class="inp" data-f="num" inputmode="decimal" placeholder="10" value="${esc(q.num == null ? '' : q.num)}"><span class="nl">до</span><input class="inp" data-f="num2" inputmode="decimal" placeholder="15" value="${esc(q.num2 == null ? '' : q.num2)}"><input class="inp" data-f="unit" placeholder="ед." maxlength="16" value="${esc(q.unit || '')}"></div><div class="hint tipline">Любой ответ внутри диапазона — полные 1000 очков. Чем дальше за его границами — тем меньше.</div>` :
+    `<div class="numrow"><input class="inp" data-f="num" inputmode="decimal" placeholder="Правильное число" value="${esc(q.num == null ? '' : q.num)}"><input class="inp" data-f="unit" placeholder="ед., напр. мес." maxlength="16" value="${esc(q.unit || '')}"></div>`);
   else {
     body += '<div class="opts">' + q.opts.map((o, j) => `<div class="opt${isCh(q) && q.ok.indexOf(j) >= 0 ? ' ok' : ''}" data-j="${j}"><span class="grip og" title="Перетащить">${ICON.grip}</span><button class="ch ${CL[j]}" data-ok="${j}" title="${isCh(q) ? 'Отметить правильным' : ''}">${L[j]}</button>` +
       `<input data-o="${j}" maxlength="80" placeholder="Вариант ${L[j]}" value="${esc(o.t)}">` +
@@ -1779,6 +1822,7 @@ function cardHtml(q, i) {
   }
   if (q.type === 'photo') body += `<div class="pqx"><div class="lbl">Фото-ответ <span class="muted">· по желанию</span> ${tip('Откроется на экране вместе с правильным ответом — например, то же фото целиком или фото героя сейчас.')}</div><div class="qimg aimg">${aimgSlot(q)}</div><input type="file" accept="image/*" class="afile" hidden>` +
     `<label class="sw">Размыть фото — проясняется по таймеру<input type="checkbox" data-blur${q.blur ? ' checked' : ''}></label></div>`;
+  if (q.type !== 'photo') body += mdOk(q.qm) || mdOk(q.am) || q._mo ? `<div class="mdx"><div class="lbl">Видео или аудио ${tip('Ссылка YouTube работает везде. Файл (до 80 МБ) хранится на этом устройстве — показывайте экран с этого же ноутбука. Фрагмент: с какой и по какую секунду играть.')}</div><div class="mdg">${mdSlot(q, 'qm', 'В вопросе')}${mdSlot(q, 'am', 'В ответе')}</div></div>` : '<button class="btn ghost sm mdadd" data-mdopen>🎬 Видео или аудио</button>';
   if (issue) body += `<div class="hint w">⚠ ${esc(issue)}</div>`;
   return `<div class="qcard${issue ? ' warn' : ''}" data-i="${i}"><div class="qtop"><span class="grip qg" title="Перетащить вопрос">${ICON.grip}</span><span class="qnum">${i + 1}</span><div class="seg">${Object.keys(TYPES).map(t => `<button data-t="${t}" class="${q.type === t ? 'on' : ''}">${TYPES[t]}${t === 'couple' && !can('couple') ? '<em class="lk sm">' + ICON_LOCK + '</em>' : ''}</button>`).join('')}</div><button class="x2b${q.x2 ? ' on' : ''}" data-x2 title="Двойные очки">×2</button>` +
     `<div class="qtools">${qTip(q)}<button class="ic" data-a="dup" title="Копия">⧉</button><button class="ic" data-a="del" title="Удалить вопрос">${ICON.trash}</button></div></div>${body}</div>`;
@@ -1827,7 +1871,7 @@ function repaintCard(i, focusSel) {
 function refreshWarn(c, q) { const issue = qIssue(q); c.classList.toggle('warn', !!issue); let w = c.querySelector('.hint.w'); if (!issue) { if (w) w.remove(); return; } if (!w) { w = document.createElement('div'); w.className = 'hint w'; c.appendChild(w); } w.textContent = '⚠ ' + issue; }
 function bindCard(c) {
   const i = +c.dataset.i, q = CFG.qs[i];
-  c.querySelectorAll('[data-f]').forEach(inp => inp.oninput = () => { const f = inp.dataset.f; q[f] = f === 'num' ? inp.value.replace(',', '.').replace(/\s/g, '') : inp.value; STORE.save(); refreshWarn(c, q); });
+  c.querySelectorAll('[data-f]').forEach(inp => inp.oninput = () => { const f = inp.dataset.f; q[f] = f === 'num' || f === 'num2' ? inp.value.replace(',', '.').replace(/\s/g, '') : inp.value; STORE.save(); refreshWarn(c, q); });
   c.querySelectorAll('[data-o]').forEach(inp => inp.oninput = () => { q.opts[+inp.dataset.o].t = inp.value; STORE.save(); refreshWarn(c, q); });
   c.querySelectorAll('[data-ok]').forEach(b => b.onclick = () => {
     if (!isCh(q)) return;
@@ -1856,6 +1900,25 @@ function bindCard(c) {
     else { if (q.opts.length < 2) q.opts = [O(), O()]; if (t === 'couple') { q.ok = []; if (!q.opts.some(optFilled)) { const [g, bn] = coupleNames(CFG.couple); q.opts = [O(g), O(bn)]; } } else if (!q.ok.length) q.ok = [0]; }
     STORE.save(); repaintCard(i);
   });
+  const mdb = c.querySelector('[data-mdopen]'); if (mdb) mdb.onclick = () => { q._mo = 1; repaintCard(i); };
+  c.querySelectorAll('[data-mk]').forEach(b => b.onclick = () => { const [key, v] = b.dataset.mk.split('|'); q[key] = v ? Object.assign({}, q[key] || {}, { k: v }) : null; if (!v && !mdOk(q.qm) && !mdOk(q.am) && !(q.qm && q.qm.k) && !(q.am && q.am.k)) q._mo = 1; STORE.save(); repaintCard(i); });
+  c.querySelectorAll('[data-myt]').forEach(inp => inp.oninput = () => { const key = inp.dataset.myt, id = ytId(inp.value); if (id) { Object.assign(q[key], { yt: id, fid: '', name: '', t0: ytT(inp.value), t1: 0 }); STORE.save(); repaintCard(i); } else if (inp.value.trim().length > 12) inp.classList.add('bad'); else inp.classList.remove('bad'); });
+  const takeMd = (key, file, el) => {
+    if (!file) return; const k = q[key].k;
+    if (!new RegExp('^' + k + '/').test(file.type || '')) return toast(k === 'audio' ? 'Нужен аудиофайл: MP3, M4A, WAV' : 'Нужен видеофайл: MP4, MOV, WEBM');
+    if (file.size > 80 * 1048576) return toast('Файл больше 80 МБ — обрежьте его или дайте ссылку YouTube');
+    if (el) el.textContent = 'Сохраняем…';
+    MEDIA.put(file).then(fid => { Object.assign(q[key], { fid, name: file.name, yt: '', t0: 0, t1: 0 }); STORE.save(); repaintCard(i); }, () => { toast('Не получилось сохранить файл в браузере'); repaintCard(i); });
+  };
+  c.querySelectorAll('[data-mfile]').forEach(inp => inp.onchange = () => takeMd(inp.dataset.mfile, inp.files && inp.files[0], inp.parentNode));
+  c.querySelectorAll('[data-mdrop]').forEach(d => {
+    d.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); d.classList.add('on'); });
+    d.addEventListener('dragleave', () => d.classList.remove('on'));
+    d.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); d.classList.remove('on'); takeMd(d.dataset.mdrop, e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0], d); });
+  });
+  c.querySelectorAll('[data-mclr]').forEach(b => b.onclick = () => { const key = b.dataset.mclr; q[key] = { k: q[key].k }; STORE.save(); repaintCard(i); });
+  c.querySelectorAll('[data-mt]').forEach(inp => inp.onchange = () => { const [key, f] = inp.dataset.mt.split('|'); q[key][f] = parseT(inp.value); inp.value = q[key][f] ? mmss(q[key][f]) : ''; STORE.save(); });
+  c.querySelectorAll('[data-nm]').forEach(b => b.onclick = () => { q.rng = b.dataset.nm === '1'; STORE.save(); repaintCard(i); });
   c.querySelector('[data-x2]').onclick = e => { q.x2 = !q.x2; e.currentTarget.classList.toggle('on', q.x2); STORE.save(); };
   c.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
     const a = b.dataset.a;
@@ -1885,6 +1948,16 @@ function bindCard(c) {
   c.addEventListener('drop', e => { c.classList.remove('drag'); const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) { e.preventDefault(); take(f); } });
 }
 const QCROP = { free: true, max: 1600, target: 380000 }, AVCROP = { aspect: 1, round: true, max: 700, target: 120000 };
+function mdSlot(q, key, label) {
+  const m = q[key] || {}, k = m.k || '';
+  let h = `<div class="mds"><div class="mdh"><span>${label}</span><span class="mseg">${[['', 'Нет'], ['video', 'Видео'], ['audio', 'Аудио']].map(([v, t]) => `<button data-mk="${key}|${v}" class="${k === v ? 'on' : ''}">${t}</button>`).join('')}</span></div>`;
+  if (k) {
+    if (m.yt || m.fid) h += `<div class="mdc">${m.yt ? `<span class="th" style="background-image:url(https://i.ytimg.com/vi/${encodeURIComponent(m.yt)}/mqdefault.jpg)">${k === 'audio' ? '🎧' : ''}</span>` : `<span class="th">${k === 'audio' ? '🎧' : '🎬'}</span>`}<span class="mi"><b>${m.yt ? 'YouTube' : esc(m.name || 'Файл')}</b><small>${m.yt ? 'играет по ссылке' : 'файл на этом устройстве'}</small></span><button class="ic" data-mclr="${key}" title="Убрать">${ICON.trash}</button></div>` +
+      `<div class="mdt"><span>Фрагмент с</span><input class="inp" data-mt="${key}|t0" inputmode="numeric" placeholder="0:00" value="${m.t0 ? mmss(m.t0) : ''}"><span>по</span><input class="inp" data-mt="${key}|t1" inputmode="numeric" placeholder="конец" value="${m.t1 ? mmss(m.t1) : ''}"></div>`;
+    else h += `<input class="inp" data-myt="${key}" placeholder="Ссылка YouTube" inputmode="url"><label class="mdrop" data-mdrop="${key}">или перетащите ${k === 'audio' ? 'аудио' : 'видео'}-файл<small>до 80 МБ</small><input type="file" accept="${k}/*" hidden data-mfile="${key}"></label>`;
+  }
+  return h + '</div>';
+}
 function aimgSlot(q) {
   if (q.aimg && IMG.get(q.aimg)) return `<div class="has">${picHtml(q.aimg, 'has-in')}<div class="acts"><button data-am="crop">Кадрировать</button><button data-am="rep">Заменить</button><button data-am="del">Убрать</button></div></div>`;
   return `<button class="add" data-am="add">${ICON.cam} Добавить фото-ответ</button>`;
@@ -2018,7 +2091,7 @@ function renderLive() {
   else if (G.phase === 'final') cur = `<div class="k">Финал</div><div class="q">Победители на экране. Спасибо за игру!</div>` + '<div class="links" style="margin-top:6px">' + (!can('keepsake') ? '<button class="btn ghost sm" id="bResL">💌 Итоги для пары ' + lockTag('keepsake') + '</button>' : G.res ? '<button class="btn gold sm" id="bRes">💌 Итоги для пары</button>' : G.net ? '<span class="muted" style="font-size:13px">Готовим итоги для пары…</span>' : '') +
       '<button class="btn ghost sm" id="bXls">⬇ Excel ' + lockTag('excel') + '</button></div>';
   else if (q) {
-    const okT = q.type === 'number' ? `✓ ${nums(q.num)} ${esc(q.unit || '')}` : q.type === 'couple' ? '💍 ответ даст пара' : '✓ ' + q.ok.map(i => L[i] + ' — ' + esc(q.opts[i].t || 'фото')).join(', ');
+    const okT = q.type === 'number' ? `✓ ${numTxt(q.num, hasRng(q) ? q.num2 : null)} ${esc(q.unit || '')}` : q.type === 'couple' ? '💍 ответ даст пара' : '✓ ' + q.ok.map(i => L[i] + ' — ' + esc(q.opts[i].t || 'фото')).join(', ');
     if (q.fact) cur = `<div class="k">Факт ${G.qi + 1} из ${G.qs.length}</div><div class="q">${esc(q.text)}</div><div class="a">✓ ${esc((q.opts[q.ok[0]] || {}).t || '')}</div>`;
     else cur = `<div class="k">Вопрос ${G.qi + 1} из ${G.qs.length}${G.phase === 'board' ? ' · таблица' : ''}${mult(G, G.qi) > 1 ? ' · ×2' : ''}</div><div class="q">${esc(q.text)}</div><div class="a">${okT}</div>`;
     if (q.type === 'couple' && (G.phase === 'question' || G.phase === 'reveal')) {
@@ -2155,8 +2228,8 @@ function exportXls() {
   G.qs.forEach((q, i) => {
     if (i > G.qi) return;
     const A = G.ans[i] || {}, ids = Object.keys(A), ok = okSet(G, i);
-    const good = q.type === 'number' ? ids.filter(id => +A[id].v === +q.num).length : ids.filter(id => ok.indexOf(A[id].o) >= 0).length;
-    rows.push([q.text || 'Вопрос ' + (i + 1), q.type === 'number' ? q.num + ' ' + (q.unit || '') : ok.map(k => (q.opts[k] || {}).t || '').join(', '), ids.length, good]);
+    const good = q.type === 'number' ? ids.filter(id => numErr(q, +A[id].v) === 0).length : ids.filter(id => ok.indexOf(A[id].o) >= 0).length;
+    rows.push([q.text || 'Вопрос ' + (i + 1), q.type === 'number' ? numTxt(q.num, hasRng(q) ? q.num2 : null) + ' ' + (q.unit || '') : ok.map(k => (q.opts[k] || {}).t || '').join(', '), ids.length, good]);
   });
   const csv = '\ufeff' + rows.map(r => r.map(v => { v = v == null ? '' : String(v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
