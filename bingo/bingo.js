@@ -750,9 +750,10 @@ function accTag() {
   if (!ACC.info) return `<span class="tag">Демо</span><button class="btn ghost sm" id="bLogin" title="${esc(ACC.err)}">Войти заново</button>`;
   const i = ACC.info, tn = TIER[i.tier] ? TIER[i.tier].n : '';
   const t = i.pro ? `<span class="tag pro">${tn || 'Подписка'}</span>` : i.unlocked ? `<span class="tag pro">${tn ? tn + ' · ' : ''}до ${new Date(i.eventUntil).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>` : '<span class="tag">Демо</span>';
+  if (window.PBAcct) return PBAcct.html(i);
   return `<span class="em">${esc(i.email)}</span>${t}`;
 }
-function renderTop() { const a = $('acc'); if (!a) return; a.innerHTML = accTag(); if ($('bLogin')) $('bLogin').onclick = goLogin; }
+function renderTop() { const a = $('acc'); if (!a) return; a.innerHTML = accTag(); if ($('bLogin')) $('bLogin').onclick = goLogin; if (window.PBAcct) PBAcct.bind(a); }
 function demoNote() {
   if (unlocked()) return '';
   return `<div class="notice"><span>🎈</span><span><b>Демо-режим:</b> всё работает, но в игру войдут максимум ${DEMO_MAX} телефонов гостей, а игра длится до ${DEMO_MIN} минут. Полный доступ — любой тариф.</span>${ACC.info ? '' : '<button class="btn ghost sm" id="bLogin2">Войти</button>'}<a class="btn gold sm" href="../#pricing">Тарифы</a></div>`;
