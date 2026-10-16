@@ -723,7 +723,7 @@ function tplCfg(name) {
     C('😎 Какой эмодзи в мире используют чаще всего?', ['😂', '❤️', '👍', '🔥'], 0),
     // Раунд 3 · Угадай мелодию
     C('🎧 Угадай мелодию: из какого фильма эта тема?', ['Миссия невыполнима', 'Джеймс Бонд', 'Розовая пантера', 'Шерлок Холмс'], 0, A('XAYhNHhxN0A', 0, 20)),
-    C('🎧 Из какой игры эта музыка?', ['Minecraft', 'Roblox', 'Fortnite', 'Among Us'], 0, A('_3ngiSxVCBs', 0, 25)),
+    C('🎧 Из какой игры эта музыка?', ['Minecraft', 'Roblox', 'Fortnite', 'Among Us'], 0, A('_3ngiSxVCBs', 0, 40)),
     C('🎧 Узнаёшь? Это мелодия из игры…', ['Тетрис', 'Super Mario', 'Pac-Man', 'Angry Birds'], 0, A('NmCCQxVBfyM', 0, 15)),
     C('🎧 Кто поёт эту песню?', ['HUNTR/X', 'Saja Boys', 'BLACKPINK', 'BTS'], 0, Object.assign(A('yebNIHKAC4A', 0, 25), V('yebNIHKAC4A', 25, 40))),
     C('🎧 Из какого мультфильма эта песня?', ['K-pop: Охотники на демонов', 'Энканто', 'Холодное сердце', 'Элементарно'], 0, A('983bBbJx0Mk', 0, 25)),
@@ -797,6 +797,7 @@ function onCmd(k, c) {
   if (r.role !== 'remote') return;
   if (c.a === 'next') next();
   else if (c.a === 'skip') skipTimer();
+  else if (c.a === 'replay') replayMedia();
   else if (c.a === 'kick') kick(String(c.p || ''));
   else if (c.a === 'cplset') coupleAnswer('host', G.qi, +c.o);
   else if (c.a === 'intro') startIntro();
@@ -1039,6 +1040,10 @@ function buildScreen(box, g) {
 function updScreen(box, g, snd) {
   if (!g || !box) return;
   const st = box._st || {};
+  if (g.phase === 'question' || g.phase === 'reveal') {
+    const mw = box.querySelector('#mdw'), r = String(g.mr || 0), q = g.qs[g.qi];
+    if (mw && q) { if (st.mr === undefined || st.mrq !== g.qi) { st.mr = r; st.mrq = g.qi; } else if (st.mr !== r) { st.mr = r; const m = g.phase === 'reveal' && mdOk(q.am) ? q.am : mdOk(q.qm) ? q.qm : q.am; if (mdOk(m)) mountMedia(mw, m, !!snd); } }
+  }
   if (g.phase === 'lobby') {
     const chips = box.querySelector('#chips'), ps = ranked(g).sort((a, b) => (a.jt || 0) - (b.jt || 0));
     if (chips) {
@@ -1436,6 +1441,7 @@ function viewRemote() {
       if (v.demo) h += `<div class="demo">Демо-режим: до ${DEMO_MAX} телефонов гостей</div>`;
       const acts = [];
       if (v.canIntro) acts.push(`<button class="btn ghost sm" data-a="intro">🎤 Представить ${v.play === 'teams' ? 'команды' : 'столы'}</button>`);
+      if (v.phase === 'question' || v.phase === 'reveal') acts.push('<button class="btn ghost sm" data-a="replay">🔁 Звук/видео ещё раз</button>');
       if (v.phase === 'question') acts.push('<button class="btn ghost sm" data-a="skip">⏭ Закончить таймер</button>');
       if (acts.length) h += `<div class="links">${acts.join('')}</div>`;
       h += `<div class="plist">${v.players.length ? v.players.map((p, i) => `<div class="p"><span class="muted" style="width:20px">${i + 1}</span><span class="dot ${p.a && v.phase === 'question' ? 'on' : !p.on ? 'off' : ''}"></span><b>${esc(p.name)}${p.t ? ` <small>стол ${p.t}</small>` : ''}</b><span>${nums(p.score)}</span><button class="kick${sure === p.id ? ' sure' : ''}" data-k="${esc(p.id)}">${sure === p.id ? 'Убрать?' : '✕'}</button></div>`).join('') : '<div class="p muted">Пока никого</div>'}</div>`;
@@ -2092,10 +2098,10 @@ function renderLive() {
     $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('<span id="lTitle"></span>')}</a><span class="sp"></span>` +
       `<button class="btn ghost sm dsk" id="bOpenScr">🖥 Экран</button><button class="btn ghost sm dsk" id="bRemote">📱 Пульт на телефоне</button><button class="btn ghost sm" id="bEdit">✎ Редактор</button></div></div>` +
       `<div class="tabs" id="tabs"><button data-t="ctl">Пульт</button><button data-t="scr">Экран</button><button data-t="ph">Я — гость</button></div>` +
-      `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><div class="kbd dsk-only">Пробел или → — дальше</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
+      `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><div class="kbd dsk-only">Пробел или → — дальше · R — повторить звук</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
       `<div class="stat"><div><b id="sP">0</b><span id="sPl">гостей</span></div><div><b id="sO">–</b><span>на связи</span></div><div><b id="sA">–</b><span>ответили</span></div></div>` +
       `<div class="netline" id="netl"></div><div id="demoL"></div><div class="cur" id="cur"></div><div class="plist" id="plist"></div>` +
-      `<div class="links"><button class="btn ghost sm" id="bSkip">⏭ Закончить таймер</button><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button><button class="btn ghost sm" id="bRemote2">📱 Пульт</button><button class="btn ghost sm" id="bSnd"></button><button class="btn ghost sm" id="bRestart">↺ Заново</button></div></div>` +
+      `<div class="links"><button class="btn ghost sm" id="bReplay">🔁 Проиграть ещё раз</button><button class="btn ghost sm" id="bSkip">⏭ Закончить таймер</button><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button><button class="btn ghost sm" id="bRemote2">📱 Пульт</button><button class="btn ghost sm" id="bSnd"></button><button class="btn ghost sm" id="bRestart">↺ Заново</button></div></div>` +
       `<div class="pane" data-p="scr"><h4>Экран для проектора <button class="btn ghost sm" id="bScrMenu">Открыть ↗</button></h4><div class="stage" id="stg"></div></div>` +
       `<div class="pane ph" data-p="ph"><h4>Телефон гостя · играйте сами <button class="btn ghost sm" id="bOpenPh2">↗</button></h4><div class="phwrap"><div class="phone"><div class="scr" id="ph"></div></div></div></div></div>` +
       `<div class="mnext"><button class="btn gold next" id="bNextM" style="display:block"></button></div>`;
@@ -2107,6 +2113,7 @@ function renderLive() {
     $('bNext').onclick = next; $('bNextM').onclick = next;
     $('bIntro').onclick = startIntro;
     $('bSkip').onclick = skipTimer;
+    $('bReplay').onclick = replayMedia;
     $('bRestart').onclick = () => { if (!confirmTwice($('bRestart'), 'Точно заново?')) return; clearBots(); newGame(); };
     $('bSnd').onclick = () => { G.s.sound = !(G.s.sound !== false); if (G.s.sound) SND.unlock(); render(); };
     document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; paintTabs(); });
@@ -2123,6 +2130,7 @@ function renderLive() {
   $('bIntro').style.display = canIntro ? '' : 'none';
   $('bIntro').textContent = '🎤 Представить ' + (G.s.play === 'teams' ? 'команды' : 'столы') + ' по очереди';
   $('bSkip').style.display = G.phase === 'question' && !isStage(G) ? '' : 'none';
+  $('bReplay').style.display = hasMedia() ? '' : 'none';
   $('bCpl').style.display = G.net && G.qs.some(q => q.type === 'couple') ? '' : 'none';
   $('bRemote2').style.display = G.net ? '' : 'none'; $('bRemote').style.display = G.net ? '' : 'none';
   $('bSnd').textContent = G.s.sound !== false ? (soundHere() ? '🔊 Звук тут' : '🔊 Звук на экране') : '🔇 Звук выкл.';
@@ -2203,10 +2211,14 @@ function demoOver() {
   clearBots(); endNet(); G = null; liveBuilt = false; ls('del', KEY_LIVE); send({ type: 'reset' }); renderEditor(); window.scrollTo(0, 0);
   modal(upsellHtml('Демо-игра закончилась', 'Демо работает ' + DEMO_MIN + ' минут. Выберите тариф — или запустите новую демо-игру.'));
 }
+/* Повтор видео/аудио текущего вопроса на экране: кнопка, клавиша R или пульт */
+function hasMedia() { if (!G || (G.phase !== 'question' && G.phase !== 'reveal')) return false; const q = G.qs[G.qi]; return !!q && (mdOk(q.qm) || mdOk(q.am)); }
+function replayMedia() { if (!hasMedia()) return; G.mr = (G.mr || 0) + 1; publish(); toast('🔁 Играем ещё раз'); }
 function bootHost() {
   document.addEventListener('keydown', e => {
     if (!G || /INPUT|TEXTAREA/.test((e.target || {}).tagName || '') || $('modal').classList.contains('on')) return;
     if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') { e.preventDefault(); replayMedia(); }
   });
   document.addEventListener('pointerdown', () => { if (G && G.s.sound !== false) SND.unlock(); });
   onMsg(m => {
