@@ -158,7 +158,7 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
   var FB = { apiKey: 'AIzaSyADi9iG0ZtHg9zGBomUKpTpgaANStenR3Y', authDomain: 'beloglazov-games.firebaseapp.com', databaseURL: 'https://beloglazov-games-default-rtdb.firebaseio.com', projectId: 'beloglazov-games' };
   var I = {
     ru: { brand: 'Белоглазов', h: 'Мои игры', newG: '+ Новая игра', newT: 'Новая игра', search: 'Поиск по названию или паре', all: 'Все', past: 'Проведённые',
-      quiz: 'Квиз о паре', fact: 'Интересный факт', bingo: 'Человеческое бинго', bingoS: 'Бинго', sm: 'Секретная миссия',
+      quiz: 'Квиз', fact: 'Интересный факт', bingo: 'Человеческое бинго', bingoS: 'Бинго', sm: 'Секретная миссия',
       quizD: 'Вопросы о паре, ответы с телефонов', factD: 'Факты о гостях от пары', bingoD: 'Карточки примет, знакомство в зале', smD: 'Тайные задания для welcome-зоны',
       smLock: 'Новые миссии — по подписке', open: 'Открыть', dup: 'Дублировать', del: 'Удалить', sure: 'Точно удалить?', copy: ' (копия)', admin: 'Панель ведущего', guests: 'Ссылка для гостей',
       copied: 'Ссылка скопирована', duped: 'Копия создана', deleted: 'Игра удалена', active: 'Активна', until: 'до', empty: 'Игр пока нет — создайте первую.', none: 'Ничего не нашли по «{q}»',
@@ -167,7 +167,7 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
       name: 'Имя', mail: 'Почта для входа', plan: 'Тариф', lang: 'Язык', noPlan: 'Без тарифа', sub: 'Подписка', event: 'Одно мероприятие', left: 'Осталось {n}', subOff: 'подписка неактивна', tariff: 'Тариф',
       creating: 'Создаём…', err: 'Ошибка: ', noSync: 'Не получилось загрузить игры из аккаунта — обновите страницу', edited: 'изменён', created: 'создана', d1: 'день', d2: 'дня', d5: 'дней', today: 'меньше дня' },
     en: { brand: 'Beloglazov', h: 'My games', newG: '+ New game', newT: 'New game', search: 'Search by title or couple', all: 'All', past: 'Past',
-      quiz: 'Couple Quiz', fact: 'Interesting Fact', bingo: 'Human Bingo', bingoS: 'Bingo', sm: 'Secret Mission',
+      quiz: 'Quiz', fact: 'Interesting Fact', bingo: 'Human Bingo', bingoS: 'Bingo', sm: 'Secret Mission',
       quizD: 'Questions about the couple, answers from phones', factD: 'Facts about guests from the couple', bingoD: 'Trait cards, guests mingle', smD: 'Secret tasks for the welcome area',
       smLock: 'New missions need a subscription', open: 'Open', dup: 'Duplicate', del: 'Delete', sure: 'Delete for good?', copy: ' (copy)', admin: 'Host panel', guests: 'Guest link',
       copied: 'Link copied', duped: 'Copy created', deleted: 'Game deleted', active: 'Active', until: 'until', empty: 'No games yet — create your first one.', none: 'Nothing found for “{q}”',
@@ -251,7 +251,7 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
       var m = lists[k]; if (!m) return;
       Object.keys(m).forEach(function (id) { var x = m[id] || {}; out.push({ k: k, id: id, title: x.title || T(k), sub: x.couple || '', t: x.updated || 0, href: TYPES[k].href + '?open=' + encodeURIComponent(id) }); });
     });
-    ((ev && ev.events) || []).forEach(function (e) { var old = !!(e.exp && e.exp < Date.now()); out.push({ k: 'sm', id: e.id, title: e.couple || T('sm'), sub: '', t: e.created || 0, exp: e.exp, old: old, href: e.adminUrl, play: e.playUrl }); });
+    ((ev && ev.events) || []).forEach(function (e) { var old = !!(e.exp && e.exp < Date.now()); out.push({ k: 'sm', id: e.id, title: (e.title && e.title !== 'Секретная миссия' && e.title !== e.couple) ? e.title : (e.couple || T('sm')), sub: (e.title && e.title !== 'Секретная миссия' && e.title !== e.couple) ? (e.couple || '') : '', t: e.created || 0, exp: e.exp, old: old, href: e.adminUrl, play: e.playUrl }); });
     return out;
   }
   function hl(s) { if (!S.q) return esc(s); var i = s.toLowerCase().indexOf(S.q.toLowerCase()); if (i < 0) return esc(s); return esc(s.slice(0, i)) + '<mark>' + esc(s.slice(i, i + S.q.length)) + '</mark>' + esc(s.slice(i + S.q.length)); }
