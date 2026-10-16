@@ -1360,7 +1360,7 @@ function viewPlayNet() {
         ref('codes/' + code).once('value').then(s => { const v = s.val(); if (!v || !v.g) { if (err) err.textContent = 'Игра с таким кодом не найдена'; return; } location.replace(v.k === 'bingo' ? '../bingo/?view=play&g=' + v.g : BASE + '?view=play&g=' + v.g); })
           .catch(() => { if (err) err.textContent = 'Нет связи, попробуйте ещё раз'; });
       };
-      draw(); setTimeout(() => { const i = $('pCode'); if (i) i.focus(); }, 300);
+      draw(); const pc = (P.get('c') || '').replace(/\D/g, ''); if (pc.length === 6) cl.enterCode(pc, null); else setTimeout(() => { const i = $('pCode'); if (i) i.focus(); }, 300);
       return;
     }
     gref(GID, 'meta').once('value').then(x => { if (!x.exists()) { gone = true; PHMSG = 'Игра не найдена или уже завершена.<br>Отсканируйте QR-код на экране ещё раз или введите код игры.'; box.dataset.k = ''; draw(); } });
