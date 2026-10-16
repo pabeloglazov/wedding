@@ -1687,7 +1687,7 @@ function renderEditor() {
   const s = CFG.s;
   $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND(GAME === 'fact' ? 'Интересный факт · редактор' : 'Квиз · редактор')}</a><span class="sp"></span><span class="muted" style="font-size:12px" id="syncSt"></span><div class="acc" id="acc"></div></div></div>` +
     (GAME === 'fact' ? `<div class="ed"><div class="k">Новая игра</div><h1>Интересный факт</h1><p class="lead">Пара присылает имена гостей и интересные факты о них. Вы показываете факты на большом экране: зал угадывает, о ком речь, — и открываются фото и имя. Можно просто показывать, а можно устроить голосование с телефонов.</p>` : `<div class="ed"><div class="k">Новая игра</div><h1>Соберите квиз за 5 минут</h1><p class="lead">Впишите вопросы, отметьте правильные ответы тапом по букве — и запускайте. Гости входят по QR-коду или коду игры.</p>`) + `<div id="demoN">${demoNote()}</div>` +
-    `<div class="panel"><div class="row2"><div class="fld"><label>Название игры</label><input class="inp" id="fTitle" maxlength="60"></div><div class="fld"><label>Имена пары</label><input class="inp" id="fCouple" maxlength="60" placeholder="Максим и Алина"></div></div></div>` +
+    `<div class="panel"><div class="row2"><div class="fld"><label>Название игры</label><input class="inp" id="fTitle" maxlength="60"></div><div class="fld"><label id="lCouple">Имена пары</label><input class="inp" id="fCouple" maxlength="60" placeholder="Максим и Алина"></div></div></div>` +
     (GAME === 'fact' ? `<div class="panel"><h3>Как показываем</h3><div class="modes" id="shows"></div><div id="showTune"></div></div>` : '') +
     (GAME === 'fact' ? '' : `<div class="panel"><h3>Формат</h3><div class="modes" id="modes"></div><div class="lbl">Как играем</div><div class="modes" id="plays"></div><div id="tblRow"></div>` +
     `<details class="tune"><summary><span>⚙️</span><span>Тонкая настройка<small>время, очки, звук, боты для проверки</small></span><span class="chev">▾</span></summary><div class="tgrid">` +
@@ -1706,7 +1706,7 @@ function renderEditor() {
     `<div class="bar"><div class="in"><div style="min-width:0;flex:1"><div style="font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="bSum"></div><div class="muted" style="font-size:12px" id="bSub"></div></div><button class="btn gold" id="bStart">Запустить ▶</button></div></div>`;
   renderTop(); paintSync();
   if ($('bLogin2')) $('bLogin2').onclick = goLogin;
-  $('fTitle').value = CFG.title; $('fCouple').value = CFG.couple;
+  $('fTitle').value = CFG.title; $('fCouple').value = CFG.couple; paintWed();
   $('fTitle').oninput = e => { CFG.title = e.target.value; STORE.save(); sum(); };
   $('fCouple').oninput = e => { CFG.couple = e.target.value; STORE.save(); };
   if (GAME === 'fact') paintShows(); else { paintModes(); paintTune(); } paintDesign(); paintForm(); paintQs(); sum();
@@ -1722,12 +1722,19 @@ function addQ(type) {
   const ts = document.querySelectorAll('.qcard textarea'), t = ts[ts.length - 1];
   if (t) { t.focus(); t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 }
+/* Не свадьба (паб-квиз, корпоратив, вечеринка) — без «пары»: поле становится подзаголовком, тип «Угадай ответ пары» скрыт */
+function paintWed() {
+  const wed = CFG.mode === 'wedding' || CFG.qs.some(q => q.type === 'couple');
+  document.body.classList.toggle('nowed', !wed);
+  if (!document.getElementById('nowedCss')) { const s = document.createElement('style'); s.id = 'nowedCss'; s.textContent = 'body.nowed [data-add=couple],body.nowed .qcard .seg [data-t=couple]{display:none!important}'; document.head.appendChild(s); }
+  const l = $('lCouple'), f = $('fCouple'); if (l) l.textContent = wed ? 'Имена пары' : 'Подзаголовок'; if (f) f.placeholder = wed ? 'Максим и Алина' : 'Например: TEENS PARTY';
+}
 function paintModes() {
   $('modes').innerHTML = Object.keys(MODES).map(k => { const m = MODES[k]; return `<button class="mode${CFG.mode === k ? ' on' : ''}" data-m="${k}"><i>${m.ic}</i><b>${m.t}</b><span>${m.d}</span></button>`; }).join('');
   $('plays').innerHTML = Object.keys(PLAYS).map(k => { const m = PLAYS[k]; return `<button class="mode${CFG.s.play === k ? ' on' : ''}${FEAT[k] && !can(k) ? ' locked' : ''}" data-p="${k}"><i>${m.ic}</i><b>${m.t}${FEAT[k] ? lockTag(k) : ''}</b><span>${m.d}</span></button>`; }).join('');
   $('tblRow').innerHTML = CFG.s.play === 'tables' ? `<div class="rng" style="margin-top:12px"><span>Сколько столов в зале</span><input type="range" id="sTbl" min="2" max="40"><b id="sTblV"></b></div>` : CFG.s.play === 'teams' ? `<div class="hint tipline">Как работают команды ${tip('Команды сами придумывают название при входе. Перед игрой их можно представить залу по очереди.')}</div>` : '';
   if ($('sTbl')) { $('sTbl').value = CFG.s.tables; $('sTblV').textContent = CFG.s.tables; $('sTbl').oninput = e => { CFG.s.tables = +e.target.value; $('sTblV').textContent = CFG.s.tables; STORE.save(); }; }
-  document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { CFG.mode = b.dataset.m; Object.assign(CFG.s, MODES[CFG.mode].s); STORE.save(); paintModes(); paintTune(); sum(); });
+  document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { CFG.mode = b.dataset.m; Object.assign(CFG.s, MODES[CFG.mode].s); STORE.save(); paintModes(); paintWed(); paintTune(); sum(); });
   document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { if (FEAT[b.dataset.p] && !can(b.dataset.p)) return upsell(b.dataset.p); CFG.s.play = b.dataset.p; STORE.save(); paintModes(); sum(); });
 }
 function paintShows() {
