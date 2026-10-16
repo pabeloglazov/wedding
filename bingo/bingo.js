@@ -446,6 +446,16 @@ function buildScreen(box, S, snd) {
   h += `<div class="pb-lock scrb">${MARK(34)}</div><div class="bcel" id="sCel"></div>`;
   box.innerHTML = h;
   box._chips = 0; box._feed = ''; box._ev = null; box._q = '';
+  /* клик по QR на экране — крупный QR поверх размытого фона; клик или Esc закрывает */
+  box.querySelectorAll('.join, .mini').forEach(el => { el.style.cursor = 'pointer'; el.onclick = e => {
+    e.stopPropagation(); if (box.querySelector('.qrzoom')) return;
+    const z = document.createElement('div'); z.className = 'qrzoom';
+    z.innerHTML = `<div class="qz"><div class="qr" id="zqr"></div><div class="jurl">${esc(SHORT.replace(/^https?:\/\//, ''))}</div>${S.code ? `<div class="jcode"><span>код</span><b>${fmtCode(S.code)}</b></div>` : ''}</div>`;
+    (box.querySelector('.sv') || box).appendChild(z); qr(z.querySelector('#zqr'), S.net ? BASE + '?view=play&g=' + S.id : BASE + '?view=play&local=1', 720);
+    const close = () => { z.classList.add('out'); setTimeout(() => z.remove(), 220); document.removeEventListener('keydown', k); };
+    const k = ev => { if (ev.key === 'Escape') close(); };
+    z.onclick = close; document.addEventListener('keydown', k);
+  }; });
 }
 function updScreen(box, S, snd) {
   if (!box || !S || !box.firstChild) return;
