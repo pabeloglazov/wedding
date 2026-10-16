@@ -7,7 +7,7 @@ const GID = (P.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
 const PF_API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
 const DEMO_MAX = 3, DEMO_MIN = 60;
 const GAME = window.PB_GAME === 'fact' ? 'fact' : 'quiz';
-const GNAME = GAME === 'fact' ? 'Интересный факт' : 'Квиз о паре';
+const GNAME = GAME === 'fact' ? 'Интересный факт' : 'Квиз';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -1292,7 +1292,7 @@ function soundOverlay(onOk) {
   document.body.appendChild(d);
 }
 function screenShell() {
-  document.body.classList.add('solo-screen', 'no-cursor'); { let it = 0; const wake = () => { document.body.classList.remove('idle'); clearTimeout(it); it = setTimeout(() => document.body.classList.add('idle'), 3000); }; ['mousemove', 'mousedown', 'keydown'].forEach(ev => document.addEventListener(ev, wake, { passive: true })); wake(); } document.title = 'Экран · Квиз о паре';
+  document.body.classList.add('solo-screen', 'no-cursor'); { let it = 0; const wake = () => { document.body.classList.remove('idle'); clearTimeout(it); it = setTimeout(() => document.body.classList.add('idle'), 3000); }; ['mousemove', 'mousedown', 'keydown'].forEach(ev => document.addEventListener(ev, wake, { passive: true })); wake(); } document.title = 'Экран · ' + GNAME;
   $('app').innerHTML = '<div class="stage full" id="stg"></div><button class="btn ghost sm fsbtn" id="fs">⛶ На весь экран</button>';
   $('fs').onclick = () => { SND.unlock(); const d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen || function () {}).call(d); };
   soundOverlay();
