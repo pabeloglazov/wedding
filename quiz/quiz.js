@@ -695,6 +695,47 @@ function dist(g) {
   Object.keys(A).forEach(k => { const x = A[k]; if (x && x.o != null && x.o < 4) cnt[x.o]++; tot++; });
   return { cnt, tot, q };
 }
+/* Готовые шаблоны: ?tpl=teens — квиз «Агент 3:16» для TEENS PARTY */
+function tplCfg(name) {
+  if (name !== 'teens') return null;
+  const C = (text, opts, ok, extra) => {
+    const right = opts[ok], o = opts.slice();
+    for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
+    return normQ(Object.assign({ type: 'choice', text, opts: o.map(O), ok: [o.indexOf(right)] }, extra || {}));
+  };
+  const A = (yt, t0, t1) => ({ qm: { k: 'audio', yt, t0, t1 } });
+  const V = (yt, t0, t1) => ({ am: { k: 'video', yt, t0, t1 } });
+  const qs = [
+    // Раунд 1 · Досье агента
+    C('🕶 Досье агента. Агент 007 — это…', ['Джеймс Бонд', 'Итан Хант', 'Джейсон Борн', 'Шерлок Холмс'], 0),
+    C('🕶 Что такое «легенда» у разведчика?', ['Вымышленная биография', 'Секретный пароль', 'Тайник для записок', 'Позывной по рации'], 0),
+    C('🕶 Шифр, где каждая буква сдвигается на одно и то же число позиций, называется…', ['Шифр Цезаря', 'Азбука Морзе', 'Энигма', 'QR-код'], 0),
+    C('🕶 Как выглядит сигнал SOS азбукой Морзе?', ['· · · — — — · · ·', '— — — · · · — — —', '· — · — · —', '· · · · · · · · ·'], 0),
+    normQ({ type: 'number', text: '🕶 В каком году вышел первый фильм «Миссия невыполнима» с Томом Крузом?', opts: [], ok: [], num: 1996, unit: 'год' }),
+    // Раунд 2 · Тренды, мемы, эмодзи
+    C('😎 Угадай фильм по эмодзи: 🦁 👑', ['Король Лев', 'Мадагаскар', 'Книга джунглей', 'Зверополис'], 0),
+    C('😎 Угадай фильм по эмодзи: 🏠 🎈 👴', ['Вверх', 'Один дома', 'Душа', 'Тачки'], 0),
+    C('😎 Угадай фильм по эмодзи: 🧙‍♂️ ⚡ 👓', ['Гарри Поттер', 'Властелин колец', 'Хроники Нарнии', 'Мерлин'], 0),
+    C('😎 Угадай фильм по эмодзи: 🚢 🧊 💔', ['Титаник', 'Пираты Карибского моря', 'Моана', 'Холодное сердце'], 0),
+    C('😎 Что значит «GOAT», когда так говорят о спортсмене?', ['Лучший всех времён', 'Упрямый как козёл', 'Новичок', 'Запасной игрок'], 0),
+    C('😎 Слово «rizz» — это…', ['Обаяние, умение понравиться', 'Опоздание', 'Ошибка в игре', 'Новый танец'], 0),
+    C('😎 Какое выражение Оксфордский словарь выбрал словом 2024 года?', ['Brain rot', 'Rizz', 'Slay', 'Skibidi'], 0),
+    C('😎 Какой эмодзи в мире используют чаще всего?', ['😂', '❤️', '👍', '🔥'], 0),
+    // Раунд 3 · Угадай мелодию
+    C('🎧 Угадай мелодию: из какого фильма эта тема?', ['Миссия невыполнима', 'Джеймс Бонд', 'Розовая пантера', 'Шерлок Холмс'], 0, A('XAYhNHhxN0A', 0, 20)),
+    C('🎧 Из какой игры эта музыка?', ['Minecraft', 'Roblox', 'Fortnite', 'Among Us'], 0, A('_3ngiSxVCBs', 0, 25)),
+    C('🎧 Узнаёшь? Это мелодия из игры…', ['Тетрис', 'Super Mario', 'Pac-Man', 'Angry Birds'], 0, A('NmCCQxVBfyM', 0, 15)),
+    C('🎧 Кто поёт эту песню?', ['HUNTR/X', 'Saja Boys', 'BLACKPINK', 'BTS'], 0, Object.assign(A('yebNIHKAC4A', 0, 25), V('yebNIHKAC4A', 25, 40))),
+    C('🎧 Из какого мультфильма эта песня?', ['K-pop: Охотники на демонов', 'Энканто', 'Холодное сердце', 'Элементарно'], 0, A('983bBbJx0Mk', 0, 25)),
+    C('🎧 О ком «мы не говорим» в этой песне?', ['О Бруно', 'О Мирабель', 'О Камило', 'О Луизе'], 0, Object.assign(A('bvWRMAU6V-c', 0, 25), V('bvWRMAU6V-c', 25, 40))),
+    C('🎧 Кто исполняет эту песню?', ['Imagine Dragons', 'Coldplay', 'OneRepublic', 'Twenty One Pilots'], 0, A('7wtfhZwyrcc', 0, 25)),
+    C('🎧 Как называется эта песня?', ['Way Maker', 'Goodness of God', 'Oceans', 'Build My Life'], 0, A('iJCV_2H9xD0', 0, 25)),
+    C('🎧 Финал! Кто поёт эту песню в мультфильме?', ['Эльза', 'Анна', 'Моана', 'Рапунцель'], 0, A('L0MK7qz13bU', 0, 25))
+  ];
+  return { id: uid(10), title: 'Квиз агента 3:16', couple: 'TEENS PARTY', mode: 'corp',
+    s: Object.assign({}, MODES.corp.s, { play: 'solo', tables: 10, lastX2: true, sound: true, every: 4 }), bots: false,
+    accent: '#ff5a1f', photo: '', wifi: { ssid: '', pass: '' }, form: '', facts: [], qs, updated: Date.now() };
+}
 
 /* ================= канал между вкладками одного устройства ================= */
 let ch = null; const handlers = [];
@@ -2174,8 +2215,10 @@ function bootHost() {
   const KEY_BAK = GAME === 'fact' ? 'pbf_cfg_bak' : 'pbq_cfg_bak';
   // ?demo=1 — сразу запускаем готовый демо-квиз (черновик ведущего сохраняем в резерв)
   const DEMO_GO = !!P.get('demo') && !G, OPEN = !G && P.get('open'), NEWG = !!P.get('new') && !G;
-  if (P.get('demo') || P.get('open') || P.get('new')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (P.get('demo') || P.get('open') || P.get('new') || P.get('tpl')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
   if (NEWG) { CFG = normCfg(defaultCfg(true)); CFG.couple = ''; CFG.title = GNAME; ls('set', KEY_CFG, CFG); }
+  const TPL = !G && GAME === 'quiz' && P.get('tpl') ? tplCfg(P.get('tpl')) : null;
+  if (TPL) { const cur = ls('get', KEY_CFG); if (cur && cur.isDemo) ls('del', KEY_BAK); CFG = normCfg(TPL); ls('set', KEY_CFG, CFG); }
   if (DEMO_GO) {
     const cur = ls('get', KEY_CFG); if (cur && !cur.isDemo) ls('set', KEY_BAK, cur);
     CFG = normCfg(defaultCfg()); CFG.couple = 'Аня и Макс'; CFG.title = GAME === 'fact' ? 'Демо: интересный факт' : 'Демо-квиз'; if (GAME !== 'fact') CFG.qs = sampleQs(CFG.couple).filter(q => q.type !== 'couple').map(normQ); CFG.isDemo = 1; ls('set', KEY_CFG, CFG);
