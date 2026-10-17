@@ -199,7 +199,7 @@ function mountMedia(box, m, snd) {
   const cover = m.k === 'audio' ? '<div class="cover"><div class="eq"><i></i><i></i><i></i><i></i><i></i></div><span>Слушаем</span></div>' : '';
   if (m.yt) {
     const t0 = Math.round(+m.t0 || 0), t1 = Math.round(+m.t1 || 0);
-    box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(m.yt)}?autoplay=1&mute=${snd ? 0 : 1}&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&start=${t0}${t1 > t0 ? '&end=' + t1 : ''}" allow="autoplay; encrypted-media" title="video"></iframe>` + cover;
+    box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(m.yt)}?autoplay=1&enablejsapi=1&mute=${snd ? 0 : 1}&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&start=${t0}${t1 > t0 ? '&end=' + t1 : ''}" allow="autoplay; encrypted-media" title="video"></iframe>` + cover;
     return;
   }
   box.innerHTML = '<div class="mph">Загружаем…</div>';
@@ -213,6 +213,12 @@ function mountMedia(box, m, snd) {
     if (t1 > t0) el.addEventListener('timeupdate', () => { if (el.currentTime >= t1) el.pause(); });
     box.innerHTML = cover; box.insertBefore(el, box.firstChild);
   });
+}
+/* мгновенно глушим/включаем уже играющее медиа (YouTube через JS API, файлы через .muted) */
+function setMediaMute(box, snd) {
+  if (!box) return;
+  box.querySelectorAll('iframe').forEach(f => { try { f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: snd ? 'unMute' : 'mute', args: [] }), '*'); if (snd) f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*'); } catch (e) {} });
+  box.querySelectorAll('audio,video').forEach(el => { el.muted = !snd; });
 }
 /* ---------- кадрирование фото ----------
    cropImage(src, { aspect: 1 | null, round, free, max, target, replace }) → Promise<dataURL | '' (отмена) | 'replace'> */
@@ -1124,6 +1130,7 @@ function syncQz(box, g) {
 function updScreen(box, g, snd) {
   if (!g || !box) return;
   syncQz(box, g);
+  { const st0 = box._st || (box._st = {}), sv = !!snd; if (st0.snd === undefined) st0.snd = sv; else if (st0.snd !== sv) { st0.snd = sv; setMediaMute(box.querySelector('#mdw'), sv); } }
   const st = box._st || {};
   if (g.phase === 'question' || g.phase === 'reveal') {
     const mw = box.querySelector('#mdw'), r = String(g.mr || 0), q = g.qs[g.qi];
