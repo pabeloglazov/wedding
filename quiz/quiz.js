@@ -850,6 +850,7 @@ function onCmd(k, c) {
   if (c.a === 'next') next();
   else if (c.a === 'skip') skipTimer();
   else if (c.a === 'replay') replayMedia();
+  else if (c.a === 'qr') toggleQr();
   else if (c.a === 'kick') kick(String(c.p || ''));
   else if (c.a === 'cplset') coupleAnswer('host', G.qi, +c.o);
   else if (c.a === 'intro') startIntro();
@@ -926,7 +927,7 @@ function pushScores() {
 }
 function rvOf() {
   const q = G.qs[G.qi], A = (G.ans[G.qi] || {}), E = entities(G);
-  return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
+  return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', qz: !!G.qrz, demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
     q: q ? { text: q.text || '', type: q.type, opts: q.opts.map(o => o.t || ''), ok: q.ok || [], num: q.num == null ? null : q.num, unit: q.unit || '' } : null,
     cpl: (G.cpl[G.qi]) || {}, roles: coupleRoles(), answered: Object.keys(A).length, n: Object.keys(G.players).length,
     online: Object.keys(ONLINE).length, canIntro: G.phase === 'lobby' && E.length > 0, play: G.s.play,
@@ -1089,8 +1090,19 @@ function buildScreen(box, g) {
     [...box.querySelectorAll('.noms div')].forEach((d, k) => setTimeout(() => d.classList.add('in'), 6600 + k * 350));
   }
 }
+function syncQz(box, g) {
+  const on = !!(g && g.qrz && g.code), z = box.querySelector('.qrzoom.rq:not(.out)');
+  if (on && !z) {
+    const sv = box.querySelector('.sv') || box, w = document.createElement('div');
+    w.className = 'qrzoom rq';
+    w.innerHTML = `<div class="qz"><div class="qr"></div><div class="jurl">${esc(SHORT.replace(/^https?:\/\//, ''))}</div><div class="jcode"><span>код</span><b>${esc(fmtCode(g.code))}</b></div></div>`;
+    sv.appendChild(w); qr(w.querySelector('.qr'), playLink(g), 720);
+    w.onclick = e => { e.stopPropagation(); if (typeof G !== 'undefined' && G && G.id === g.id && G.qrz) toggleQr(); };
+  } else if (!on && z) { z.classList.add('out'); setTimeout(() => z.remove(), 220); }
+}
 function updScreen(box, g, snd) {
   if (!g || !box) return;
+  syncQz(box, g);
   const st = box._st || {};
   if (g.phase === 'question' || g.phase === 'reveal') {
     const mw = box.querySelector('#mdw'), r = String(g.mr || 0), q = g.qs[g.qi];
@@ -1493,6 +1505,7 @@ function viewRemote() {
       if (v.demo) h += `<div class="demo">Демо-режим: до ${DEMO_MAX} телефонов гостей</div>`;
       const acts = [];
       if (v.canIntro) acts.push(`<button class="btn ghost sm" data-a="intro">🎤 Представить ${v.play === 'teams' ? 'команды' : 'столы'}</button>`);
+      if (v.code) acts.push(`<button class="btn ${v.qz ? 'gold' : 'ghost'} sm" data-a="qr">${v.qz ? '✕ Убрать QR с экрана' : '🔳 Показать QR на экране'}</button>`);
       if (v.phase === 'question' || v.phase === 'reveal') acts.push('<button class="btn ghost sm" data-a="replay">🔁 Звук/видео ещё раз</button>');
       if (v.phase === 'question') acts.push('<button class="btn ghost sm" data-a="skip">⏭ Закончить таймер</button>');
       if (acts.length) h += `<div class="links">${acts.join('')}</div>`;
@@ -2153,7 +2166,7 @@ function renderLive() {
       `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><div class="kbd dsk-only">Пробел или → — дальше · R — повторить звук</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
       `<div class="stat"><div><b id="sP">0</b><span id="sPl">гостей</span></div><div><b id="sO">–</b><span>на связи</span></div><div><b id="sA">–</b><span>ответили</span></div></div>` +
       `<div class="netline" id="netl"></div><div id="demoL"></div><div class="cur" id="cur"></div><div class="plist" id="plist"></div>` +
-      `<div class="links"><button class="btn ghost sm" id="bReplay">🔁 Проиграть ещё раз</button><button class="btn ghost sm" id="bSkip">⏭ Закончить таймер</button><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button><button class="btn ghost sm" id="bRemote2">📱 Пульт</button><button class="btn ghost sm" id="bSnd"></button><button class="btn ghost sm" id="bRestart">↺ Заново</button></div></div>` +
+      `<div class="links"><button class="btn ghost sm" id="bQr"></button><button class="btn ghost sm" id="bReplay">🔁 Проиграть ещё раз</button><button class="btn ghost sm" id="bSkip">⏭ Закончить таймер</button><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button><button class="btn ghost sm" id="bRemote2">📱 Пульт</button><button class="btn ghost sm" id="bSnd"></button><button class="btn ghost sm" id="bRestart">↺ Заново</button></div></div>` +
       `<div class="pane" data-p="scr"><h4>Экран для проектора <button class="btn ghost sm" id="bScrMenu">Открыть ↗</button></h4><div class="stage" id="stg"></div></div>` +
       `<div class="pane ph" data-p="ph"><h4>Телефон гостя · играйте сами <button class="btn ghost sm" id="bOpenPh2">↗</button></h4><div class="phwrap"><div class="phone"><div class="scr" id="ph"></div></div></div></div></div>` +
       `<div class="mnext"><button class="btn gold next" id="bNextM" style="display:block"></button></div>`;
@@ -2165,7 +2178,7 @@ function renderLive() {
     $('bNext').onclick = next; $('bNextM').onclick = next;
     $('bIntro').onclick = startIntro;
     $('bSkip').onclick = skipTimer;
-    $('bReplay').onclick = replayMedia;
+    $('bReplay').onclick = replayMedia; $('bQr').onclick = toggleQr;
     $('bRestart').onclick = () => { if (!confirmTwice($('bRestart'), 'Точно заново?')) return; clearBots(); newGame(); };
     $('bSnd').onclick = () => { G.s.sound = !(G.s.sound !== false); if (G.s.sound) SND.unlock(); render(); };
     document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; paintTabs(); });
@@ -2183,6 +2196,7 @@ function renderLive() {
   $('bIntro').textContent = '🎤 Представить ' + (G.s.play === 'teams' ? 'команды' : 'столы') + ' по очереди';
   $('bSkip').style.display = G.phase === 'question' && !isStage(G) ? '' : 'none';
   $('bReplay').style.display = hasMedia() ? '' : 'none';
+  $('bQr').style.display = G.code ? '' : 'none'; $('bQr').textContent = G.qrz ? '✕ Убрать QR с экрана' : '🔳 Показать QR на экране'; $('bQr').classList.toggle('gold', !!G.qrz);
   $('bCpl').style.display = G.net && G.qs.some(q => q.type === 'couple') ? '' : 'none';
   $('bRemote2').style.display = G.net ? '' : 'none'; $('bRemote').style.display = G.net ? '' : 'none';
   $('bSnd').textContent = G.s.sound !== false ? (soundHere() ? '🔊 Звук тут' : '🔊 Звук на экране') : '🔇 Звук выкл.';
@@ -2265,12 +2279,14 @@ function demoOver() {
 }
 /* Повтор видео/аудио текущего вопроса на экране: кнопка, клавиша R или пульт */
 function hasMedia() { if (!G || (G.phase !== 'question' && G.phase !== 'reveal')) return false; const q = G.qs[G.qi]; return !!q && (mdOk(q.qm) || mdOk(q.am)); }
+function toggleQr() { if (!G) return; G.qrz = G.qrz ? 0 : 1; publish(); scheduleRv(true); toast(G.qrz ? '🔳 QR на экране' : 'QR убран с экрана'); }
 function replayMedia() { if (!hasMedia()) return; G.mr = (G.mr || 0) + 1; publish(); toast('🔁 Играем ещё раз'); }
 function bootHost() {
   document.addEventListener('keydown', e => {
     if (!G || /INPUT|TEXTAREA/.test((e.target || {}).tagName || '') || $('modal').classList.contains('on')) return;
     if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); next(); }
     else if (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') { e.preventDefault(); replayMedia(); }
+    else if (e.key === 'q' || e.key === 'Q' || e.key === 'й' || e.key === 'Й') { e.preventDefault(); toggleQr(); }
   });
   document.addEventListener('pointerdown', () => { if (G && G.s.sound !== false) SND.unlock(); });
   onMsg(m => {
