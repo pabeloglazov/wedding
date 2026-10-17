@@ -851,6 +851,7 @@ function onCmd(k, c) {
   else if (c.a === 'skip') skipTimer();
   else if (c.a === 'replay') replayMedia();
   else if (c.a === 'qr') toggleQr();
+  else if (c.a === 'snd') toggleSound();
   else if (c.a === 'kick') kick(String(c.p || ''));
   else if (c.a === 'cplset') coupleAnswer('host', G.qi, +c.o);
   else if (c.a === 'intro') startIntro();
@@ -927,7 +928,7 @@ function pushScores() {
 }
 function rvOf() {
   const q = G.qs[G.qi], A = (G.ans[G.qi] || {}), E = entities(G);
-  return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', qz: !!G.qrz, demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
+  return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', qz: !!G.qrz, snd: G.s.sound !== false, demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
     q: q ? { text: q.text || '', type: q.type, opts: q.opts.map(o => o.t || ''), ok: q.ok || [], num: q.num == null ? null : q.num, unit: q.unit || '' } : null,
     cpl: (G.cpl[G.qi]) || {}, roles: coupleRoles(), answered: Object.keys(A).length, n: Object.keys(G.players).length,
     online: Object.keys(ONLINE).length, canIntro: G.phase === 'lobby' && E.length > 0, play: G.s.play,
@@ -1347,6 +1348,7 @@ function updPhone(box, g, cl) {
     note.textContent = s; note.classList.toggle('w', cl.net && !NET.connected);
   }
 }
+const sndOn = g => !(g && g.s && g.s.sound === false);
 
 /* ================= звук на экране ================= */
 function soundOverlay(onOk) {
@@ -1367,9 +1369,9 @@ function screenShell() {
 function viewScreenLocal() {
   const box = screenShell();
   let LIVE = ls('get', KEY_LIVE);
-  const draw = () => { if (LIVE) applyAccent(LIVE.accent); renderScreen(box, LIVE, true); };
+  const draw = () => { if (LIVE) applyAccent(LIVE.accent); renderScreen(box, LIVE, sndOn(LIVE)); };
   onMsg(m => { if (m.type === 'state') { LIVE = m.g; draw(); } if (m.type === 'reset') { LIVE = null; draw(); } });
-  setInterval(() => { send({ type: 'scr-alive' }); if (LIVE) updScreen(box, LIVE, true); }, 250);
+  setInterval(() => { send({ type: 'scr-alive' }); if (LIVE) updScreen(box, LIVE, sndOn(LIVE)); }, 250);
   IMG.ready.then(draw);
   send({ type: 'hello' });
 }
@@ -1382,16 +1384,16 @@ function viewScreenNet() {
   netReady.then(ok => {
     if (!ok) { box.innerHTML = '<div class="sv center"><h1>Нет связи</h1><p class="muted" style="font-size:1.3em">Проверьте интернет и обновите страницу</p></div>'; return; }
     gref(GID, 'meta').once('value').then(x => { if (!x.exists()) { gone = true; box.innerHTML = '<div class="sv center"><h1>Игра не найдена</h1><p class="muted" style="font-size:1.3em">Откройте экран заново с пульта ведущего</p></div>'; } });
-    const redraw = () => { box._st = {}; renderScreen(box, LIVE, true); };
+    const redraw = () => { box._st = {}; renderScreen(box, LIVE, sndOn(LIVE)); };
     gref(GID, 'scr').on('value', x => {
       LIVE = fixScr(x.val());
       if (!LIVE) { if (!gone) { box._st = {}; box.innerHTML = '<div class="sv center"><div class="kk">' + GNAME + '</div><h1>Игра завершена</h1></div>'; } return; }
       applyAccent(LIVE.accent);
       const ids = new Set(); if (LIVE.photo) ids.add(LIVE.photo); LIVE.qs.forEach(q => { if (q.img) ids.add(q.img); if (q.hp) ids.add(q.hp); if (q.aimg) ids.add(q.aimg); q.opts.forEach(o => { if (o.img) ids.add(o.img); }); });
       ids.forEach(id => IMG.fetchNet('g/' + GID + '/img/' + id + '/s', id, redraw));
-      renderScreen(box, LIVE, true);
+      renderScreen(box, LIVE, sndOn(LIVE));
     });
-    setInterval(() => { if (LIVE) updScreen(box, LIVE, true); }, 250);
+    setInterval(() => { if (LIVE) updScreen(box, LIVE, sndOn(LIVE)); }, 250);
   });
 }
 
@@ -1508,6 +1510,7 @@ function viewRemote() {
       if (v.code) acts.push(`<button class="btn ${v.qz ? 'gold' : 'ghost'} sm" data-a="qr">${v.qz ? '✕ Убрать QR с экрана' : '🔳 Показать QR на экране'}</button>`);
       if (v.phase === 'question' || v.phase === 'reveal') acts.push('<button class="btn ghost sm" data-a="replay">🔁 Звук/видео ещё раз</button>');
       if (v.phase === 'question') acts.push('<button class="btn ghost sm" data-a="skip">⏭ Закончить таймер</button>');
+      acts.push(`<button class="btn ghost sm" data-a="snd">${v.snd !== false ? '🔊 Звук вкл.' : '🔇 Звук выкл.'}</button>`);
       if (acts.length) h += `<div class="links">${acts.join('')}</div>`;
       h += `<div class="plist">${v.players.length ? v.players.map((p, i) => `<div class="p"><span class="muted" style="width:20px">${i + 1}</span><span class="dot ${p.a && v.phase === 'question' ? 'on' : !p.on ? 'off' : ''}"></span><b>${esc(p.name)}${p.t ? ` <small>стол ${p.t}</small>` : ''}</b><span>${nums(p.score)}</span><button class="kick${sure === p.id ? ' sure' : ''}" data-k="${esc(p.id)}">${sure === p.id ? 'Убрать?' : '✕'}</button></div>`).join('') : '<div class="p muted">Пока никого</div>'}</div>`;
       const nl = v.next || ['Далее', ''];
@@ -2180,7 +2183,7 @@ function renderLive() {
     $('bSkip').onclick = skipTimer;
     $('bReplay').onclick = replayMedia; $('bQr').onclick = toggleQr;
     $('bRestart').onclick = () => { if (!confirmTwice($('bRestart'), 'Точно заново?')) return; clearBots(); newGame(); };
-    $('bSnd').onclick = () => { G.s.sound = !(G.s.sound !== false); if (G.s.sound) SND.unlock(); render(); };
+    $('bSnd').onclick = toggleSound;
     document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; paintTabs(); });
     paintTabs();
     window._openLocal = openLocal;
@@ -2279,6 +2282,7 @@ function demoOver() {
 }
 /* Повтор видео/аудио текущего вопроса на экране: кнопка, клавиша R или пульт */
 function hasMedia() { if (!G || (G.phase !== 'question' && G.phase !== 'reveal')) return false; const q = G.qs[G.qi]; return !!q && (mdOk(q.qm) || mdOk(q.am)); }
+function toggleSound() { if (!G) return; G.s.sound = !(G.s.sound !== false); if (G.s.sound) SND.unlock(); publish(); scheduleRv(true); toast(G.s.sound ? '🔊 Звук включён' : '🔇 Звук выключен'); }
 function toggleQr() { if (!G) return; G.qrz = G.qrz ? 0 : 1; publish(); scheduleRv(true); toast(G.qrz ? '🔳 QR на экране' : 'QR убран с экрана'); }
 function replayMedia() { if (!hasMedia()) return; G.mr = (G.mr || 0) + 1; publish(); toast('🔁 Играем ещё раз'); }
 function bootHost() {
