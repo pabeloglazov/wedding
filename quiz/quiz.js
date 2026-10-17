@@ -697,6 +697,7 @@ function dist(g) {
 }
 /* Готовые шаблоны: ?tpl=teens — квиз «Агент 3:16» для TEENS PARTY */
 function tplCfg(name) {
+  if (name === 'feed') return tplFeed();
   if (name !== 'teens') return null;
   const C = (text, opts, ok, extra) => {
     const right = opts[ok], o = opts.slice();
@@ -735,6 +736,57 @@ function tplCfg(name) {
   return { id: uid(10), title: 'Квиз агента 3:16', couple: 'TEENS PARTY', mode: 'corp',
     s: Object.assign({}, MODES.corp.s, { play: 'solo', tables: 10, lastX2: true, sound: true, every: 4 }), bots: false,
     accent: '#ff5a1f', photo: '', wifi: { ssid: '', pass: '' }, form: '', facts: [], qs, updated: Date.now() };
+}
+
+/* ?tpl=feed — квиз «Залипли?» про TikTok, Instagram и нас */
+function tplFeed() {
+  const C = (text, opts, ok, extra) => {
+    const right = opts[ok], o = opts.slice();
+    for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
+    return normQ(Object.assign({ type: 'choice', text, opts: o.map(O), ok: [o.indexOf(right)] }, extra || {}));
+  };
+  const A = (yt, t0, t1) => ({ qm: { k: 'audio', yt, t0, t1 } });
+  const qs = [
+    // Раунд 1 · Хиты Америки
+    C('🇺🇸 Угадай мелодию: как называется эта песня?', ['Die With a Smile', 'APT.', 'Espresso', 'Flowers'], 0, A('kPa7bsKwL-c', 44, 66)),
+    C('🇺🇸 Кто поёт эту песню вместе с Бруно Марсом?', ['ROSÉ', 'Lady Gaga', 'Dua Lipa', 'Ariana Grande'], 0, A('8Ebqe2Dbzls', 4, 26)),
+    C('🇺🇸 Угадай мелодию: как называется эта песня?', ['Beautiful Things', 'Lose Control', 'Stick Season', 'Birds of a Feather'], 0, A('Oa_RSwwpPaA', 70, 92)),
+    C('🇺🇸 Кто исполняет эту песню?', ['Billie Eilish', 'Olivia Rodrigo', 'Taylor Swift', 'Sabrina Carpenter'], 0, A('V9PVRfjEBTI', 39, 61)),
+    C('🇺🇸 Из какого мультфильма эта песня?', ['Кей-поп-охотницы на демонов', 'Энканто', 'Моана 2', 'Головоломка 2'], 0, A('yebNIHKAC4A', 58, 80)),
+    // Раунд 2 · Русские хиты из TikTok
+    C('🇷🇺 Угадай мелодию: как называется эта песня?', ['Мокрые кроссы', 'Витаминка', 'Тает лёд', 'Малиновый закат'], 0, A('48Heq9b3UNU', 57, 79)),
+    C('🇷🇺 Угадай мелодию: как называется эта песня?', ['Медуза', 'Девочка с каре', 'Пыяла', 'Хали-гали'], 0, A('kacHLh3fPpg', 43, 65)),
+    C('🇷🇺 Кто исполняет эту песню?', ['RASA', 'MATRANG', 'Мукка', 'Грибы'], 0, A('zaw8qQP_WoY', 12, 34)),
+    C('🇷🇺 Угадай мелодию: как называется эта песня?', ['Цвет настроения синий', 'Седая ночь', 'Хали-гали', 'Малиновый закат'], 0, A('i1OQf2FEyKs', 0, 22)),
+    C('🇷🇺 Кто исполняет эту песню?', ['SLAVA MARLOW', 'MORGENSHTERN', 'Тима Белорусских', 'Макс Корж'], 0, A('Sh6XaC1lJ4E', 28, 50)),
+    // Раунд 3 · Христианские песни
+    C('🙏 Угадай мелодию: как называется эта песня?', ['Goodness of God', 'Build My Life', 'What a Beautiful Name', '10,000 Reasons'], 0, A('9sE5kEnitqE', 47, 69)),
+    C('🙏 Угадай мелодию: как называется эта песня?', ['Way Maker', 'Graves Into Gardens', 'Firm Foundation', 'Reckless Love'], 0, A('iJCV_2H9xD0', 93, 115)),
+    C('🙏 Кто исполняет эту песню?', ['Brandon Lake', 'Chris Tomlin', 'Phil Wickham', 'Elevation Worship'], 0, A('dQdfs5S6jyA', 53, 75)),
+    C('🙏 Угадай мелодию: как называется эта песня?', ['Oceans (Where Feet May Fail)', 'Living Hope', 'King of Kings', 'Great Are You Lord'], 0, A('dy9nwe9_xzw', 218, 240)),
+    C('🙏 Кто исполняет эту песню?', ['Chris Tomlin', 'Hillsong UNITED', 'Leeland', 'CeCe Winans'], 0, A('IkHgxKemCRk', 39, 61)),
+    // Раунд 4 · Мемы и тренды
+    C('😎 FYP в TikTok — это…', ['For You Page — лента рекомендаций', 'Follow Your Profile', 'Find Your Photo', 'Fast Video Post'], 0),
+    C('😎 Как называют мем про собаку в свитере, которой «вообще всё равно»?', ['Chill guy', 'Sigma', 'Doge', 'NPC'], 0),
+    C('😎 Как зовут карликового бегемотика из тайского зоопарка — звезду 2024 года?', ['Му Денг', 'Песто', 'Фиона', 'Гриммас'], 0),
+    C('😎 Italian brainrot: как зовут акулу в кроссовках?', ['Tralalero Tralala', 'Bombardiro Crocodilo', 'Tung Tung Tung Sahur', 'Ballerina Cappuccina'], 0),
+    C('😎 Какое число школьники в 2025 году выкрикивали с жестом «весы» руками?', ['67', '42', '69', '52'], 0),
+    // Раунд 5 · TikTok и Instagram
+    C('📱 В каком году появился Instagram?', ['2010', '2012', '2014', '2008'], 0),
+    C('📱 Кто купил Instagram в 2012 году и за сколько?', ['Facebook — за 1 млрд долларов', 'Google — за 5 млрд', 'Apple — за 500 млн', 'Twitter — за 2 млрд'], 0),
+    C('📱 С каким приложением TikTok объединился в 2018 году?', ['Musical.ly', 'Vine', 'Snapchat', 'Dubsmash'], 0),
+    C('📱 Как называется китайская версия TikTok?', ['Douyin', 'WeChat', 'Kuaishou', 'Weibo'], 0),
+    // Раунд 6 · Библия
+    C('📖 «Не сообразуйтесь с веком сим, но преобразуйтесь обновлением ума вашего» — из какой книги?', ['Послание к Римлянам', 'Притчи', 'Евангелие от Иоанна', 'Псалтирь'], 0),
+    C('📖 «Светильник для тела есть …» — закончи слова Иисуса', ['Око', 'Сердце', 'Слово', 'Вера'], 0),
+    C('📖 Кто увидел с крыши то, чего не стоило видеть, — и согрешил?', ['Давид', 'Самсон', 'Соломон', 'Саул'], 0),
+    C('📖 Кто залез на смоковницу, чтобы увидеть Иисуса?', ['Закхей', 'Никодим', 'Варфоломей', 'Лазарь'], 0),
+    C('📖 Сколько камней взял Давид, выходя против Голиафа?', ['5', '1', '3', '7'], 0),
+    C('📖 Финал! Какой стих в Библии самый короткий?', ['«Иисус прослезился»', '«Бог есть любовь»', '«Всегда радуйтесь»', '«Непрестанно молитесь»'], 0)
+  ];
+  return { id: uid(10), title: 'Залипли?', couple: 'TikTok, Instagram и мы', mode: 'corp',
+    s: Object.assign({}, MODES.corp.s, { play: 'solo', tables: 10, lastX2: true, sound: true, every: 5 }), bots: false,
+    accent: '#fe2c55', photo: '', wifi: { ssid: '', pass: '' }, form: '', facts: [], qs, updated: Date.now() };
 }
 
 /* ================= канал между вкладками одного устройства ================= */
