@@ -357,6 +357,26 @@ const lockTag = f => can(f) ? '' : `<em class="lk" title="Тариф «${TIER[FE
 const wsKey = () => ACC.info && /^[0-9a-f]{64}$/.test(ACC.info.ws || '') ? ACC.info.ws : '';
 function goLogin() { try { localStorage.setItem('pb_next', GAME); } catch (e) {} location.href = '../host/'; }
 
+/* панель «Управление экраном» — общая для пульта на ноутбуке и на телефоне */
+const CPI = {
+  qr: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-7"/></svg>',
+  son: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  soff: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>',
+  rep: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+  skip: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/></svg>',
+  pult: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>',
+  rst: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>'
+};
+function cpanHtml(o) {
+  const t = (a, on, ic, name, st, dis) => `<button class="ct${on ? ' on' : ''}" data-cp="${a}"${dis ? ' disabled' : ''}>${ic}<span><b>${name}</b><i>${st}</i></span></button>`;
+  const s = (a, ic, name, dis, warn) => `<button class="cs${warn ? ' warn' : ''}" data-cp="${a}"${dis ? ' disabled' : ''}>${ic}<span>${name}</span></button>`;
+  const small = [s('replay', CPI.rep, 'Ещё раз', !o.media), s('skip', CPI.skip, 'Стоп таймер', !o.timer)];
+  if (o.host) small.push(s('pult', CPI.pult, 'Пульт', !o.net), s('restart', CPI.rst, o.sure ? 'Точно?' : 'Заново', false, o.sure));
+  return `<div class="cpan"><div class="cph"><span>Управление экраном</span>${o.code ? `<span>Код <b>${esc(fmtCode(o.code))}</b></span>` : ''}</div>` +
+    `<div class="cpt">${t('qr', o.qr, CPI.qr, 'QR-код', o.qr ? 'на экране' : 'скрыт', !o.code)}${t('snd', !o.snd, o.snd ? CPI.son : CPI.soff, 'Звук', o.snd ? 'включён' : 'выключен')}</div>` +
+    `<div class="cps c${small.length}">${small.join('')}</div></div>`;
+}
+
 /* ================= конфиг квиза ================= */
 const KEY_CFG = GAME === 'fact' ? 'pbf_cfg_v1' : 'pbq_cfg_v2', KEY_LIVE = GAME === 'fact' ? 'pbf_live_v1' : 'pbq_live_v2';
 const WSQ = GAME === 'fact' ? 'fq' : 'q', WSL = GAME === 'fact' ? 'flist' : 'list';
@@ -928,7 +948,7 @@ function pushScores() {
 }
 function rvOf() {
   const q = G.qs[G.qi], A = (G.ans[G.qi] || {}), E = entities(G);
-  return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', qz: !!G.qrz, snd: G.s.sound !== false, demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
+  return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', qz: !!G.qrz, snd: G.s.sound !== false, md: hasMedia(), demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
     q: q ? { text: q.text || '', type: q.type, opts: q.opts.map(o => o.t || ''), ok: q.ok || [], num: q.num == null ? null : q.num, unit: q.unit || '' } : null,
     cpl: (G.cpl[G.qi]) || {}, roles: coupleRoles(), answered: Object.keys(A).length, n: Object.keys(G.players).length,
     online: Object.keys(ONLINE).length, canIntro: G.phase === 'lobby' && E.length > 0, play: G.s.play,
@@ -1507,10 +1527,7 @@ function viewRemote() {
       if (v.demo) h += `<div class="demo">Демо-режим: до ${DEMO_MAX} телефонов гостей</div>`;
       const acts = [];
       if (v.canIntro) acts.push(`<button class="btn ghost sm" data-a="intro">🎤 Представить ${v.play === 'teams' ? 'команды' : 'столы'}</button>`);
-      if (v.code) acts.push(`<button class="btn ${v.qz ? 'gold' : 'ghost'} sm" data-a="qr">${v.qz ? '✕ Убрать QR с экрана' : '🔳 Показать QR на экране'}</button>`);
-      if (v.phase === 'question' || v.phase === 'reveal') acts.push('<button class="btn ghost sm" data-a="replay">🔁 Звук/видео ещё раз</button>');
-      if (v.phase === 'question') acts.push('<button class="btn ghost sm" data-a="skip">⏭ Закончить таймер</button>');
-      acts.push(`<button class="btn ghost sm" data-a="snd">${v.snd !== false ? '🔊 Звук вкл.' : '🔇 Звук выкл.'}</button>`);
+      h += cpanHtml({ host: false, qr: !!v.qz, snd: v.snd !== false, code: v.code || '', media: !!v.md, timer: v.phase === 'question' });
       if (acts.length) h += `<div class="links">${acts.join('')}</div>`;
       h += `<div class="plist">${v.players.length ? v.players.map((p, i) => `<div class="p"><span class="muted" style="width:20px">${i + 1}</span><span class="dot ${p.a && v.phase === 'question' ? 'on' : !p.on ? 'off' : ''}"></span><b>${esc(p.name)}${p.t ? ` <small>стол ${p.t}</small>` : ''}</b><span>${nums(p.score)}</span><button class="kick${sure === p.id ? ' sure' : ''}" data-k="${esc(p.id)}">${sure === p.id ? 'Убрать?' : '✕'}</button></div>`).join('') : '<div class="p muted">Пока никого</div>'}</div>`;
       const nl = v.next || ['Далее', ''];
@@ -1518,6 +1535,7 @@ function viewRemote() {
       $('rm').innerHTML = h;
       $('rNext').onclick = () => cmd('next');
       [...document.querySelectorAll('[data-a]')].forEach(b => b.onclick = () => cmd(b.dataset.a));
+      [...document.querySelectorAll('[data-cp]')].forEach(b => b.onclick = () => { if (!b.disabled) cmd(b.dataset.cp); });
       [...document.querySelectorAll('[data-cpl]')].forEach(b => b.onclick = () => cmd('cplset', { o: +b.dataset.cpl }));
       [...document.querySelectorAll('[data-k]')].forEach(b => b.onclick = () => { if (sure === b.dataset.k) { cmd('kick', { p: b.dataset.k }); sure = ''; } else { sure = b.dataset.k; setTimeout(() => { if (sure === b.dataset.k) { sure = ''; draw(); } }, 3000); } draw(); });
     }
@@ -2166,24 +2184,24 @@ function renderLive() {
     $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('<span id="lTitle"></span>')}</a><span class="sp"></span>` +
       `<button class="btn ghost sm dsk" id="bOpenScr">🖥 Экран</button><button class="btn ghost sm dsk" id="bRemote">📱 Пульт на телефоне</button><button class="btn ghost sm" id="bEdit">✎ Редактор</button></div></div>` +
       `<div class="tabs" id="tabs"><button data-t="ctl">Пульт</button><button data-t="scr">Экран</button><button data-t="ph">Я — гость</button></div>` +
-      `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><div class="kbd dsk-only">Пробел или → — дальше · R — повторить звук</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
+      `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><div class="kbd dsk-only">Пробел или → — дальше · R — звук ещё раз · Q — QR</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
       `<div class="stat"><div><b id="sP">0</b><span id="sPl">гостей</span></div><div><b id="sO">–</b><span>на связи</span></div><div><b id="sA">–</b><span>ответили</span></div></div>` +
-      `<div class="netline" id="netl"></div><div id="demoL"></div><div class="cur" id="cur"></div><div class="plist" id="plist"></div>` +
-      `<div class="links"><button class="btn ghost sm" id="bQr"></button><button class="btn ghost sm" id="bReplay">🔁 Проиграть ещё раз</button><button class="btn ghost sm" id="bSkip">⏭ Закончить таймер</button><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button><button class="btn ghost sm" id="bRemote2">📱 Пульт</button><button class="btn ghost sm" id="bSnd"></button><button class="btn ghost sm" id="bRestart">↺ Заново</button></div></div>` +
+      `<div class="netline" id="netl"></div><div id="demoL"></div><div class="cur" id="cur"></div><div id="cpan"></div><div class="links" id="cplx"><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button></div><div class="plist" id="plist"></div></div>` +
       `<div class="pane" data-p="scr"><h4>Экран для проектора <button class="btn ghost sm" id="bScrMenu">Открыть ↗</button></h4><div class="stage" id="stg"></div></div>` +
       `<div class="pane ph" data-p="ph"><h4>Телефон гостя · играйте сами <button class="btn ghost sm" id="bOpenPh2">↗</button></h4><div class="phwrap"><div class="phone"><div class="scr" id="ph"></div></div></div></div></div>` +
       `<div class="mnext"><button class="btn gold next" id="bNextM" style="display:block"></button></div>`;
     const openLocal = () => { SND.unlock(); window.open(BASE + '?view=screen', 'pbq_screen', 'width=1280,height=760'); };
     $('bOpenScr').onclick = screenMenu; $('bScrMenu').onclick = screenMenu;
     $('bOpenPh2').onclick = () => window.open(playLink(G), '_blank');
-    $('bRemote').onclick = remoteMenu; $('bRemote2').onclick = remoteMenu; $('bCpl').onclick = coupleMenu;
+    $('bRemote').onclick = remoteMenu; $('bCpl').onclick = coupleMenu;
     $('bEdit').onclick = () => { if (G.phase !== 'final' && G.phase !== 'lobby' && !confirmTwice($('bEdit'), 'Завершить игру?')) return; clearBots(); endNet(); G = null; liveBuilt = false; ls('del', KEY_LIVE); send({ type: 'reset' }); renderEditor(); window.scrollTo(0, 0); };
     $('bNext').onclick = next; $('bNextM').onclick = next;
     $('bIntro').onclick = startIntro;
-    $('bSkip').onclick = skipTimer;
-    $('bReplay').onclick = replayMedia; $('bQr').onclick = toggleQr;
-    $('bRestart').onclick = () => { if (!confirmTwice($('bRestart'), 'Точно заново?')) return; clearBots(); newGame(); };
-    $('bSnd').onclick = toggleSound;
+    $('cpan').onclick = e => {
+      const b = e.target.closest('[data-cp]'); if (!b || b.disabled) return; const a = b.dataset.cp;
+      if (a === 'qr') toggleQr(); else if (a === 'snd') toggleSound(); else if (a === 'replay') replayMedia(); else if (a === 'skip') skipTimer(); else if (a === 'pult') remoteMenu();
+      else if (a === 'restart') { if (Date.now() - rstSure > 3000) { rstSure = Date.now(); render(); setTimeout(() => { if (G) render(); }, 3100); return; } rstSure = 0; clearBots(); newGame(); }
+    };
     document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; paintTabs(); });
     paintTabs();
     window._openLocal = openLocal;
@@ -2197,12 +2215,10 @@ function renderLive() {
   const canIntro = G.phase === 'lobby' && entities(G).length > 0;
   $('bIntro').style.display = canIntro ? '' : 'none';
   $('bIntro').textContent = '🎤 Представить ' + (G.s.play === 'teams' ? 'команды' : 'столы') + ' по очереди';
-  $('bSkip').style.display = G.phase === 'question' && !isStage(G) ? '' : 'none';
-  $('bReplay').style.display = hasMedia() ? '' : 'none';
-  $('bQr').style.display = G.code ? '' : 'none'; $('bQr').textContent = G.qrz ? '✕ Убрать QR с экрана' : '🔳 Показать QR на экране'; $('bQr').classList.toggle('gold', !!G.qrz);
   $('bCpl').style.display = G.net && G.qs.some(q => q.type === 'couple') ? '' : 'none';
-  $('bRemote2').style.display = G.net ? '' : 'none'; $('bRemote').style.display = G.net ? '' : 'none';
-  $('bSnd').textContent = G.s.sound !== false ? (soundHere() ? '🔊 Звук тут' : '🔊 Звук на экране') : '🔇 Звук выкл.';
+  $('bRemote').style.display = G.net ? '' : 'none';
+  $('cplx').style.display = $('bCpl').style.display;
+  $('cpan').innerHTML = cpanHtml({ host: true, qr: !!G.qrz, snd: G.s.sound !== false, code: G.code || '', media: hasMedia(), timer: G.phase === 'question' && !isStage(G), net: !!G.net, sure: Date.now() - rstSure < 3000 });
   const n = Object.keys(G.players).length, A = G.qi >= 0 ? (G.ans[G.qi] || {}) : {}, a = Object.keys(A).length;
   $('sP').textContent = n; $('sPl').textContent = G.s.play === 'teams' ? plural(n, 'команда', 'команды', 'команд') : plural(n, 'гость', 'гостя', 'гостей');
   $('sA').textContent = G.phase === 'question' || G.phase === 'reveal' ? a + '/' + n : '–';
@@ -2282,6 +2298,7 @@ function demoOver() {
 }
 /* Повтор видео/аудио текущего вопроса на экране: кнопка, клавиша R или пульт */
 function hasMedia() { if (!G || (G.phase !== 'question' && G.phase !== 'reveal')) return false; const q = G.qs[G.qi]; return !!q && (mdOk(q.qm) || mdOk(q.am)); }
+let rstSure = 0;
 function toggleSound() { if (!G) return; G.s.sound = !(G.s.sound !== false); if (G.s.sound) SND.unlock(); publish(); scheduleRv(true); toast(G.s.sound ? '🔊 Звук включён' : '🔇 Звук выключен'); }
 function toggleQr() { if (!G) return; G.qrz = G.qrz ? 0 : 1; publish(); scheduleRv(true); toast(G.qrz ? '🔳 QR на экране' : 'QR убран с экрана'); }
 function replayMedia() { if (!hasMedia()) return; G.mr = (G.mr || 0) + 1; publish(); toast('🔁 Играем ещё раз'); }

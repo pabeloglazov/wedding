@@ -247,6 +247,19 @@ body.sorting,body.sorting *{-webkit-user-select:none;user-select:none;cursor:gra
 .plist .kick:hover{background:rgba(217,102,91,.2);color:var(--bad)}
 .plist .kick.sure{background:var(--bad);color:#fff;width:auto;padding:0 8px;font-size:11px;font-weight:800}
 .links{display:flex;gap:8px;flex-wrap:wrap}
+.cpan{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.cpan .cph{display:flex;justify-content:space-between;align-items:center;padding:0 2px;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.cpan .cph span+span{letter-spacing:.04em;text-transform:none;font-size:12px}.cpan .cph b{color:var(--ink);letter-spacing:.08em}
+.cpan .cpt{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cpan .cps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.cpan .cps.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cpan button{font:inherit;cursor:pointer;color:var(--ink);background:var(--bg2);border:1px solid var(--line);transition:background .15s,color .15s,opacity .15s}
+.cpan button:disabled{opacity:.38;cursor:default}
+.cpan .ct{min-height:60px;border-radius:14px;padding:0 14px;display:flex;align-items:center;gap:10px;text-align:left}
+.cpan .ct svg{flex:none}.cpan .ct span{display:flex;flex-direction:column;line-height:1.15}
+.cpan .ct b{font-weight:800;font-size:15px}.cpan .ct i{font-style:normal;font-size:11px;font-weight:700;opacity:.75}
+.cpan .ct.on{background:var(--gold);color:var(--gink);border-color:transparent}
+.cpan .cs{min-height:62px;border-radius:12px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-weight:700;font-size:11.5px;line-height:1.1;text-align:center}
+.cpan .cs.warn{background:var(--bad);color:#fff;border-color:transparent}
 .pane h4{margin:0 0 8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
 .pane h4 .btn{margin-left:auto}
 .phwrap{display:flex;justify-content:center}
@@ -672,6 +685,6 @@ body.solo-play #ph>.pv{flex:1}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=33"></script>
+<script src="quiz.js?v=34"></script>
 </body>
 </html>
