@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кастинг: лучший друг Артёма</title>
+<meta name="description" content="Артёму 31. Пройди кастинг на роль лучшего друга.">
+<meta name="theme-color" content="#0a0a0a">
+<meta property="og:title" content="Кастинг: лучший друг Артёма">
+<meta property="og:description" content="Артёму 31. Получи роль на площадке и сними все сцены.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a; --fg:#f1ede4; --card:#141311; --card2:#1c1a17; --red:#e5322d; --red2:#ff5a4f; --gold:#e8c27a;
+    --muted:#9d978c; --line:#2c2a26; --err:#ff6a5f;
+    --display:Oswald,"Arial Narrow",Impact,sans-serif; --body:Manrope,"Segoe UI",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+    --clap:repeating-linear-gradient(-55deg,#f1ede4 0 16px,#0a0a0a 16px 32px);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  [hidden]{display:none!important}
+  html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45}
+  body{min-height:100vh;overflow-x:hidden;padding-bottom:calc(env(safe-area-inset-bottom) + 28px)}
+  body:before{content:"";position:fixed;inset:-50%;z-index:20;pointer-events:none;opacity:.07;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:grain .6s steps(4) infinite}
+  @keyframes grain{25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-1%)}}
+  button,input,textarea{font:inherit}
+  :focus-visible{outline:2px solid var(--red);outline-offset:3px}
+
+  /* плёнка */
+  .film{position:relative;overflow:hidden;background:#000;padding:13px 0;margin:calc(env(safe-area-inset-top) + 10px) 0 0}
+  .film:before,.film:after{content:"";position:absolute;left:0;right:0;height:7px;z-index:1;
+    background:repeating-linear-gradient(90deg,transparent 0 6px,#d9d3c7 6px 14px,transparent 14px 22px);opacity:.75}
+  .film:before{top:3px}.film:after{bottom:3px}
+  .film .track{display:inline-flex;gap:6px;animation:mq 46s linear infinite;width:max-content}
+  .film img{display:block;width:128px;height:72px;object-fit:cover;filter:saturate(.85) contrast(1.05)}
+  .film.rev .track{animation-direction:reverse;animation-duration:52s}
+  @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  .wrap{max-width:480px;margin:0 auto;padding:0 16px}
+  .langbar{display:none}
+  h1,h2{font-family:var(--display);font-weight:700;margin:0;line-height:1;text-transform:uppercase;letter-spacing:.01em}
+  h2{font-size:28px;line-height:1.05}
+
+  /* видоискатель */
+  .hero{position:relative;margin:18px 0 26px;padding:18px 16px 20px;min-height:440px;overflow:hidden;
+    background:radial-gradient(120% 80% at 80% 100%,#3a1513 0%,#120f0d 55%,#0a0a0a 100%)}
+  .vf{position:absolute;inset:8px;pointer-events:none;z-index:3;
+    background:
+      linear-gradient(var(--fg),var(--fg)) 0 0/22px 2px,linear-gradient(var(--fg),var(--fg)) 0 0/2px 22px,
+      linear-gradient(var(--fg),var(--fg)) 100% 0/22px 2px,linear-gradient(var(--fg),var(--fg)) 100% 0/2px 22px,
+      linear-gradient(var(--fg),var(--fg)) 0 100%/22px 2px,linear-gradient(var(--fg),var(--fg)) 0 100%/2px 22px,
+      linear-gradient(var(--fg),var(--fg)) 100% 100%/22px 2px,linear-gradient(var(--fg),var(--fg)) 100% 100%/2px 22px;
+    background-repeat:no-repeat}
+  .osd{position:relative;z-index:4;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--fg)}
+  .rec{display:inline-flex;align-items:center;gap:7px;font-weight:700}
+  .rec i{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red);animation:bl 1s steps(2) infinite}
+  @keyframes bl{50%{opacity:.15}}
+  .osd2{position:absolute;left:16px;right:16px;bottom:14px;z-index:4;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
+  .hero .kicker{position:relative;z-index:4;margin:26px 0 8px;color:var(--gold)}
+  .hero h1{position:relative;z-index:4;font-size:clamp(64px,21vw,104px);line-height:.86;letter-spacing:-.005em}
+  .hero h1 span{display:block;animation:rise .7s cubic-bezier(.2,1,.3,1) both}
+  .hero h1 span+span{animation-delay:.12s;color:transparent;-webkit-text-stroke:1.5px var(--fg)}
+  .hero h1 small{display:block;font-size:.3em;letter-spacing:.2em;color:var(--red);margin-bottom:12px;animation:rise .7s cubic-bezier(.2,1,.3,1) both}
+  @keyframes rise{from{transform:translateY(30px);opacity:0;filter:blur(6px)}to{transform:none;opacity:1;filter:none}}
+  .hero .lead{position:relative;z-index:4;color:#d8d2c6;margin:16px 0 0;font-size:15px;font-weight:600;max-width:23ch}
+  .star{position:absolute;right:-30px;bottom:0;width:270px;z-index:2;animation:fadein 1.2s .3s both;
+    -webkit-mask-image:linear-gradient(180deg,#000 70%,transparent);mask-image:linear-gradient(180deg,#000 70%,transparent)}
+  @keyframes fadein{from{opacity:0;transform:translateX(30px)}}
+  .tc{font-variant-numeric:tabular-nums}
+
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;margin-bottom:10px;color:var(--red2)}
+  .lead{color:var(--muted);margin:16px 0 0;font-size:16px;font-weight:600}
+
+  /* карточки-хлопушки */
+  .card{background:var(--card);color:var(--fg);border:1px solid var(--line);padding:22px 18px 20px;margin:0 0 20px;position:relative}
+  .card.mission{padding-top:44px;animation:clap .6s cubic-bezier(.2,1.2,.3,1) both}
+  .card.mission:before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:24px;background:var(--clap);border-bottom:2px solid #000;
+    transform-origin:0 100%;animation:snap .55s .15s cubic-bezier(.5,0,.4,1.6) both}
+  @keyframes snap{0%{transform:rotate(-14deg)}100%{transform:none}}
+  @keyframes clap{from{opacity:0;transform:translateY(24px)}}
+  .card.mission .tag{position:absolute;top:34px;right:14px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--bg);background:var(--gold);padding:4px 8px;font-weight:700}
+  .center{text-align:center}
+  .card.center .tag{right:50%;transform:translateX(50%)}
+  .lbl{display:block;font-family:var(--display);font-weight:600;font-size:18px;text-transform:uppercase;letter-spacing:.02em;line-height:1.2;margin:4px 0 10px}
+  .lbl .opt{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;border:1px solid var(--muted);color:var(--muted);padding:2px 6px;margin-left:4px;vertical-align:middle;text-transform:uppercase}
+  .lbl + .inp{margin-bottom:20px}
+  .hint{color:var(--muted);font-size:14px;font-weight:600;margin:-4px 0 12px}
+  .inp{width:100%;border:1px solid #3a3732;border-radius:0;padding:14px;font-size:18px;font-weight:600;background:#0c0b0a;color:var(--fg);outline:none;resize:none}
+  .inp:focus{border-color:var(--red)}
+  .inp.code{font-family:var(--mono);font-size:38px;letter-spacing:.3em;text-align:center;font-weight:700;padding:10px}
+  textarea.inp{font-size:16px}
+  .facts{display:grid;gap:6px}
+  .fact{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid #33302b;background:#0f0e0c;padding:12px;font-size:15px;font-weight:600;color:var(--fg);cursor:pointer;transition:transform .12s,border-color .12s}
+  .fact .box{flex:0 0 20px;height:20px;border:1.5px solid var(--muted);border-radius:50%;position:relative}
+  .fact.on{border-color:var(--red);background:#1d0f0d}
+  .fact.on .box{background:var(--red);border-color:var(--red);box-shadow:0 0 10px var(--red)}
+  .fact:active{transform:scale(.98)}
+  .btn{display:block;width:100%;background:var(--red);color:#fff;border:0;font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.08em;text-transform:uppercase;padding:16px;min-height:58px;margin-top:20px;cursor:pointer;border-radius:0;position:relative;transition:transform .12s,background .12s;
+    clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+  .btn:before{content:"●";font-size:12px;margin-right:10px;vertical-align:3px;animation:bl 1s steps(2) infinite}
+  .btn:hover:not(:disabled){background:var(--red2)}
+  .btn:active:not(:disabled){transform:scale(.98)}
+  .btn.ghost{background:var(--fg);color:var(--bg)}
+  .btn.ghost:before,.btn:disabled:before{content:none}
+  .btn:disabled{background:#3a3732;color:var(--muted);cursor:default}
+  .link{display:block;margin:6px auto 0;background:none;border:0;color:var(--muted);font-size:14px;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:12px;cursor:pointer}
+  .err{color:var(--err);font-size:14px;font-weight:700;margin-top:10px}
+  .err:empty{display:none}
+  .muted{color:var(--muted);font-weight:600}
+
+  /* верх: роль */
+  .top{display:flex;align-items:stretch;justify-content:space-between;gap:10px;margin:20px 0 26px}
+  .agent{flex:1;min-width:0;border-left:3px solid var(--red);background:var(--card);padding:10px 12px;display:flex;flex-direction:column;justify-content:center}
+  .agent small{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+  .agent b{font-family:var(--display);font-weight:600;font-size:22px;text-transform:uppercase;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .agent i{font-style:normal;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dots{display:flex;gap:3px;margin-top:8px;align-items:center;flex-wrap:wrap}
+  .dot{width:18px;height:10px;background:#2a2824;border-radius:1px}
+  .dot.on{background:var(--red);box-shadow:0 0 6px rgba(229,50,45,.6)}
+  .plus{font-family:var(--mono);font-size:12px;color:var(--gold);font-weight:700;margin-left:4px}
+  .codechip{border:1px solid var(--fg);background:transparent;color:var(--fg);padding:8px 12px;text-align:center;cursor:pointer;min-width:92px}
+  .codechip span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+  .codechip b{font-family:var(--mono);font-weight:700;font-size:26px;letter-spacing:.08em}
+
+  .task{font-size:18px;font-weight:600;line-height:1.45;margin:12px 0 0}
+  .task.big{font-family:var(--display);font-weight:500;font-size:27px;line-height:1.18;text-wrap:balance}
+  .secret{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--red);color:var(--red2);padding:5px 8px;margin:18px 0 0}
+  .emoji{font-size:110px;line-height:1;margin:14px 0 6px;animation:wob 2.4s ease-in-out infinite}
+  @keyframes wob{50%{transform:rotate(-6deg) scale(1.06)}}
+  .ename{font-family:var(--display);font-weight:600;font-size:28px;text-transform:uppercase}
+  .banner{background:linear-gradient(90deg,#2a0d0b,#141311);border-left:3px solid var(--gold);padding:14px 16px;margin:0 0 22px;font-weight:600}
+  .banner b{font-family:var(--display);font-weight:600;text-transform:uppercase;color:var(--gold)}
+
+  /* референс-кадр */
+  .ref{position:relative;margin:16px 0 4px;background:#000;border:1px solid #3a3732;padding:8px}
+  .ref img{display:block;width:100%;max-height:360px;object-fit:contain;background:#000}
+  .ref .rlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted);padding:2px 2px 8px;text-transform:uppercase}
+  .ref .rlab b{color:var(--red2)}
+  .ref.none .slate{aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:repeating-linear-gradient(-55deg,#14120f 0 18px,#0c0b0a 18px 36px);font-family:var(--display);text-transform:uppercase;font-size:22px;text-align:center;padding:16px}
+  .ref.none .slate small{font-family:var(--body);text-transform:none;font-size:14px;color:var(--muted);font-weight:600}
+
+  .photo{display:flex;align-items:center;justify-content:center;gap:10px;border:1.5px dashed #5a554d;padding:18px;margin-top:16px;color:var(--fg);font-weight:700;cursor:pointer;flex-direction:column;background:#0c0b0a}
+  .photo input{display:none}
+  .photo img{max-width:100%;max-height:260px}
+  .spin{width:54px;height:54px;margin:22px auto;border-radius:50%;border:3px solid #2c2a26;border-top-color:var(--red);animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .ov{position:fixed;inset:0;background:rgba(5,5,5,.86);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10;animation:fi .2s}
+  .ovcard{background:var(--card);color:var(--fg);border:1px solid #3a3732;padding:28px 20px 16px;width:100%;max-width:440px;text-align:center;animation:pop .35s cubic-bezier(.2,1.3,.4,1);position:relative;overflow:hidden}
+  .ovcard:before{content:"";position:absolute;left:0;right:0;top:0;height:8px;background:var(--clap)}
+  @keyframes fi{from{opacity:0}}
+  @keyframes pop{from{transform:translateY(40px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+  .stampx{display:inline-block;border:3px solid var(--red);color:var(--red);font-family:var(--display);font-weight:700;font-size:40px;letter-spacing:.12em;padding:4px 18px;transform:rotate(-7deg);margin:10px 0 14px;animation:stamp .45s cubic-bezier(.3,1.6,.5,1) both .1s}
+  @keyframes stamp{from{transform:rotate(-20deg) scale(3);opacity:0}to{transform:rotate(-7deg) scale(1);opacity:1}}
+  .check{font-size:56px;line-height:1;margin:0 auto 10px}
+  .bigcode{font-family:var(--mono);font-size:80px;font-weight:700;letter-spacing:.1em;margin:8px 0}
+  .progress{font-family:var(--mono);font-weight:700;color:var(--gold);margin-top:10px;font-size:18px;letter-spacing:.1em}
+  .loading{text-align:center;padding-top:22vh;color:var(--muted)}
+  .reveal .rk{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--red2)}
+  .reveal .rn{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:clamp(34px,10vw,48px);line-height:1;margin:16px 0 6px;min-height:1.1em;word-break:break-word}
+  .reveal .rn.done{animation:rise .5s cubic-bezier(.2,1,.3,1)}
+  .reveal .bar{height:2px;margin:18px 0 10px;background:linear-gradient(90deg,transparent,var(--red),transparent)}
+
+  /* лента */
+  .live{background:#0c0b0a;color:var(--fg);border:1px solid var(--line);padding:16px;margin-top:8px}
+  .livehead{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+  .pulse{width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);animation:bl 1s steps(2) infinite}
+  .lstats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0 6px}
+  .lstats div{background:#0c0b0a;padding:10px 6px;text-align:center}
+  .lstats div:first-child{background:var(--red);color:#fff}
+  .lstats b{display:block;font-family:var(--display);font-size:30px;font-weight:600;line-height:1.05}
+  .lstats span{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .podium{margin:16px 0 4px}
+  .podium h3,.ticker h3{margin:0 0 6px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .prow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #22201d}
+  .prow:last-child{border:0}
+  .medal{font-size:22px;width:28px;text-align:center}
+  .pname{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pscore{font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .ticker{margin-top:14px}
+  .trow{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid #22201d;font-size:14px;font-weight:600}
+  .trow:last-child{border:0}
+  .trow .tt{flex:1}
+  .trow .ago{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+  .trow.new{animation:nw 1.2s ease}
+  @keyframes nw{from{background:rgba(229,50,45,.3)}to{background:transparent}}
+  .empty{color:var(--muted);font-size:14px;padding:6px 0 10px}
+  .credits{text-align:center;margin:30px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#5d5850;text-transform:uppercase}
+  .credits img{display:block;width:120px;margin:0 auto 8px;opacity:.55}
+  @media (prefers-reduced-motion:reduce){*,body:before{animation:none!important}}
+  .lead.hl{margin:-8px 0 24px;padding-left:12px;border-left:2px solid var(--red);color:#d8d2c6;max-width:none}
+</style>
+</head>
+<body>
+<div class="film" aria-hidden="true"><div class="track"><img src="assets/f01.jpg" alt=""><img src="assets/f02.jpg" alt=""><img src="assets/f03.jpg" alt=""><img src="assets/f04.jpg" alt=""><img src="assets/f05.jpg" alt=""><img src="assets/f06.jpg" alt=""><img src="assets/f07.jpg" alt=""><img src="assets/f08.jpg" alt=""><img src="assets/f09.jpg" alt=""><img src="assets/f10.jpg" alt=""><img src="assets/f11.jpg" alt=""><img src="assets/f12.jpg" alt=""><img src="assets/f01.jpg" alt=""><img src="assets/f02.jpg" alt=""><img src="assets/f03.jpg" alt=""><img src="assets/f04.jpg" alt=""><img src="assets/f05.jpg" alt=""><img src="assets/f06.jpg" alt=""><img src="assets/f07.jpg" alt=""><img src="assets/f08.jpg" alt=""><img src="assets/f09.jpg" alt=""><img src="assets/f10.jpg" alt=""><img src="assets/f11.jpg" alt=""><img src="assets/f12.jpg" alt=""></div></div>
+<div class="wrap">
+  <div class="langbar"><div class="lang" id="lang"><button data-l="ru">RU</button><button data-l="en">EN</button></div></div>
+  <div id="app"><div class="loading"><div class="spin"></div></div></div>
+  <div id="live"></div>
+  <div class="credits"><img src="assets/logo.webp" alt="Artem Melikhov">31 · Режиссёр вечера — Артём</div>
+</div>
+<div class="film rev" aria-hidden="true"><div class="track"><img src="assets/f07.jpg" alt=""><img src="assets/f03.jpg" alt=""><img src="assets/f11.jpg" alt=""><img src="assets/f01.jpg" alt=""><img src="assets/f09.jpg" alt=""><img src="assets/f05.jpg" alt=""><img src="assets/f12.jpg" alt=""><img src="assets/f02.jpg" alt=""><img src="assets/f08.jpg" alt=""><img src="assets/f04.jpg" alt=""><img src="assets/f10.jpg" alt=""><img src="assets/f06.jpg" alt=""><img src="assets/f07.jpg" alt=""><img src="assets/f03.jpg" alt=""><img src="assets/f11.jpg" alt=""><img src="assets/f01.jpg" alt=""><img src="assets/f09.jpg" alt=""><img src="assets/f05.jpg" alt=""><img src="assets/f12.jpg" alt=""><img src="assets/f02.jpg" alt=""><img src="assets/f08.jpg" alt=""><img src="assets/f04.jpg" alt=""><img src="assets/f10.jpg" alt=""><img src="assets/f06.jpg" alt=""></div></div>
+<script>window.SM_API = "https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec"; window.SM_EV = "5h372r9ekb"; var CFG = null;</script>
+<script>
+window.SM_START = function () {
+  var app = document.getElementById('app');
+  var liveEl = document.getElementById('live');
+  var LS = 'sm_gid_' + (window.SM_EV || 'x'), LS_LANG = 'artem31_lang';
+  var gid = store('get', LS);
+  var ST = null, pollT = null, feedT = null, lastSig = '', photoData = null, busy = false;
+  var regSide = '', regFacts = {}, view = 'welcome', FEED = null, seenEv = {};
+
+  var I = {
+    ru: {
+      name: 'Как тебя зовут?', namePh: 'Имя', side: 'Ты гость со стороны…', groom: 'жениха', bride: 'невесты', both: 'обоих',
+      factsLbl: 'Анкета актёра: что про тебя правда?', factsHint: 'По этим пунктам тебя будут искать другие актёры. Можно ничего не отмечать.',
+      getMission: 'Получить сцену', join: 'Пройти кастинг', issuing: 'Готовим площадку…', lost: 'Я уже играю, но потерял(а) страницу', enterName: 'Напиши своё имя',
+      backTitle: 'Вернуться в игру', backLead: 'Введи имя и свой код — так же, как при регистрации.', nameShort: 'Имя', yourCode: 'Твой код',
+      back: 'Вернуться', goBack: 'Назад', closed: 'Площадка пока закрыта. Ждём команды «Мотор!»', doneCount: 'Снято сцен: ',
+      codeChip: 'твой код', finale: 'Это снято!', noteLbl: 'Заметки со съёмки', optional: 'по желанию', notePh: 'Что узнал(а)? Пригодится для титров',
+      addPhoto: '📸 Загрузить кадр', mission: 'Сцена № ', ready: 'Мотор?', readyNext: 'Следующий дубль?',
+      onlyYou: 'Сценарий видишь только ты. Никому не показывай экран.',
+      tFind: 'найди актёра', tMeet: 'интервью', tFun: 'съёмка',
+      pairLost: 'Твоя пара потерялась', pairPick: 'Подбираем тебе пару', pairNew: 'Ищем тебе новую. ', pairWait: 'Это займёт до 20 секунд. Не закрывай страницу.', noWait: 'Не ждать — дать другое задание',
+      findPair: 'найди партнёра по сцене', pairText: 'У кого-то в зале такой же символ. Это твой партнёр по сцене — найдите друг друга!',
+      pairHint: 'Подсказка: можно показывать экран — символ не секрет', pairCode: 'Нашли? Введите код друг друга', weFound: 'Мы нашли друг друга',
+      metKicker: 'дуэт', itsX: 'Это {n}!', didIt: 'Снято!', secret: 'Сценарий засекречен',
+      askCode: 'Нашёл(ла)? Спроси его код', count: 'Засчитать', done: 'Снято!', skip: 'Переснять: другая сцена (осталось: {n})',
+      cantFind: 'Не можем найти друг друга', processing: 'Обрабатываем…', replacePhoto: 'Заменить фото', photoFail: 'Не получилось, попробуй другое фото',
+      choosing: 'Выбираем сцену…', code3: 'Код — это 3 цифры', checking: 'Проверяем…', enterCode3: 'Введи 3-значный код человека',
+      uploading: 'Загружаем фото…', changing: 'Меняем…', giveUpQ: 'Точно не можете найти друг друга? Выдадим тебе другую миссию.',
+      showCode: 'Покажи его человеку, который тебя нашёл.', close: 'Закрыть', allDone: 'Все сцены сняты', inFinal: 'Ты в титрах!',
+      playOn: 'Играть дальше', counted: 'Дубль принят', newFriend: 'Новое знакомство: ', of: ' из ', nextMission: 'Следующая сцена', later: 'Чуть позже',
+      wait: 'Секунду…',
+      live: 'Площадка · в эфире', players: 'актёров', meets: 'интервью', missions: 'дублей', top3: 'Лидеры', tick: 'Что происходит',
+      noLeaders: 'Первые дубли вот-вот будут сняты', noEvents: 'Скоро здесь появятся первые кадры',
+      eJoin: '🎬 На площадке новый актёр', ePair: '{e} Пара нашла друг друга', eFind: '🔎 Актёр нашёл нужного человека',
+      eMeet: '🎙 Новое интервью', eFun: '📸 Новый дубль', ePairDone: '🎞 Дуэт снял сцену', eFinish: '🏆 Кто-то отснял все сцены!',
+      now: 'только что', min: ' мин', hour: ' ч', ago: ' назад', finishedMark: '★ в титрах',
+      agentK: 'роль на площадке', yourName: 'Твоя роль на площадке', nameNote: 'Так тебя назовут в титрах. Настоящее имя знает только режиссёр.', toMission: 'На площадку', stamp: 'СНЯТО', refK: 'Референс', refN: 'кадр ', refSoon: 'Кадр скоро появится', refSoon2: 'Режиссёр ещё монтирует. Спроси у ведущего или повтори по описанию.'
+    },
+    en: {
+      name: 'What’s your name?', namePh: 'Name', side: 'You’re a guest of the…', groom: 'groom', bride: 'bride', both: 'both',
+      factsLbl: 'Check what’s true about you', factsHint: 'Other guests will look for you by these. You can skip them all.',
+      getMission: 'Get my scene', join: 'Join the casting', issuing: 'Getting your mission…', lost: 'I’m already playing but lost the page', enterName: 'Please enter your name',
+      backTitle: 'Back to the game', backLead: 'Enter your name and code, exactly as when you signed up.', nameShort: 'Name', yourCode: 'Your code',
+      back: 'Continue', goBack: 'Back', closed: 'The game is closed right now. Watch for the host!', doneCount: 'Missions completed: ',
+      codeChip: 'your code', finale: 'Finale!', noteLbl: 'What did you learn?', optional: 'optional', notePh: 'The host might use it',
+      addPhoto: '+ Add a photo', mission: 'Mission #', ready: 'Ready?', readyNext: 'Ready for the next one?',
+      onlyYou: 'Only you will see the mission. Don’t show it to anyone.',
+      tFind: 'find someone', tMeet: 'new acquaintance', tFun: 'fun mission',
+      pairLost: 'Your partner got lost', pairPick: 'Finding you a partner', pairNew: 'Looking for a new one. ', pairWait: 'This takes up to 20 seconds. Keep this page open.', noWait: 'Don’t wait — give me another mission',
+      findPair: 'find your match', pairText: 'Somewhere in the room there’s one more person with the same symbol. Find each other!',
+      pairHint: 'Tip: you can show your screen — the symbol isn’t secret', pairCode: 'Found each other? Enter each other’s code', weFound: 'We found each other',
+      metKicker: 'you found each other', itsX: 'It’s {n}!', didIt: 'Done', secret: 'Secret. Don’t show this screen.',
+      askCode: 'Found them? Ask for their code', count: 'Submit', done: 'Done', skip: 'Skip this mission ({n} left)',
+      cantFind: 'We can’t find each other', processing: 'Processing…', replacePhoto: 'Replace photo', photoFail: 'That didn’t work, try another photo',
+      choosing: 'Picking a mission…', code3: 'The code is 3 digits', checking: 'Checking…', enterCode3: 'Enter the person’s 3-digit code',
+      uploading: 'Uploading photo…', changing: 'Switching…', giveUpQ: 'Really can’t find each other? We’ll give you another mission.',
+      showCode: 'Show it to the person who found you.', close: 'Close', allDone: 'All missions complete', inFinal: 'You made the finale!',
+      playOn: 'Keep playing', counted: 'Nice work!', newFriend: 'New acquaintance: ', of: ' of ', nextMission: 'Next mission', later: 'Later',
+      wait: 'One sec…',
+      live: 'Live now', players: 'players', meets: 'new friends', missions: 'missions', top3: 'Leaderboard', tick: 'What’s happening',
+      noLeaders: 'The first missions are about to be completed', noEvents: 'The first events will show up here soon',
+      eJoin: '👋 A new guest joined the game', ePair: '{e} A pair found each other', eFind: '🔎 Someone found the right person',
+      eMeet: '🤝 A new acquaintance', eFun: '🎉 A fun mission was completed', ePairDone: '💬 A pair completed their task', eFinish: '🏆 Someone completed all missions!',
+      now: 'just now', min: ' min', hour: ' h', ago: ' ago', finishedMark: '★ in the credits',
+      agentK: 'role on set', yourName: 'Your role on set', nameNote: 'That’s your name in the credits.', toMission: 'To the set', stamp: 'THAT’S A WRAP', refK: 'Reference', refN: 'frame ', refSoon: 'Frame coming soon', refSoon2: 'Ask the host or recreate it from the description.'
+    }
+  };
+
+  var CN = {
+    ru: ['Оператор дрона', 'Гаффер', 'Звукарь', 'Продюсер', 'Монтажёр', 'Колорист', 'Второй режиссёр', 'Хлопушка', 'Фокус-пуллер', 'Стедикамщик', 'Кастинг-директор', 'Скрипт-супервайзер', 'Каскадёр', 'Гримёр', 'Реквизитор', 'Продакшн-ассистент', 'Сценарист', 'Композитор', 'Бест-бой', 'Главный по свету'],
+    en: ['Drone Pilot', 'Gaffer', 'Sound Guy', 'Producer', 'Editor', 'Colorist', 'Assistant Director', 'Clapper', 'Focus Puller', 'Steadicam Op', 'Casting Director', 'Script Supervisor', 'Stunt Double', 'Makeup Artist', 'Prop Master', 'Production Assistant', 'Screenwriter', 'Composer', 'Best Boy', 'Chief Lighting Tech']
+  };
+  function codeName(code) { var n = parseInt(code, 10) || 0; return CN[L][(n * 7) % 20]; }
+  function refSplit(t) {
+    var mm = /^\s*\[кадр:(\d+)\]\s*/.exec(t || '');
+    if (!mm) return { text: t, html: '' };
+    var n = mm[1];
+    return { text: t.slice(mm[0].length), html: '<div class="ref" id="ref' + n + '"><div class="rlab"><b>● ' + T('refK') + '</b><span>' + T('refN') + n + ' / A·31</span></div>' +
+      '<img src="assets/ref/' + n + '.jpg" alt="' + T('refK') + ' ' + n + '" onerror="this.parentNode.className=\'ref none\';this.outerHTML=\'<div class=slate>' + T('refSoon') + '<small>' + T('refSoon2') + '</small></div>\'"></div>' };
+  }
+  function heroHtml(lead) {
+    return '<div class="hero"><div class="vf"></div>' +
+      '<div class="osd"><span class="rec"><i></i>REC</span><span class="tc">00:00:00:00</span></div>' +
+      '<img class="star" src="assets/portrait.webp" alt="Артём">' +
+      '<div class="kicker">' + (L === 'en' ? 'Artem · 31 · New York' : 'Артём · 31 · New York') + '</div>' +
+      '<h1><small>' + (L === 'en' ? 'casting call' : 'кастинг на роль') + '</small><span>' + (L === 'en' ? 'Best' : 'Лучший') + '</span><span>' + (L === 'en' ? 'friend' : 'друг') + '</span></h1>' +
+      '<div class="osd2"><span>4K · 24FPS</span><span>ISO 800 · ƒ/1.8</span></div></div>' +
+      '<p class="lead hl">' + lead + '</p>';
+  }
+  var L = pickLang();
+  function pickLang() {
+    var s = store('get', LS_LANG);
+    if (s === 'ru' || s === 'en') return s;
+    if (CFG.defaultLang === 'ru' || CFG.defaultLang === 'en') return CFG.defaultLang;
+    var n = (navigator.language || 'ru').toLowerCase();
+    return /^(ru|uk|be|kk|uz|hy|ka)/.test(n) ? 'ru' : 'en';
+  }
+  function T(k, n) { var s = (I[L] && I[L][k]) || I.ru[k] || k; return n === undefined ? s : s.replace('{n}', n); }
+  function cfgTitle() { return L === 'en' ? CFG.titleEn : CFG.title; }
+  function cfgCouple() { return L === 'en' ? CFG.coupleEn : CFG.couple; }
+  function cfgIntro() { return L === 'en' ? CFG.introEn : CFG.intro; }
+
+  document.documentElement.style.setProperty('--accent', CFG.accent || '#b8894d');
+
+  function store(op, key, v) {
+    try {
+      if (op === 'get') return localStorage.getItem(key);
+      if (op === 'set') localStorage.setItem(key, v);
+      if (op === 'del') localStorage.removeItem(key);
+    } catch (e) {}
+    return null;
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function nl(s) { return esc(s).replace(/\n/g, '<br>'); }
+  function $(id) { return document.getElementById(id); }
+  function callApi(name, args, tries) {
+    tries = tries || 0;
+    return fetch(window.SM_API, {
+      method: 'POST', credentials: 'omit', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: name, args: args, ev: window.SM_EV })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) throw { api: true, msg: String(j.error || '').replace(/^(Exception|Error|Исключение):\s*/i, '') };
+      return j.data;
+    }).catch(function (e) {
+      if (e && e.api) throw e.msg;
+      if (tries < 2 && /^api(State|Feed|Config)$/.test(name)) return new Promise(function (r) { setTimeout(r, 800 * (tries + 1)); }).then(function () { return callApi(name, args, tries + 1); });
+      throw (L === 'en' ? 'No connection. Try again.' : 'Нет связи. Попробуй ещё раз.');
+    });
+  }
+  function call(name) {
+    var args = [].slice.call(arguments, 1);
+    if (window.SM_API) return callApi(name, args);
+    return new Promise(function (res, rej) {
+      var r = google.script.run.withSuccessHandler(res).withFailureHandler(function (e) {
+        var msg = (e && e.message) ? e.message : String(e);
+        rej(msg.replace(/^(Exception|Error|Исключение):\s*/i, ''));
+      });
+      r[name].apply(r, args);
+    });
+  }
+  function setErr(msg) { var e = $('err'); if (e) e.textContent = msg || ''; }
+  function lock(btn, text) {
+    busy = true;
+    if (btn) { btn.dataset.t = btn.textContent; btn.textContent = text || T('wait'); btn.disabled = true; }
+  }
+  function unlock(btn) {
+    busy = false;
+    if (btn && btn.dataset.t) { btn.textContent = btn.dataset.t; btn.disabled = false; }
+  }
+
+  /* ---------- язык ---------- */
+
+  function paintLang() {
+    document.documentElement.lang = L;
+    document.title = cfgTitle();
+    [].forEach.call($('lang').children, function (b) { b.classList.toggle('on', b.dataset.l === L); });
+  }
+  $('lang').onclick = function (e) {
+    var b = e.target.closest('button'); if (!b || b.dataset.l === L) return;
+    L = b.dataset.l; store('set', LS_LANG, L); paintLang();
+    renderLive();
+    if (view === 'welcome') welcome();
+    else if (view === 'recover') recoverView();
+    else if (gid) { lastSig = ''; if (ST) showState(ST, true); refresh(); }
+  };
+
+  /* ---------- регистрация ---------- */
+
+  function welcome() {
+    view = 'welcome';
+    clearTimeout(pollT);
+    if (!CFG.open) { app.innerHTML = closedView(null); return; }
+    var nameVal = $('name') ? $('name').value : '';
+    var facts = (CFG.facts || []).map(function (f) {
+      return '<button type="button" class="fact' + (regFacts[f.key] ? ' on' : '') + '" data-k="' + esc(f.key) + '"><span class="box"></span><span>' + esc(L === 'en' ? f.qEn : f.q) + '</span></button>';
+    }).join('');
+    app.innerHTML =
+      heroHtml(nl(cfgIntro())) +
+      '<div class="card">' +
+      '<label class="lbl" for="name">' + T('name') + '</label>' +
+      '<input id="name" class="inp" maxlength="40" autocomplete="given-name" placeholder="' + T('namePh') + '" value="' + esc(nameVal) + '">' +
+      (facts ? '<label class="lbl">' + T('factsLbl') + '</label><p class="hint">' + T('factsHint') + '</p><div class="facts" id="facts">' + facts + '</div>' : '') +
+      '<div class="err" id="err"></div>' +
+      '<button class="btn acc" id="go">' + T('join') + '</button>' +
+      '</div>' +
+      '<button class="link" id="rec">' + T('lost') + '</button>';
+
+    if ($('facts')) $('facts').onclick = function (e) {
+      var b = e.target.closest('.fact'); if (!b) return;
+      var k = b.dataset.k; regFacts[k] = !regFacts[k]; b.classList.toggle('on', regFacts[k]);
+    };
+    $('rec').onclick = recoverView;
+    $('go').onclick = function () {
+      if (busy) return;
+      var name = $('name').value.trim();
+      if (!name) { setErr(T('enterName')); $('name').focus(); return; }
+      var facts = Object.keys(regFacts).filter(function (k) { return regFacts[k]; });
+      var btn = this; lock(btn, T('issuing')); setErr('');
+      call('apiRegister', name, regSide, facts, L).then(function (r) {
+        busy = false; gid = r.guestId; store('set', LS, gid); lastSig = ''; showState(r.state, true); loadFeed(); revealName(r.state.me.code);
+      }).catch(function (m) { unlock(btn); setErr(m); });
+    };
+  }
+
+  function recoverView() {
+    view = 'recover';
+    app.innerHTML =
+      '<div class="hero"><h2>' + T('backTitle') + '</h2><p class="lead">' + T('backLead') + '</p></div>' +
+      '<div class="card"><label class="lbl" for="rname">' + T('nameShort') + '</label><input id="rname" class="inp" maxlength="40">' +
+      '<label class="lbl" for="rcode">' + T('yourCode') + '</label><input id="rcode" class="inp code" inputmode="numeric" maxlength="3" placeholder="000">' +
+      '<div class="err" id="err"></div><button class="btn" id="rgo">' + T('back') + '</button></div>' +
+      '<button class="link" id="back">' + T('goBack') + '</button>';
+    $('back').onclick = welcome;
+    $('rgo').onclick = function () {
+      if (busy) return;
+      var btn = this; lock(btn); setErr('');
+      call('apiRecover', $('rname').value, $('rcode').value, L).then(function (r) {
+        busy = false; gid = r.guestId; store('set', LS, gid); lastSig = ''; showState(r.state, true);
+      }).catch(function (m) { unlock(btn); setErr(m); });
+    };
+  }
+
+  function closedView(st) {
+    return heroHtml(T('closed')) +
+      (st ? '<div class="card center"><div class="kicker">' + T('yourCode') + '</div><div class="bigcode">' + esc(st.me.code) + '</div><p class="muted">' + T('doneCount') + st.me.done + '</p></div>' : '');
+  }
+
+  /* ---------- основной экран ---------- */
+
+  function sigOf(st) {
+    var m = st.mission;
+    if (!st.open) return 'closed|' + L;
+    if (!m) return 'none|' + st.me.done + '|' + st.me.finished + '|' + L;
+    return [m.type, m.status, m.emoji || '', m.partnerName || '', m.text, m.requeued ? 1 : 0, L].join('|');
+  }
+
+  function showState(st, force) {
+    view = 'game';
+    ST = st;
+    clearTimeout(pollT);
+    var sig = sigOf(st);
+    if (sig !== lastSig || force) {
+      var note = $('note') ? $('note').value : '', code = $('code') ? $('code').value : '';
+      lastSig = sig; photoData = null;
+      app.innerHTML = st.open ? mainView(st) : closedView(st);
+      if (note && $('note')) $('note').value = note;
+      if (code && $('code')) $('code').value = code;
+      if (force) window.scrollTo(0, 0);
+    }
+    updateLive(st);
+    schedule(st);
+  }
+
+  function schedule(st) {
+    var m = st.mission;
+    var ms = 0;
+    if (!st.open) ms = 20000;
+    else if (m && m.type === 'pair' && m.status === 'waiting') ms = 3000;
+    else if (m && m.type === 'pair' && m.status === 'searching') ms = 6000;
+    if (ms) pollT = setTimeout(refresh, ms);
+  }
+
+  function refresh() {
+    if (!gid) return;
+    call('apiState', gid, L).then(handle).catch(function () { pollT = setTimeout(refresh, 8000); });
+  }
+
+  function handle(r) {
+    if (r && r.lost) { store('del', LS); gid = null; lastSig = ''; welcome(); return; }
+    showState(r.state);
+  }
+
+  function dots(me) {
+    var h = '';
+    for (var i = 0; i < me.goal; i++) h += '<span class="dot' + (i < me.done ? ' on' : '') + '"></span>';
+    if (me.done > me.goal) h += '<span class="plus">+' + (me.done - me.goal) + '</span>';
+    return h;
+  }
+
+  function mainView(st) {
+    var me = st.me, m = st.mission;
+    var h = '<div class="top"><div class="agent"><small>' + T('agentK') + '</small><b>' + esc(codeName(me.code)) + '</b><i>' + esc(me.name) + '</i><div class="dots">' + dots(me) + '</div></div>' +
+      '<button class="codechip" data-act="code"><span>' + T('codeChip') + '</span><b>' + esc(me.code) + '</b></button></div>';
+    if (me.finished) h += '<div class="banner"><b>' + T('finale') + '</b> ' + esc(st.finale) + '</div>';
+    h += missionView(st, m);
+    return h;
+  }
+
+  function noteField() {
+    return '<label class="lbl" for="note">' + T('noteLbl') + ' <span class="opt">' + T('optional') + '</span></label>' +
+      '<textarea id="note" class="inp" rows="2" maxlength="300" placeholder="' + T('notePh') + '"></textarea>';
+  }
+  function photoField() {
+    return '<label class="photo" id="photoLbl"><input type="file" id="photo" accept="image/*">' +
+      '<span id="photoTxt">' + T('addPhoto') + '</span><img id="photoPrev" alt="" hidden></label>';
+  }
+
+  function missionView(st, m) {
+    var me = st.me;
+    if (!m) {
+      return '<div class="card mission center"><div class="kicker">' + T('mission') + (me.done + 1) + '</div>' +
+        '<h2>' + (me.done ? T('readyNext') : T('ready')) + '</h2>' +
+        '<p class="muted">' + T('onlyYou') + '</p>' +
+        '<button class="btn acc" data-act="next">' + T('getMission') + '</button></div>';
+    }
+    var labels = { find: T('tFind'), meet: T('tMeet'), fun: T('tFun') };
+
+    if (m.type === 'pair' && m.status === 'waiting') {
+      return '<div class="card center"><div class="kicker">' + T('mission') + m.num + '</div>' +
+        '<h2>' + (m.requeued ? T('pairLost') : T('pairPick')) + '</h2>' +
+        '<div class="spin"></div><p class="muted">' + (m.requeued ? T('pairNew') : '') + T('pairWait') + '</p>' +
+        '<button class="link" data-act="nowait">' + T('noWait') + '</button></div>';
+    }
+    if (m.type === 'pair' && m.status === 'searching') {
+      return '<div class="card mission center"><span class="tag">' + T('findPair') + '</span><div class="kicker">' + T('mission') + m.num + '</div>' +
+        '<div class="emoji">' + esc(m.emoji) + '</div><div class="ename">' + esc(m.emojiName) + '</div>' +
+        '<p>' + T('pairText') + '</p>' +
+        '<p class="secret">' + T('pairHint') + '</p></div>' +
+        '<div class="card"><label class="lbl" for="code">' + T('pairCode') + '</label>' +
+        '<input id="code" class="inp code" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="000">' +
+        '<div class="err" id="err"></div><button class="btn" data-act="confirm">' + T('weFound') + '</button></div>' +
+        '<div id="giveup"></div>';
+    }
+    if (m.type === 'pair' && m.status === 'met') {
+      var rf = refSplit(m.text);
+      return '<div class="card mission"><span class="tag">' + T('metKicker') + '</span><div class="kicker">' + T('mission') + m.num + '</div>' +
+        '<h2>' + esc(T('itsX', m.partnerName)) + '</h2><p class="task">' + nl(rf.text) + '</p>' + rf.html + '</div>' +
+        '<div class="card">' + noteField() + (m.photo ? photoField() : '') +
+        '<div class="err" id="err"></div><button class="btn acc" data-act="complete">' + T('didIt') + '</button></div>';
+    }
+    var rf = refSplit(m.text);
+    var h = '<div class="card mission"><span class="tag">' + (labels[m.type] || '') + '</span><div class="kicker">' + T('mission') + m.num + '</div>' +
+      '<p class="task big">' + nl(rf.text) + '</p>' + rf.html + '<p class="secret">' + T('secret') + '</p></div>' +
+      '<div class="card">';
+    if (m.needCode) {
+      h += '<label class="lbl" for="code">' + T('askCode') + '</label>' +
+        '<input id="code" class="inp code" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="000">';
+    }
+    h += noteField() + (m.photo ? photoField() : '') +
+      '<div class="err" id="err"></div><button class="btn acc" data-act="complete">' + (m.needCode ? T('count') : T('done')) + '</button></div>';
+    if (m.canSkip) h += '<button class="link" data-act="skip">' + T('skip', st.me.skipsLeft) + '</button>';
+    return h;
+  }
+
+  function updateLive(st) {
+    var m = st.mission, box = $('giveup');
+    if (!box) return;
+    if (m && m.type === 'pair' && m.status === 'searching' && m.elapsed >= m.giveUpAfter) {
+      if (!box.innerHTML) box.innerHTML = '<button class="link" data-act="giveup">' + T('cantFind') + '</button>';
+    } else box.innerHTML = '';
+  }
+
+  /* ---------- живая лента ---------- */
+
+  function loadFeed() {
+    if (!CFG.feed) return;
+    clearTimeout(feedT);
+    call('apiFeed').then(function (f) {
+      if (f && f.off) { liveEl.innerHTML = ''; return; }
+      FEED = f; renderLive();
+      feedT = setTimeout(loadFeed, 20000);
+    }).catch(function () { feedT = setTimeout(loadFeed, 30000); });
+  }
+
+  function ago(t) {
+    var base = FEED ? FEED.now : Date.now();
+    var s = Math.max(0, (base - t) / 1000);
+    if (s < 60) return T('now');
+    if (s < 3600) return Math.floor(s / 60) + T('min') + T('ago');
+    return Math.floor(s / 3600) + T('hour') + T('ago');
+  }
+
+  function evText(e) {
+    if (e.type === 'join') return T('eJoin');
+    if (e.type === 'pair') return T('ePair').replace('{e}', e.emoji || '🤝');
+    if (e.type === 'finish') return T('eFinish');
+    if (e.type === 'done') return e.mtype === 'find' ? T('eFind') : e.mtype === 'meet' ? T('eMeet') : e.mtype === 'pair' ? T('ePairDone') : T('eFun');
+    return '';
+  }
+
+  function renderLive() {
+    if (!FEED || !CFG.feed) { liveEl.innerHTML = ''; return; }
+    var s = FEED.stats, medals = ['🥇', '🥈', '🥉'];
+    var top = FEED.top.length ? FEED.top.map(function (p, i) {
+      return '<div class="prow"><span class="medal">' + medals[i] + '</span><span class="pname">' + esc(p.name) + '</span>' +
+        '<span class="pscore">' + (p.finished ? T('finishedMark') + ' · ' : '') + p.done + T('of') + FEED.goal + '</span></div>';
+    }).join('') : '<div class="empty">' + T('noLeaders') + '</div>';
+    var evs = FEED.events.length ? FEED.events.slice(0, 8).map(function (e) {
+      var k = e.t + e.type + (e.emoji || '') + (e.mtype || ''), isNew = Object.keys(seenEv).length && !seenEv[k];
+      seenEv[k] = 1;
+      return '<div class="trow' + (isNew ? ' new' : '') + '"><span class="tt">' + esc(evText(e)) + '</span><span class="ago">' + ago(e.t) + '</span></div>';
+    }).join('') : '<div class="empty">' + T('noEvents') + '</div>';
+    liveEl.innerHTML = '<div class="live">' +
+      '<div class="livehead"><span class="pulse"></span>' + T('live') + '</div>' +
+      '<div class="lstats"><div><b>' + s.players + '</b><span>' + T('players') + '</span></div><div><b>' + s.meets + '</b><span>' + T('meets') + '</span></div><div><b>' + s.done + '</b><span>' + T('missions') + '</span></div></div>' +
+      '<div class="podium"><h3>' + T('top3') + '</h3>' + top + '</div>' +
+      '<div class="ticker"><h3>' + T('tick') + '</h3>' + evs + '</div></div>';
+  }
+
+  /* ---------- действия ---------- */
+
+  app.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]');
+    if (!b) return;
+    var a = b.dataset.act;
+    if (a === 'code') return showCode();
+    if (a === 'closeov') return closeOv();
+    if (busy) return;
+    if (a === 'next') return doNext(b);
+    if (a === 'confirm') return doConfirm(b);
+    if (a === 'complete') return doComplete(b);
+    if (a === 'skip') return doSkip(b);
+    if (a === 'giveup') return doGiveUp(b);
+    if (a === 'nowait') return doNoWait(b);
+  });
+
+  app.addEventListener('change', function (e) {
+    if (e.target.id !== 'photo' || !e.target.files || !e.target.files[0]) return;
+    $('photoTxt').textContent = T('processing');
+    resize(e.target.files[0], function (data) {
+      photoData = data;
+      var img = $('photoPrev');
+      if (data && img) { img.src = data; img.hidden = false; $('photoTxt').textContent = T('replacePhoto'); }
+      else $('photoTxt').textContent = T('photoFail');
+    });
+  });
+
+  app.addEventListener('input', function (e) {
+    if (e.target.id === 'code' || e.target.id === 'rcode') e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+  });
+
+  function doNext(b) {
+    lock(b, T('choosing'));
+    call('apiNext', gid, L).then(function (r) { busy = false; closeOv(); if (r.lost) return handle(r); lastSig = ''; showState(r.state, true); })
+      .catch(function (m) { unlock(b); alert(m); });
+  }
+
+  function doConfirm(b) {
+    var code = ($('code') || {}).value || '';
+    if (!/^\d{3}$/.test(code)) { setErr(T('code3')); return; }
+    lock(b, T('checking')); setErr('');
+    call('apiConfirmPair', gid, code, L).then(function (r) { busy = false; handle(r); loadFeed(); })
+      .catch(function (m) { unlock(b); setErr(m); });
+  }
+
+  function doComplete(b) {
+    var m = ST && ST.mission; if (!m) return;
+    var code = ($('code') || {}).value || '';
+    if (m.needCode && !/^\d{3}$/.test(code)) { setErr(T('enterCode3')); return; }
+    var note = ($('note') || {}).value || '';
+    lock(b, photoData ? T('uploading') : T('checking')); setErr('');
+    call('apiComplete', gid, code, note, photoData, L).then(function (r) {
+      busy = false;
+      if (r.lost) return handle(r);
+      lastSig = ''; showState(r.state, true);
+      showResult(r.state, r.state.result || {});
+      loadFeed();
+    }).catch(function (msg) { unlock(b); setErr(msg); });
+  }
+
+  function doSkip(b) {
+    lock(b, T('changing'));
+    call('apiSkip', gid, L).then(function (r) { busy = false; lastSig = ''; handle(r); })
+      .catch(function (m) { unlock(b); alert(m); });
+  }
+
+  function doGiveUp(b) {
+    if (!confirm(T('giveUpQ'))) return;
+    lock(b);
+    call('apiGiveUpPair', gid, L).then(function (r) { busy = false; lastSig = ''; handle(r); })
+      .catch(function (m) { unlock(b); alert(m); });
+  }
+
+  function doNoWait(b) {
+    lock(b, T('choosing'));
+    call('apiGiveUpPair', gid, L).then(function (r) { busy = false; lastSig = ''; handle(r); })
+      .catch(function (m) { unlock(b); alert(m); });
+  }
+
+  /* ---------- оверлеи ---------- */
+
+  function overlay(html) {
+    closeOv();
+    var d = document.createElement('div');
+    d.className = 'ov'; d.id = 'ov';
+    d.innerHTML = '<div class="ovcard">' + html + '</div>';
+    d.addEventListener('click', function (e) { if (e.target === d) closeOv(); });
+    app.appendChild(d);
+  }
+  function closeOv() { var o = $('ov'); if (o) o.remove(); }
+
+  function revealName(code) {
+    var name = codeName(code), ABC = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЭЮЯ0123456789';
+    if (L === 'en') ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    overlay('<div class="reveal"><div class="rk">● ' + T('yourName').toUpperCase() + '</div><div class="rn" id="rn"></div>' +
+      '<div class="bar"></div><p class="muted">' + T('nameNote') + '</p><button class="btn" data-act="closeov">' + T('toMission') + '</button></div>');
+    var el = $('rn'), t0 = Date.now(), dur = 1400;
+    (function tick() {
+      if (!el.isConnected) return;
+      var k = Math.min(1, (Date.now() - t0) / dur), fixed = Math.floor(name.length * k), s = '';
+      for (var i = 0; i < name.length; i++) s += i < fixed || name[i] === ' ' || name[i] === '-' ? name[i] : ABC[Math.floor(Math.random() * ABC.length)];
+      el.textContent = s;
+      if (k < 1) setTimeout(tick, 45); else el.classList.add('done');
+    })();
+  }
+
+  function showCode() {
+    overlay('<div class="kicker">' + esc(codeName(ST.me.code)) + ' · ' + T('yourCode') + '</div><div class="bigcode">' + esc(ST.me.code) + '</div>' +
+      '<p class="muted">' + T('showCode') + '</p><button class="btn" data-act="closeov">' + T('close') + '</button>');
+  }
+
+  function showResult(st, res) {
+    var me = st.me;
+    if (res.justFinished) {
+      overlay('<div class="stampx">' + T('stamp') + '</div><div class="kicker">' + T('allDone') + '</div><h2>' + T('inFinal') + '</h2>' +
+        '<p>' + nl(st.finale) + '</p>' +
+        '<button class="btn acc" data-act="next">' + T('playOn') + '</button><button class="link" data-act="closeov">' + T('close') + '</button>');
+      return;
+    }
+    overlay('<div class="stampx">' + T('stamp') + '</div><h2>' + T('counted') + '</h2>' +
+      (res.partner ? '<p>' + T('newFriend') + '<b>' + esc(res.partner) + '</b></p>' : '') +
+      '<div class="progress">TAKE ' + me.done + ' / ' + me.goal + '</div>' +
+      '<button class="btn acc" data-act="next">' + T('nextMission') + '</button><button class="link" data-act="closeov">' + T('later') + '</button>');
+  }
+
+  /* ---------- фото ---------- */
+
+  function resize(file, cb) {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      var max = 1280, w = img.naturalWidth, h = img.naturalHeight;
+      var k = Math.min(1, max / Math.max(w, h));
+      var c = document.createElement('canvas');
+      c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      try { cb(c.toDataURL('image/jpeg', 0.82)); } catch (e) { cb(null); }
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
+    img.src = url;
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'visible') return;
+    if (gid && !busy) { clearTimeout(pollT); refresh(); }
+    loadFeed();
+  });
+
+  /* ---------- старт ---------- */
+  paintLang();
+  if (gid) refresh(); else welcome();
+  loadFeed();
+};
+</script>
+<script>
+(function boot(n) {
+  if (!window.SM_EV) { document.getElementById('app').innerHTML = '<div style="text-align:center;padding:40px 16px;color:#9d978c;line-height:1.6">Отсканируйте QR-код у ведущего.</div>'; return; }
+  fetch(window.SM_API, { method: 'POST', credentials: 'omit', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'apiConfig', args: [], ev: window.SM_EV }) })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (!j.ok) { var er = new Error(j.error); er.api = true; throw er; } CFG = j.data; window.SM_START(); })
+    .catch(function (err) {
+      if (err && err.api) { document.getElementById('app').innerHTML = '<div style="text-align:center;padding:40px 16px;color:#9d978c;line-height:1.6">Игра не найдена. Отсканируйте QR у ведущего ещё раз.<br>Game not found. Please scan the host’s QR code again.</div>'; return; }
+      if (n < 3) return setTimeout(function () { boot(n + 1); }, 1000 * (n + 1));
+      document.getElementById('app').innerHTML = '<div style="text-align:center;padding:40px 10px;color:#9d978c">Нет связи · No connection<br><br><button onclick="location.reload()" style="border:0;border-radius:12px;padding:12px 20px;background:#e5322d;color:#fff;font-weight:700;font:inherit">Обновить · Reload</button></div>';
+    });
+})(0);
+</script>
+<script>
+(function () {
+  var t0 = Date.now();
+  function p(n) { return (n < 10 ? '0' : '') + n; }
+  setInterval(function () {
+    var ms = Date.now() - t0, s = Math.floor(ms / 1000), f = Math.floor((ms % 1000) / 41.67);
+    var v = p(Math.floor(s / 3600)) + ':' + p(Math.floor(s / 60) % 60) + ':' + p(s % 60) + ':' + p(f);
+    var els = document.querySelectorAll('.tc');
+    for (var i = 0; i < els.length; i++) els[i].textContent = v;
+  }, 42);
+})();
+</script>
+</body>
+</html>
