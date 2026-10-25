@@ -4,10 +4,10 @@
 <base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Кастинг: лучший друг Артёма</title>
+<title>Кастинг. Лучший друг</title>
 <meta name="description" content="Артёму 31. Пройди кастинг на роль лучшего друга.">
 <meta name="theme-color" content="#0a0a0a">
-<meta property="og:title" content="Кастинг: лучший друг Артёма">
+<meta property="og:title" content="Кастинг. Лучший друг">
 <meta property="og:description" content="Артёму 31. Получи роль на площадке и сними все сцены.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,10 +63,10 @@
   @keyframes bl{50%{opacity:.15}}
   .osd2{position:absolute;left:16px;right:16px;bottom:14px;z-index:4;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
   .hero .kicker{position:relative;z-index:4;margin:26px 0 8px;color:var(--gold)}
-  .hero h1{position:relative;z-index:4;font-size:clamp(64px,21vw,104px);line-height:.86;letter-spacing:-.005em}
+  .hero h1{position:relative;z-index:4;margin-top:26px;font-size:clamp(64px,21vw,104px);line-height:.86;letter-spacing:-.005em}
   .hero h1 span{display:block;animation:rise .7s cubic-bezier(.2,1,.3,1) both}
   .hero h1 span+span{animation-delay:.12s;color:transparent;-webkit-text-stroke:1.5px var(--fg)}
-  .hero h1 small{display:block;font-size:.3em;letter-spacing:.2em;color:var(--red);margin-bottom:12px;animation:rise .7s cubic-bezier(.2,1,.3,1) both}
+  .hero h1 small{display:block;font-size:.42em;letter-spacing:.14em;color:var(--red);margin-bottom:12px;animation:rise .7s cubic-bezier(.2,1,.3,1) both}
   @keyframes rise{from{transform:translateY(30px);opacity:0;filter:blur(6px)}to{transform:none;opacity:1;filter:none}}
   .hero .lead{position:relative;z-index:4;color:#d8d2c6;margin:16px 0 0;font-size:15px;font-weight:600;max-width:23ch}
   .star{position:absolute;right:-30px;bottom:0;width:270px;z-index:2;animation:fadein 1.2s .3s both;
@@ -291,8 +291,7 @@ window.SM_START = function () {
     return '<div class="hero"><div class="vf"></div>' +
       '<div class="osd"><span class="rec"><i></i>REC</span><span class="tc">00:00:00:00</span></div>' +
       '<img class="star" src="assets/portrait.webp" alt="Артём">' +
-      '<div class="kicker">' + (L === 'en' ? 'Artem · 31 · New York' : 'Артём · 31 · New York') + '</div>' +
-      '<h1><small>' + (L === 'en' ? 'casting call' : 'кастинг на роль') + '</small><span>' + (L === 'en' ? 'Best' : 'Лучший') + '</span><span>' + (L === 'en' ? 'friend' : 'друг') + '</span></h1>' +
+            '<h1><small>' + (L === 'en' ? 'Casting.' : 'Кастинг.') + '</small><span>' + (L === 'en' ? 'Best' : 'Лучший') + '</span><span>' + (L === 'en' ? 'friend' : 'друг') + '</span></h1>' +
       '<div class="osd2"><span>4K · 24FPS</span><span>ISO 800 · ƒ/1.8</span></div></div>' +
       '<p class="lead hl">' + lead + '</p>';
   }
@@ -305,7 +304,7 @@ window.SM_START = function () {
     return /^(ru|uk|be|kk|uz|hy|ka)/.test(n) ? 'ru' : 'en';
   }
   function T(k, n) { var s = (I[L] && I[L][k]) || I.ru[k] || k; return n === undefined ? s : s.replace('{n}', n); }
-  function cfgTitle() { return L === 'en' ? CFG.titleEn : CFG.title; }
+  function cfgTitle() { return L === 'en' ? 'Casting. Best friend' : 'Кастинг. Лучший друг'; }
   function cfgCouple() { return L === 'en' ? CFG.coupleEn : CFG.couple; }
   function cfgIntro() { return L === 'en' ? CFG.introEn : CFG.intro; }
 
