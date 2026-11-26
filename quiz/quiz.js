@@ -39,6 +39,7 @@ const ICS = {
   table: '<ellipse cx="12" cy="9" rx="9" ry="3.5"/><path d="M12 12.5V20M8 20h8M3 9v1M21 9v1"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
   monitor: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  replay: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
   phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18h2"/>',
   pencil: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
   camera: '<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>'
@@ -1030,6 +1031,7 @@ const onMsg = h => handlers.push(h);
 /* ================= сеть: ведущий ================= */
 let hostOff = [], lastCore = '', lastPk = '', scrTimer = null, rvTimer = null, hbTimer = null;
 let REM = {}, ONLINE = {};
+const onlineN = () => Object.keys(ONLINE).filter(k => ONLINE[k] !== 'scr').length, netScr = () => Object.keys(ONLINE).some(k => ONLINE[k] === 'scr');
 const doneCmd = {};
 const coupleRoles = () => [...new Set(Object.values(REM).map(r => r.role).filter(r => r === 'groom' || r === 'bride'))];
 const hasCoupleDevices = () => coupleRoles().length > 0;
@@ -1084,7 +1086,7 @@ function attachNet() {
   const jr = gref(gid, 'join'), ar = gref(gid, 'ans'), orf = gref(gid, 'on'), rr = ref('rem/' + gid), cr = ref('rc/' + gid);
   const onJ = x => { const v = x.val(); if (v && G && G.id === gid) join(x.key, v.name, true, v.table); };
   const onA = x => { const v = x.val(); if (!v || !G || G.id !== gid || G.phase !== 'question') return; const a = v[G.qi]; if (a) answer(x.key, G.qi, a, pickTime(a)); };
-  const onO = x => { ONLINE = x.val() || {}; renderNetLine(); scheduleRv(); };
+  const onO = x => { const was = soundHere(); ONLINE = x.val() || {}; renderNetLine(); scheduleRv(); if (G && was !== soundHere()) render(); };
   const onR = x => { REM = x.val() || {}; scheduleRv(); if (G) render(); };
   const onC = x => onCmd(x.key, x.val());
   jr.on('child_added', onJ); jr.on('child_changed', onJ);
@@ -1187,7 +1189,7 @@ function rvOf() {
   return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', qz: !!G.qrz, snd: G.s.sound !== false, md: hasMedia(), demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
     q: q ? { text: q.text || '', type: q.type, opts: q.opts.map(o => o.t || ''), ok: q.ok || [], num: q.num == null ? null : q.num, unit: q.unit || '', ans: q.ans || '', pts: qPts(q) } : null, aw: (G.aw && G.aw['q' + G.qi]) || {},
     cpl: (G.cpl[G.qi]) || {}, roles: coupleRoles(), answered: Object.keys(A).length, n: Object.keys(G.players).length,
-    online: Object.keys(ONLINE).length, canIntro: G.phase === 'lobby' && E.length > 0, play: G.s.play,
+    online: onlineN(), canIntro: G.phase === 'lobby' && E.length > 0, play: G.s.play,
     intro: G.phase === 'intro' && E[G.ii] ? { i: G.ii, of: E.length, name: E[G.ii].name } : null,
     players: ranked().slice(0, 100).map(p => ({ id: p.id, name: p.name, score: p.score, a: !!A[p.id], on: !p.net || !!ONLINE[p.id], bot: !!p.bot, t: p.table || 0 })) };
 }
@@ -1246,7 +1248,7 @@ function renderScreen(box, g, snd) {
     const prevPhase = st.phase;
     st.key = key; st.phase = g && g.phase; st.tick = -1; st.up = false; st.rev = false; st.nPlayers = g ? Object.keys(g.players).length : 0; st.code = '';
     buildScreen(box, g);
-    if (g && (g.phase === 'question' || g.phase === 'reveal')) { const q = g.qs[g.qi], mw = box.querySelector('#mdw'); if (mw) { const ans = g.phase === 'reveal' && mdOk(q.am); if (ans || mdOk(q.qm)) { mw.dataset.s = ans ? 'a' : 'q'; mountMedia(mw, ans ? q.am : q.qm, !!snd && box.id !== 'stg'); } } }
+    if (g && (g.phase === 'question' || g.phase === 'reveal')) { const q = g.qs[g.qi], mw = box.querySelector('#mdw'); if (mw) { const ans = g.phase === 'reveal' && mdOk(q.am); if (ans || mdOk(q.qm)) { mw.dataset.s = ans ? 'a' : 'q'; mountMedia(mw, ans ? q.am : q.qm, !!snd); } } }
     if (snd && g) {
       if (g.phase === 'question') setTimeout(() => SND.play('start'), Math.max(0, g.t0 - now() - 400));
       else if (g.phase === 'reveal') { st.rev = true; SND.play('reveal'); }
@@ -1371,11 +1373,11 @@ function syncQz(box, g) {
 function updScreen(box, g, snd) {
   if (!g || !box) return;
   syncQz(box, g);
-  { const st0 = box._st || (box._st = {}), sv = !!snd && box.id !== 'stg'; if (st0.snd === undefined) st0.snd = sv; else if (st0.snd !== sv) { st0.snd = sv; setMediaMute(box.querySelector('#mdw'), sv); } }
+  { const st0 = box._st || (box._st = {}), sv = !!snd; if (st0.snd === undefined) st0.snd = sv; else if (st0.snd !== sv) { st0.snd = sv; setMediaMute(box.querySelector('#mdw'), sv); } }
   const st = box._st || {};
   if (g.phase === 'question' || g.phase === 'reveal') {
     const mw = box.querySelector('#mdw'), r = String(g.mr || 0), q = g.qs[g.qi];
-    if (mw && q) { if (st.mr === undefined || st.mrq !== g.qi) { st.mr = r; st.mrq = g.qi; } else if (st.mr !== r) { st.mr = r; const m = g.phase === 'reveal' && mdOk(q.am) ? q.am : mdOk(q.qm) ? q.qm : q.am; if (mdOk(m)) mountMedia(mw, m, !!snd && box.id !== 'stg'); } }
+    if (mw && q) { if (st.mr === undefined || st.mrq !== g.qi) { st.mr = r; st.mrq = g.qi; } else if (st.mr !== r) { st.mr = r; const m = g.phase === 'reveal' && mdOk(q.am) ? q.am : mdOk(q.qm) ? q.qm : q.am; if (mdOk(m)) mountMedia(mw, m, !!snd); } }
   }
   if (g.phase === 'lobby') {
     const chips = box.querySelector('#chips'), ps = ranked(g).sort((a, b) => (a.jt || 0) - (b.jt || 0));
@@ -1406,7 +1408,7 @@ function updScreen(box, g, snd) {
   const n = Object.keys(g.players).length, A = (g.ans && g.ans[g.qi]) || {}, a = Object.keys(A).length;
   const ac = box.querySelector('#ansCnt'); if (ac) ac.textContent = isStage(g) ? '' : `Ответили ${a} из ${n}`;
   const fr = box.querySelector('#footR');
-  const mw = box.querySelector('#mdw'); if (mw && rev && mdOk(q.am) && mw.dataset.s !== 'a') { mw.dataset.s = 'a'; mountMedia(mw, q.am, !!snd && box.id !== 'stg'); }
+  const mw = box.querySelector('#mdw'); if (mw && rev && mdOk(q.am) && mw.dataset.s !== 'a') { mw.dataset.s = 'a'; mountMedia(mw, q.am, !!snd); }
   if (q.type === 'open') {
     const oq = box.querySelector('#openq'), aw = (g.aw && g.aw['q' + g.qi]) || {}, ids = Object.keys(aw).filter(id => g.players[id]), k = rev ? 'r:' + ids.sort().join(',') : 'q';
     if (oq && oq.dataset.st !== k) {
@@ -1671,6 +1673,7 @@ function viewScreenNet() {
   netReady.then(ok => {
     if (!ok) { box.innerHTML = '<div class="sv center"><h1>Нет связи</h1><p class="muted" style="font-size:1.3em">Проверьте интернет и обновите страницу</p></div>'; return; }
     gref(GID, 'meta').once('value').then(x => { if (!x.exists()) { gone = true; box.innerHTML = '<div class="sv center"><h1>Игра не найдена</h1><p class="muted" style="font-size:1.3em">Откройте экран заново с пульта ведущего</p></div>'; } });
+    { const on = gref(GID, 'on/' + NET.uid), pr = () => { if (NET.connected) { on.onDisconnect().remove(); on.set('scr').catch(() => {}); } }; NET.subs.push(pr); pr(); }
     const redraw = () => { box._st = {}; renderScreen(box, LIVE, sndOn(LIVE)); };
     gref(GID, 'scr').on('value', x => {
       LIVE = fixScr(x.val());
@@ -2456,7 +2459,7 @@ function alertBar(t) { const b = $('bSub'); if (b) { b.textContent = t; b.style.
 let liveBuilt = false, tab = 'ctl', sureKick = '', scrAlive = 0;
 const me = { pid: 'me', role: '', picked: {}, pending: {}, net: false, table: 0, cur: () => G,
   join: (name, table) => join('me', name, false, table), answer(qi, a) { this.picked[qi] = a.o != null ? a.o : a.v; answer('me', qi, a); } };
-const soundHere = () => !!(G && G.s.sound !== false && Date.now() - scrAlive > 4000);
+const soundHere = () => !!(G && G.s.sound !== false && Date.now() - scrAlive > 4000 && !netScr());
 function renderLive() {
   if (!liveBuilt) {
     liveBuilt = true; edBuilt = false;
@@ -2464,7 +2467,7 @@ function renderLive() {
     $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('<span id="lTitle"></span>')}</a><span class="sp"></span>` +
       `<button class="btn ghost sm dsk ib" id="bOpenScr">${ico('monitor', 16)}<span>Экран</span></button><button class="btn ghost sm dsk ib" id="bRemote">${ico('phone', 16)}<span>Пульт на телефоне</span></button><button class="btn ghost sm ib" id="bEdit">${ico('pencil', 16)}<span>Редактор</span></button></div></div>` +
       `<div class="tabs" id="tabs"><button data-t="ctl">Пульт</button><button data-t="scr">Экран</button><button data-t="ph">Я — гость</button></div>` +
-      `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><div class="kbd dsk-only">Пробел или → — дальше · R — звук ещё раз · Q — QR</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
+      `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><button class="btn ghost ib rpl" id="bReplay" style="display:none">${ico('replay', 18)}<span>Проиграть ещё раз</span></button><div class="kbd dsk-only">Пробел или → — дальше · R — звук ещё раз · Q — QR</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
       `<div class="stat"><div><b id="sP">0</b><span id="sPl">гостей</span></div><div><b id="sO">–</b><span>на связи</span></div><div><b id="sA">–</b><span>ответили</span></div></div>` +
       `<div class="netline" id="netl"></div><div id="demoL"></div><div class="cur" id="cur"></div><div id="cpan"></div><div class="links" id="cplx"><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button></div><div class="plist" id="plist"></div></div>` +
       `<div class="pane" data-p="scr"><h4>Экран для проектора <button class="btn ghost sm" id="bScrMenu">Открыть ↗</button></h4><div class="stage" id="stg"></div></div>` +
@@ -2475,7 +2478,7 @@ function renderLive() {
     $('bOpenPh2').onclick = () => window.open(playLink(G), '_blank');
     $('bRemote').onclick = remoteMenu; $('bCpl').onclick = coupleMenu;
     $('bEdit').onclick = () => { if (G.phase !== 'final' && G.phase !== 'lobby' && !confirmTwice($('bEdit'), 'Завершить игру?')) return; clearBots(); endNet(); G = null; liveBuilt = false; ls('del', KEY_LIVE); send({ type: 'reset' }); renderEditor(); window.scrollTo(0, 0); };
-    $('bNext').onclick = next; $('bNextM').onclick = next;
+    $('bNext').onclick = next; $('bNextM').onclick = next; $('bReplay').onclick = replayMedia;
     $('bIntro').onclick = startIntro;
     $('cpan').onclick = e => {
       const b = e.target.closest('[data-cp]'); if (!b || b.disabled) return; const a = b.dataset.cp;
@@ -2488,6 +2491,7 @@ function renderLive() {
   }
   $('lTitle').textContent = G.title;
   const nl = nextLabel(G);
+  $('bReplay').style.display = hasMedia() ? '' : 'none';
   [$('bNext'), $('bNextM')].forEach(b => { b.innerHTML = esc(nl[0]) + (nl[1] ? `<small>${esc(nl[1])}</small>` : ''); b.disabled = G.phase === 'final' || (G.phase === 'lobby' && !isStage(G) && !Object.keys(G.players).length); });
   const stg = isStage(G);
   document.querySelectorAll('.live .stat, #plist, #tabs [data-t="ph"], .live>[data-p="ph"]').forEach(x => { x.style.display = stg ? 'none' : ''; });
@@ -2548,7 +2552,7 @@ function renderLive() {
 function renderNetLine() {
   const el = $('netl'); if (!el || !G) return;
   if (!G.net) { el.innerHTML = '<i class="off"></i>Без интернета: гости войдут только с этого устройства'; $('sO').textContent = '–'; return; }
-  const on = Object.keys(ONLINE).length, cls = !NET.connected ? 'off' : NET.rtt > 600 ? 'slow' : '';
+  const on = onlineN(), cls = !NET.connected ? 'off' : NET.rtt > 600 ? 'slow' : '';
   el.innerHTML = `<i class="${cls}"></i>${NET.connected ? 'На связи' : 'Нет связи — переподключаемся'}${NET.rtt ? ' · ' + NET.rtt + ' мс' : ''}${G.code ? `<span class="codeb">Код ${fmtCode(G.code)}</span>` : ''}`;
   $('sO').textContent = on;
 }
