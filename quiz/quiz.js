@@ -400,6 +400,7 @@ function goLogin() { try { localStorage.setItem('pb_next', GAME); } catch (e) {}
 
 /* панель «Управление экраном» — общая для пульта на ноутбуке и на телефоне */
 const CPI = {
+  mus: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
   qr: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-7"/></svg>',
   son: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
   soff: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>',
@@ -411,7 +412,7 @@ const CPI = {
 function cpanHtml(o) {
   const t = (a, on, ic, name, st, dis) => `<button class="ct${on ? ' on' : ''}" data-cp="${a}"${dis ? ' disabled' : ''}>${ic}<span><b>${name}</b><i>${st}</i></span></button>`;
   const s = (a, ic, name, dis, warn) => `<button class="cs${warn ? ' warn' : ''}" data-cp="${a}"${dis ? ' disabled' : ''}>${ic}<span>${name}</span></button>`;
-  const small = [s('skip', CPI.skip, 'Стоп таймер', !o.timer)];
+  const small = [s('skip', CPI.skip, 'Стоп таймер', !o.timer), s('bgm', CPI.mus, o.bgm ? 'Фон. музыка' : 'Музыка выкл.', !o.snd)];
   if (o.host) small.push(s('pult', CPI.pult, 'Пульт', !o.net), s('restart', CPI.rst, o.sure ? 'Точно?' : 'Заново', false, o.sure));
   return `<div class="cpan"><div class="cph"><span>Управление экраном</span>${o.code ? `<span>Код <b>${esc(fmtCode(o.code))}</b></span>` : ''}</div>` +
     `<div class="cpt">${t('qr', o.qr, CPI.qr, 'QR-код', o.qr ? 'на экране' : 'скрыт', !o.code)}${t('replay', false, CPI.rep, 'Ещё раз', o.media ? 'музыка' : 'нет музыки', !o.media)}` +
@@ -1112,6 +1113,7 @@ function onCmd(k, c) {
   else if (c.a === 'replay') replayMedia();
   else if (c.a === 'qr') toggleQr();
   else if (c.a === 'snd') toggleSound();
+  else if (c.a === 'bgm') toggleBgm();
   else if (c.a === 'kick') kick(String(c.p || ''));
   else if (c.a === 'aw') award(String(c.p || ''));
   else if (c.a === 'cplset') coupleAnswer('host', G.qi, +c.o);
@@ -1191,7 +1193,7 @@ function pushScores() {
 }
 function rvOf() {
   const q = G.qs[G.qi], A = (G.ans[G.qi] || {}), E = entities(G);
-  return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', qz: !!G.qrz, snd: G.s.sound !== false, md: hasMedia(), demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
+  return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', qz: !!G.qrz, snd: G.s.sound !== false, bgm: G.s.bgm !== false, md: hasMedia(), demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
     q: q ? { text: q.text || '', type: q.type, opts: q.opts.map(o => o.t || ''), ok: q.ok || [], num: q.num == null ? null : q.num, unit: q.unit || '', ans: q.ans || '', pts: qPts(q) } : null, aw: (G.aw && G.aw['q' + G.qi]) || {},
     cpl: (G.cpl[G.qi]) || {}, roles: coupleRoles(), answered: Object.keys(A).length, n: Object.keys(G.players).length,
     online: onlineN(), canIntro: G.phase === 'lobby' && E.length > 0, play: G.s.play,
@@ -1256,8 +1258,25 @@ function fitStage(box) {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(run);
 }
 window.addEventListener('resize', () => { clearTimeout(fitStage.t); fitStage.t = setTimeout(() => document.querySelectorAll('.stage').forEach(fitStage), 150); });
+/* фоновая музыка во время вопроса: «Game Show Quest» (WadermanMusic, YouTube), скрытый плеер, громкость ниже эффектов */
+const BGM = {
+  id: 'tXJsKdX_Pj0', vol: 35, f: null, at: 0, on: false, tm: 0,
+  prep() { if (this.f) return; const f = document.createElement('iframe'); f.allow = 'autoplay'; f.src = `https://www.youtube.com/embed/${this.id}?enablejsapi=1&controls=0&playsinline=1&loop=1&playlist=${this.id}&origin=${encodeURIComponent(location.origin)}`; f.style.cssText = 'position:fixed;left:-10px;top:-10px;width:2px;height:2px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(f); this.f = f; this.at = Date.now(); },
+  c(func, args) { try { this.f.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), '*'); } catch (e) {} },
+  start(delay) {
+    this.prep(); clearTimeout(this.tm); this.on = true;
+    const go = () => { if (!this.on) return; if (Date.now() - this.at < 2500) { this.tm = setTimeout(go, 300); return; } this.c('unMute'); this.c('setVolume', [this.vol]); this.c('seekTo', [0, true]); this.c('playVideo'); };
+    this.tm = setTimeout(go, Math.max(0, delay || 0));
+  },
+  stop() {
+    if (!this.on) return; this.on = false; clearTimeout(this.tm); if (!this.f) return;
+    let v = this.vol; const step = () => { if (this.on) return; v -= 7; if (v > 0) { this.c('setVolume', [v]); this.tm = setTimeout(step, 70); } else { this.c('pauseVideo'); this.c('setVolume', [this.vol]); } }; step();
+  }
+};
+const bgmFor = (g, snd) => !!(snd && g && g.phase === 'question' && g.s && g.s.bgm !== false && !isStage(g) && g.qs[g.qi] && !(mdOk(g.qs[g.qi].qm) && g.qs[g.qi].qm.k !== 'image'));
 function renderScreen(box, g, snd) {
   if (!box) return;
+
   tgTheme(box, g);
   const key = scrKey(g), st = box._st || (box._st = {});
   if (key !== st.key || !box.firstChild) {
@@ -1266,7 +1285,7 @@ function renderScreen(box, g, snd) {
     buildScreen(box, g);
     if (g && (g.phase === 'question' || g.phase === 'reveal')) { const q = g.qs[g.qi], mw = box.querySelector('#mdw'); if (mw) { const ans = g.phase === 'reveal' && mdOk(q.am); if (ans || mdOk(q.qm)) { mw.dataset.s = ans ? 'a' : 'q'; mountMedia(mw, ans ? q.am : q.qm, !!snd); } } }
     if (snd && g) {
-      if (g.phase === 'question') setTimeout(() => SND.play('start'), Math.max(0, g.t0 - now() - 400));
+      if (g.phase === 'question') { setTimeout(() => SND.play('start'), Math.max(0, g.t0 - now() - 400)); }
       else if (g.phase === 'reveal') { st.rev = true; SND.play('reveal'); }
       else if (g.phase === 'board') SND.play('board');
       else if (g.phase === 'intro') SND.play('intro');
@@ -1388,6 +1407,8 @@ function syncQz(box, g) {
   } else if (!on && z) { z.classList.add('out'); setTimeout(() => z.remove(), 220); }
 }
 function updScreen(box, g, snd) {
+  if (snd && g && g.s && g.s.bgm !== false) BGM.prep();
+  if (bgmFor(g, snd)) { if (!BGM.on) BGM.start(g.t0 - now() + 600); } else BGM.stop();
   if (!g || !box) return;
   syncQz(box, g);
   { const st0 = box._st || (box._st = {}), sv = !!snd; if (st0.snd === undefined) st0.snd = sv; else if (st0.snd !== sv) { st0.snd = sv; setMediaMute(box.querySelector('#mdw'), sv); } }
@@ -1816,7 +1837,7 @@ function viewRemote() {
       if (v.demo) h += `<div class="demo">Демо-режим: до ${DEMO_MAX} телефонов гостей</div>`;
       const acts = [];
       if (v.canIntro) acts.push(`<button class="btn ghost sm" data-a="intro">🎤 Представить ${v.play === 'teams' ? 'команды' : 'столы'}</button>`);
-      h += cpanHtml({ host: false, qr: !!v.qz, snd: v.snd !== false, code: v.code || '', media: !!v.md, timer: v.phase === 'question' });
+      h += cpanHtml({ host: false, qr: !!v.qz, snd: v.snd !== false, bgm: v.bgm !== false, code: v.code || '', media: !!v.md, timer: v.phase === 'question' });
       if (acts.length) h += `<div class="links">${acts.join('')}</div>`;
       h += `<div class="plist">${v.players.length ? v.players.map((p, i) => `<div class="p"><span class="muted" style="width:20px">${i + 1}</span><span class="dot ${p.a && v.phase === 'question' ? 'on' : !p.on ? 'off' : ''}"></span><b>${esc(p.name)}${p.t ? ` <small>стол ${p.t}</small>` : ''}</b><span>${nums(p.score)}</span><button class="kick${sure === p.id ? ' sure' : ''}" data-k="${esc(p.id)}">${sure === p.id ? 'Убрать?' : '✕'}</button></div>`).join('') : '<div class="p muted">Пока никого</div>'}</div>`;
       const nl = v.next || ['Далее', ''];
@@ -2501,7 +2522,7 @@ function renderLive() {
     $('bIntro').onclick = startIntro;
     $('cpan').onclick = e => {
       const b = e.target.closest('[data-cp]'); if (!b || b.disabled) return; const a = b.dataset.cp;
-      if (a === 'qr') toggleQr(); else if (a === 'snd') toggleSound(); else if (a === 'replay') replayMedia(); else if (a === 'skip') skipTimer(); else if (a === 'pult') remoteMenu();
+      if (a === 'qr') toggleQr(); else if (a === 'snd') toggleSound(); else if (a === 'bgm') toggleBgm(); else if (a === 'replay') replayMedia(); else if (a === 'skip') skipTimer(); else if (a === 'pult') remoteMenu();
       else if (a === 'restart') { if (Date.now() - rstSure > 3000) { rstSure = Date.now(); render(); setTimeout(() => { if (G) render(); }, 3100); return; } rstSure = 0; clearBots(); newGame(); }
     };
     document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; paintTabs(); });
@@ -2520,7 +2541,7 @@ function renderLive() {
   $('bCpl').style.display = G.net && G.qs.some(q => q.type === 'couple') ? '' : 'none';
   $('bRemote').style.display = G.net ? '' : 'none';
   $('cplx').style.display = $('bCpl').style.display;
-  $('cpan').innerHTML = cpanHtml({ host: true, qr: !!G.qrz, snd: G.s.sound !== false, code: G.code || '', media: hasMedia(), timer: G.phase === 'question' && !isStage(G), net: !!G.net, sure: Date.now() - rstSure < 3000 });
+  $('cpan').innerHTML = cpanHtml({ host: true, qr: !!G.qrz, snd: G.s.sound !== false, bgm: G.s.bgm !== false, code: G.code || '', media: hasMedia(), timer: G.phase === 'question' && !isStage(G), net: !!G.net, sure: Date.now() - rstSure < 3000 });
   const n = Object.keys(G.players).length, A = G.qi >= 0 ? (G.ans[G.qi] || {}) : {}, a = Object.keys(A).length;
   $('sP').textContent = n; $('sPl').textContent = G.s.play === 'teams' ? plural(n, 'команда', 'команды', 'команд') : plural(n, 'гость', 'гостя', 'гостей');
   $('sA').textContent = G.phase === 'question' || G.phase === 'reveal' ? a + '/' + n : '–';
@@ -2614,6 +2635,7 @@ function demoOver() {
 /* Повтор видео/аудио текущего вопроса на экране: кнопка, клавиша R или пульт */
 function hasMedia() { if (!G || (G.phase !== 'question' && G.phase !== 'reveal')) return false; const q = G.qs[G.qi]; return !!q && (mdOk(q.qm) || mdOk(q.am)); }
 let rstSure = 0;
+function toggleBgm() { if (!G) return; G.s.bgm = G.s.bgm === false; publish(); scheduleRv(true); toast(G.s.bgm ? '🎵 Фоновая музыка включена' : 'Фоновая музыка выключена'); }
 function toggleSound() { if (!G) return; G.s.sound = !(G.s.sound !== false); if (G.s.sound) SND.unlock(); publish(); scheduleRv(true); toast(G.s.sound ? '🔊 Звук включён' : '🔇 Звук выключен'); }
 function toggleQr() { if (!G) return; G.qrz = G.qrz ? 0 : 1; publish(); scheduleRv(true); toast(G.qrz ? '🔳 QR на экране' : 'QR убран с экрана'); }
 function replayMedia() { if (!hasMedia()) return; G.mr = (G.mr || 0) + 1; publish(); toast('🔁 Играем ещё раз'); }
