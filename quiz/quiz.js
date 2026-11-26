@@ -30,15 +30,29 @@ const hasRng = q => !!(q && q.rng && q.num2 !== '' && q.num2 != null && isFinite
 const numTxt = (a, b) => b != null && b !== '' && isFinite(+b) && +b !== +a ? nums(a) + '–' + nums(b) : nums(a);
 const numErr = (q, v) => { const lo = +q.num, hi = hasRng(q) ? +q.num2 : lo; return v < lo ? lo - v : v > hi ? v - hi : 0; };
 
+const ICS = {
+  ring: '<circle cx="12" cy="15" r="6"/><path d="m9 5 3-3 3 3-3 3z"/>',
+  beer: '<path d="M6 8h10v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M16 11h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/><path d="M6 8a3 3 0 0 1 3-4 3 3 0 0 1 5 0 2.5 2.5 0 0 1 2 4"/>',
+  office: '<path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 9h4a1 1 0 0 1 1 1v11"/><path d="M8 8h3M8 12h3M8 16h3M3 21h18"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/>',
+  table: '<ellipse cx="12" cy="9" rx="9" ry="3.5"/><path d="M12 12.5V20M8 20h8M3 9v1M21 9v1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  monitor: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18h2"/>',
+  pencil: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>'
+};
+const ico = (k, w) => `<svg width="${w || 22}" height="${w || 22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICS[k] || ''}</svg>`;
 const MODES = {
-  wedding: { ic: '💍', t: 'Свадьба', d: 'Быстрые вопросы, очки за скорость', s: { time: 20, speed: true, every: 3, change: false } },
-  pub: { ic: '🍻', t: 'Паб-квиз', d: 'Больше времени, ответ можно поменять', s: { time: 45, speed: false, every: 5, change: true } },
-  corp: { ic: '🏢', t: 'Корпоратив', d: 'Лидеры каждые 2 вопроса', s: { time: 30, speed: true, every: 2, change: false } }
+  wedding: { ic: 'ring', t: 'Свадьба', d: 'Быстрые вопросы, очки за скорость', s: { time: 20, speed: true, every: 3, change: false } },
+  pub: { ic: 'beer', t: 'Паб-квиз', d: 'Больше времени, ответ можно поменять', s: { time: 45, speed: false, every: 5, change: true } },
+  corp: { ic: 'office', t: 'Корпоратив', d: 'Лидеры каждые 2 вопроса', s: { time: 30, speed: true, every: 2, change: false } }
 };
 const PLAYS = {
-  solo: { ic: '🙋', t: 'Каждый сам за себя', d: 'Гости играют со своих телефонов' },
-  teams: { ic: '👥', t: 'Команды', d: 'Один телефон на команду, название придумывают сами' },
-  tables: { ic: '🍽', t: 'Столы', d: 'Играет каждый, очки идут и в зачёт стола' }
+  solo: { ic: 'user', t: 'Каждый сам за себя', d: 'Гости играют со своих телефонов' },
+  teams: { ic: 'users', t: 'Команды', d: 'Один телефон на команду, название придумывают сами' },
+  tables: { ic: 'table', t: 'Столы', d: 'Играет каждый, очки идут и в зачёт стола' }
 };
 const ACCENTS = ['#f2efe9', '#e2cd92', '#e8a0a8', '#9cc5a1', '#9db8e8', '#c7a4e8', '#e8b07a', '#d98c6c'];
 const BRAND = sub => window.PB_BRAND ? PB_BRAND.lockup(sub) : '<b>Beloglazov Event</b>';
@@ -1422,7 +1436,7 @@ function phoneKey(g, cl) {
 }
 function renderPhone(box, g, cl) {
   if (!box) return;
-  tgTheme(null, g);
+  tgTheme(null, g); box.classList.toggle('th-tg', !!(g && g.theme === 'tg'));
   const key = phoneKey(g, cl);
   if (key !== box.dataset.k || !box.firstChild) { box.dataset.k = key; buildPhone(box, g, cl); }
   updPhone(box, g, cl);
@@ -1442,7 +1456,7 @@ function buildPhone(box, g, cl) {
     const me = g.players[cl.pid], teams = g.s.play === 'teams', tables = g.s.play === 'tables';
     if (!me) {
       if (g.phase === 'final') h = wait('<div class="kk">' + esc(g.couple) + '</div>', 'Игра завершена', 'Спасибо, что были с нами!');
-      else h = `<div class="pv"><div class="pbrand">${MARK(40)}</div><div class="kk">${esc(g.couple)}</div><h2>${esc(g.title)}</h2><p class="sub">${teams ? 'Придумайте название команды' : 'Как вас зовут?'}</p>` +
+      else h = `<div class="pv jn"><div class="pbrand">${MARK(40)}</div><div class="kk">${esc(g.couple)}</div><h2>${esc(g.title)}</h2><p class="sub">${teams ? 'Придумайте название команды' : 'Как вас зовут?'}</p>` +
         `<input class="pin" id="pName" maxlength="24" autocomplete="off" placeholder="${teams ? 'Название команды' : 'Ваше имя'}" value="${esc(cl.lastName || '')}">` +
         (teams && g.tn && g.tn.length ? `<div class="tnc">${g.tn.map(t => `<button type="button" onclick="var i=document.getElementById('pName');i.value=this.textContent;i.focus()">${esc(t)}</button>`).join('')}</div>` : '') +
         (tables ? `<div class="lblc">Ваш стол</div><div class="tbls" id="pTbl">${Array.from({ length: g.s.tables || 10 }, (_, i) => `<button data-t="${i + 1}" class="${cl.table === i + 1 ? 'on' : ''}">${i + 1}</button>`).join('')}</div>` : '') +
@@ -1970,7 +1984,7 @@ function accTag() {
 function renderTop() { const a = $('acc'); if (!a) return; a.innerHTML = accTag(); if ($('bLogin')) $('bLogin').onclick = goLogin; if ($('bMine')) $('bMine').onclick = () => { const m = a.querySelector('.pba .am'); if (m) m.hidden = true; openMine(); }; if (window.PBAcct) PBAcct.bind(a); }
 function demoNote() {
   if (unlocked()) return '';
-  return `<div class="notice"><span>🎈</span><span><b>Демо-режим:</b> всё работает, но в игру войдут максимум ${DEMO_MAX} телефонов гостей. Полный доступ — любой тариф: подписка или одно мероприятие.</span><span class="sp"></span>${ACC.info ? '' : '<button class="btn ghost sm" id="bLogin2">Войти</button>'}<a class="btn gold sm" href="../#pricing">Тарифы</a></div>`;
+  return `<div class="notice"><span>${ico('gear', 18).replace(ICS.gear, '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>')}</span><span><b>Демо-режим:</b> всё работает, но в игру войдут максимум ${DEMO_MAX} телефонов гостей. Полный доступ — любой тариф: подписка или одно мероприятие.</span><span class="sp"></span>${ACC.info ? '' : '<button class="btn ghost sm" id="bLogin2">Войти</button>'}<a class="btn gold sm" href="../#pricing">Тарифы</a></div>`;
 }
 let edBuilt = false;
 function renderEditor() {
@@ -1982,7 +1996,7 @@ function renderEditor() {
     `<div class="panel"><div class="row2"><div class="fld"><label>Название игры</label><input class="inp" id="fTitle" maxlength="60"></div><div class="fld"><label id="lCouple">Имена пары</label><input class="inp" id="fCouple" maxlength="60" placeholder="Максим и Алина"></div></div></div>` +
     (GAME === 'fact' ? `<div class="panel"><h3>Как показываем</h3><div class="modes" id="shows"></div><div id="showTune"></div></div>` : '') +
     (GAME === 'fact' ? '' : `<div class="panel"><h3>Формат</h3><div class="modes" id="modes"></div><div class="lbl">Как играем</div><div class="modes" id="plays"></div><div id="tblRow"></div>` +
-    `<details class="tune"><summary><span>⚙️</span><span>Тонкая настройка<small>время, очки, звук, боты для проверки</small></span><span class="chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="tgrid">` +
+    `<details class="tune"><summary><span>${ico('gear', 18)}</span><span>Тонкая настройка<small>время, очки, звук, боты для проверки</small></span><span class="chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="tgrid">` +
     `<div class="rng"><span>Время на вопрос</span><input type="range" id="sTime" min="10" max="90" step="5"><b id="sTimeV"></b></div>` +
     `<div class="rng"><span>Лидеры каждые</span><input type="range" id="sEvery" min="1" max="10"><b id="sEveryV"></b></div>` +
     `<label class="sw">Очки за скорость<input type="checkbox" id="sSpeed"></label><label class="sw">Можно менять ответ<input type="checkbox" id="sChange"></label>` +
@@ -2022,8 +2036,8 @@ function paintWed() {
   const l = $('lCouple'), f = $('fCouple'); if (l) l.textContent = wed ? 'Имена пары' : 'Подзаголовок'; if (f) f.placeholder = wed ? 'Максим и Алина' : 'Например: TEENS PARTY';
 }
 function paintModes() {
-  $('modes').innerHTML = Object.keys(MODES).map(k => { const m = MODES[k]; return `<button class="mode${CFG.mode === k ? ' on' : ''}" data-m="${k}"><i>${m.ic}</i><b>${m.t}</b><span>${m.d}</span></button>`; }).join('');
-  $('plays').innerHTML = Object.keys(PLAYS).map(k => { const m = PLAYS[k]; return `<button class="mode${CFG.s.play === k ? ' on' : ''}${FEAT[k] && !can(k) ? ' locked' : ''}" data-p="${k}"><i>${m.ic}</i><b>${m.t}${FEAT[k] ? lockTag(k) : ''}</b><span>${m.d}</span></button>`; }).join('');
+  $('modes').innerHTML = Object.keys(MODES).map(k => { const m = MODES[k]; return `<button class="mode${CFG.mode === k ? ' on' : ''}" data-m="${k}"><i>${ICS[m.ic] ? ico(m.ic) : m.ic}</i><b>${m.t}</b><span>${m.d}</span></button>`; }).join('');
+  $('plays').innerHTML = Object.keys(PLAYS).map(k => { const m = PLAYS[k]; return `<button class="mode${CFG.s.play === k ? ' on' : ''}${FEAT[k] && !can(k) ? ' locked' : ''}" data-p="${k}"><i>${ICS[m.ic] ? ico(m.ic) : m.ic}</i><b>${m.t}${FEAT[k] ? lockTag(k) : ''}</b><span>${m.d}</span></button>`; }).join('');
   $('tblRow').innerHTML = CFG.s.play === 'tables' ? `<div class="rng" style="margin-top:12px"><span>Сколько столов в зале</span><input type="range" id="sTbl" min="2" max="40"><b id="sTblV"></b></div>` : CFG.s.play === 'teams' ? `<div class="hint tipline">Как работают команды ${tip('Команды сами придумывают название при входе. Перед игрой их можно представить залу по очереди.')}</div>` : '';
   if ($('sTbl')) { $('sTbl').value = CFG.s.tables; $('sTblV').textContent = CFG.s.tables; $('sTbl').oninput = e => { CFG.s.tables = +e.target.value; $('sTblV').textContent = CFG.s.tables; STORE.save(); }; }
   document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { CFG.mode = b.dataset.m; Object.assign(CFG.s, MODES[CFG.mode].s); STORE.save(); paintModes(); paintWed(); paintTune(); sum(); });
@@ -2042,7 +2056,8 @@ function paintShows() {
 function paintTune() {
   const s = CFG.s;
   $('sTime').value = s.time; $('sTimeV').textContent = s.time + ' с';
-  $('sEvery').value = s.every; $('sEveryV').textContent = s.every;
+  const byRounds = CFG.qs.some(q => q && q.rb);
+  $('sEvery').value = Math.min(10, s.every); $('sEveryV').textContent = byRounds ? 'по раундам' : s.every; $('sEvery').disabled = byRounds;
   $('sSpeed').checked = s.speed; $('sChange').checked = s.change; $('sX2').checked = s.lastX2; $('sSound').checked = s.sound; $('sBots').checked = CFG.bots;
   $('sTime').oninput = e => { s.time = +e.target.value; $('sTimeV').textContent = s.time + ' с'; STORE.save(); sum(); };
   $('sEvery').oninput = e => { s.every = +e.target.value; $('sEveryV').textContent = s.every; STORE.save(); };
@@ -2055,7 +2070,7 @@ function paintDesign() {
   const set = c => { if (validColor(c) !== ACCENTS[0] && !can('color')) { upsell('color'); $('cCust').value = cur; return; } CFG.accent = validColor(c); applyAccent(CFG.accent); STORE.save(); document.querySelectorAll('#sws [data-c]').forEach(b => b.classList.toggle('on', b.dataset.c === CFG.accent)); };
   document.querySelectorAll('#sws [data-c]').forEach(b => b.onclick = () => { set(b.dataset.c); $('cCust').value = b.dataset.c; });
   $('cCust').oninput = e => set(e.target.value);
-  const ph = () => { const d = IMG.get(CFG.photo); $('cPh').style.backgroundImage = d ? `url(${d})` : ''; $('cPh').textContent = d ? '' : '💍'; $('cPhD').style.display = d ? '' : 'none'; };
+  const ph = () => { const d = IMG.get(CFG.photo); $('cPh').style.backgroundImage = d ? `url(${d})` : ''; $('cPh').innerHTML = d ? '' : ico('camera', 26); $('cPhD').style.display = d ? '' : 'none'; };
   ph(); if ($('phLk')) $('phLk').innerHTML = lockTag('photo');
   $('cPhB').onclick = () => can('photo') ? $('cPhF').click() : upsell('photo');
   $('cPh').onclick = () => { if (!can('photo')) return upsell('photo'); const d = IMG.get(CFG.photo); if (!d) return $('cPhF').click(); cropImage(d, { aspect: 1, round: true, max: 1000, target: 220000, replace: true }).then(r => { if (r === 'replace') $('cPhF').click(); else if (r) { CFG.photo = IMG.put(r); STORE.upImg(CFG.photo); STORE.save(); ph(); } }); };
@@ -2392,7 +2407,7 @@ function renderLive() {
     liveBuilt = true; edBuilt = false;
     applyAccent(G.accent);
     $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('<span id="lTitle"></span>')}</a><span class="sp"></span>` +
-      `<button class="btn ghost sm dsk" id="bOpenScr">🖥 Экран</button><button class="btn ghost sm dsk" id="bRemote">📱 Пульт на телефоне</button><button class="btn ghost sm" id="bEdit">✎ Редактор</button></div></div>` +
+      `<button class="btn ghost sm dsk ib" id="bOpenScr">${ico('monitor', 16)}<span>Экран</span></button><button class="btn ghost sm dsk ib" id="bRemote">${ico('phone', 16)}<span>Пульт на телефоне</span></button><button class="btn ghost sm ib" id="bEdit">${ico('pencil', 16)}<span>Редактор</span></button></div></div>` +
       `<div class="tabs" id="tabs"><button data-t="ctl">Пульт</button><button data-t="scr">Экран</button><button data-t="ph">Я — гость</button></div>` +
       `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><div class="kbd dsk-only">Пробел или → — дальше · R — звук ещё раз · Q — QR</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
       `<div class="stat"><div><b id="sP">0</b><span id="sPl">гостей</span></div><div><b id="sO">–</b><span>на связи</span></div><div><b id="sA">–</b><span>ответили</span></div></div>` +
