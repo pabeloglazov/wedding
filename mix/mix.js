@@ -37,6 +37,7 @@ const GM = {
   bingo: { n: 'Человеческое бинго', em: '🎯✅', c: '#6f9fc6', d: 'Карточки примет, знакомство в зале, «БИНГО!»', ed: '../bingo/', app: '../bingo/', p: 'bq', l: 'blist' },
   sm: { n: 'Секретная миссия', em: '🕶️💌', c: '#a7ae86', d: 'Тайные задания для гостей, welcome-зона', ed: '../host/', ext: 1 }
 };
+const gIco = (k, w = 18) => `<span class="gi2" style="background:${GM[k].c}2e;color:${GM[k].c}">${ico('g_' + k, w)}</span>`;
 const appUrl = (k, q) => { const g = GM[k]; return (k === 'fact' ? '../fact/' : g.app) + '?' + q; };
 
 /* ================= Firebase и аккаунт ================= */
@@ -103,7 +104,7 @@ function renderEditor() {
     `<div class="wrap"><div class="hero"><div class="k">Игра из раундов</div><h1>Игра-микс</h1><p>Соберите вечер из наших игр: каждый раунд — отдельная игра. Гости заходят по одному QR на весь вечер, проектор и телефоны сами переключаются между раундами, счёт команд — общий.</p></div>` +
     (!k ? `<div class="card"><h3>Нужен вход</h3><p class="muted" style="margin:0 0 14px">Раунды микса — это ваши игры из «Моих игр». Войдите, чтобы выбрать их или создать новые.</p><button class="btn gold" id="bLogin2">Войти</button></div>` :
       `<div class="card"><div class="fld"><label for="fT">Название вечера</label><input class="inp" id="fT" maxlength="60" value="${esc(CFG.title)}"></div></div>` +
-      `<div class="card"><h3>Раунды</h3><div class="rl" id="rl">${CFG.rounds.length ? CFG.rounds.map((r, i) => `<div class="rr" data-i="${i}"><span class="grip">${ico('grip', 16)}</span><span class="num">${i + 1}</span><span class="em" style="background:${GM[r.k].c}33">${GM[r.k].em.slice(0, 2)}</span><div class="tx"><b>${esc(titleOf(r))}</b><span>${GM[r.k].n}</span></div>` +
+      `<div class="card"><h3>Раунды</h3><div class="rl" id="rl">${CFG.rounds.length ? CFG.rounds.map((r, i) => `<div class="rr" data-i="${i}"><span class="grip">${ico('grip', 16)}</span><span class="num">${i + 1}</span>${gIco(r.k, 22)}<div class="tx"><b>${esc(titleOf(r))}</b><span>${GM[r.k].n}</span></div>` +
         `<a class="btn ghost sm" href="${r.k === 'sm' ? esc(r.adm || '../host/') : GM[r.k].ed + '?open=' + encodeURIComponent(r.id)}" target="_blank" rel="noopener">${ico('pencil', 14)}Изменить</a><button class="icb" data-del="${i}" title="Убрать раунд" aria-label="Убрать раунд">${ico('x', 16)}</button></div>`).join('') : '<div class="empty">Пока пусто — добавьте первый раунд</div>'}</div>` +
       `<button class="radd" id="rAdd">${ico('plus', 18)}Раунд</button></div>`) +
     `</div>` + (k ? `<div class="bar"><div class="in"><div class="t"><b>${esc(CFG.title)}</b><span>${CFG.rounds.length} ${plural(CFG.rounds.length, 'раунд', 'раунда', 'раундов')} · один QR на весь вечер</span></div><button class="btn gold" id="bGo"${CFG.rounds.length ? '' : ' disabled'}>${ico('play', 16)}Запустить вечер</button></div></div>` : '');
@@ -131,7 +132,7 @@ function sortable(box, itemSel, handleSel, onMove) {
 }
 /* «+ Раунд»: сначала игра, потом конкретная игра из «Моих игр» */
 function pickGame(after) {
-  modal(`<div class="kh"><h3>Добавить раунд</h3><button class="icb" data-close aria-label="Закрыть">${ico('x', 18)}</button></div><p class="muted" style="margin:0 0 14px;font-size:14px">Выберите игру — она станет раундом вечера.</p><div class="ggrid">${Object.keys(GM).map(k => `<button class="gc" data-g="${k}"><span class="ga" style="background:linear-gradient(135deg,${GM[k].c}99,${GM[k].c}22)">${GM[k].em}</span><b>${GM[k].n}</b><small>${GM[k].d}</small><span class="kb">Выбрать</span></button>`).join('')}</div>`, b => {
+  modal(`<div class="kh"><h3>Добавить раунд</h3><button class="icb" data-close aria-label="Закрыть">${ico('x', 18)}</button></div><p class="muted" style="margin:0 0 14px;font-size:14px">Выберите игру — она станет раундом вечера.</p><div class="ggrid">${Object.keys(GM).map(k => `<button class="gc" data-g="${k}"><span class="ga" style="background:linear-gradient(135deg,${GM[k].c}66,${GM[k].c}14);color:#fff">${ico('g_' + k, 40)}</span><b>${GM[k].n}</b><small>${GM[k].d}</small><span class="kb">Выбрать</span></button>`).join('')}</div>`, b => {
     b.querySelectorAll('[data-g]').forEach(x => x.onclick = () => pickSaved(x.dataset.g));
   }, true);
 }
@@ -226,7 +227,7 @@ function renderLive(force) {
     $('bEnd').onclick = () => { if (!sure($('bEnd'))) return; endShow(); };
   }
   const run = S.ph === 'round' || S.ph === 'starting';
-  $('ctl').innerHTML = `<div class="rtabs">${S.rounds.map((x, i) => `<button class="rt${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}"><span class="em" style="background:${GM[x.k].c}33">${GM[x.k].em.slice(0, 2)}</span><span class="tx"><b>Раунд ${i + 1}</b><small>${esc(x.t)}</small></span>${i === S.ri && run ? '<i class="live">идёт</i>' : S.done.indexOf(i) >= 0 ? '<i>✓</i>' : ''}</button>`).join('')}</div>` +
+  $('ctl').innerHTML = `<div class="rtabs">${S.rounds.map((x, i) => `<button class="rt${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}">${gIco(x.k)}<span class="tx"><b>Раунд ${i + 1}</b><small>${esc(x.t)}</small></span>${i === S.ri && run ? '<i class="live">идёт</i>' : S.done.indexOf(i) >= 0 ? '<i>✓</i>' : ''}</button>`).join('')}</div>` +
     `<div class="sctl"><div class="k" style="margin:12px 0 8px">Экран</div><div class="sg"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Общий счёт</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div></div>`;
   $('ctl').querySelectorAll('[data-go]').forEach(b => b.onclick = () => A.go(+b.dataset.go));
   $('ctl').querySelectorAll('[data-ov]').forEach(b => b.onclick = () => A.ov(b.dataset.ov));
@@ -254,7 +255,7 @@ function viewScreen() {
     const R = C.rounds || [], rank = C.rank || [], names = Object.values(C.names || {});
     let h = '';
     if (C.ph === 'round' && C.rk === 'sm') h = `<div class="mlob"><div><div class="kk">Раунд ${C.ri + 1} из ${C.n}</div><h1>Секретная миссия</h1><p style="font-size:1.4em;font-weight:700;opacity:.85">Откройте свою тайную миссию на телефоне — у вас она уже на экране. Нет? Сканируйте QR.</p></div><div class="joinc"><div class="qr" id="qrc"></div><small>миссия</small></div></div>`;
-    else if (C.ph === 'lobby' || C.ph === 'starting') h = `<div class="mlob"><div><div class="kk">Сегодня в программе</div><h1>${esc(C.title)}</h1><div class="rs">${R.map((r, i) => `<div><i style="background:${GM[r.k].c}55">${i + 1}</i>${esc(r.t)}</div>`).join('')}</div><div class="teams">${names.map(n => `<span>${esc(n)}</span>`).join('')}</div></div><div class="joinc"><div class="qr" id="qrc"></div><div class="u">${esc(SHORT)}</div><small>код вечера</small><div class="cd">${C.code ? fmtCode(C.code) : '······'}</div></div></div>`;
+    else if (C.ph === 'lobby' || C.ph === 'starting') h = `<div class="mlob"><div><div class="kk">Сегодня в программе</div><h1>${esc(C.title)}</h1><div class="rs">${R.map((r, i) => `<div><i style="background:${GM[r.k].c}55">${ico('g_' + r.k, 16)}</i>${esc(r.t)}</div>`).join('')}</div><div class="teams">${names.map(n => `<span>${esc(n)}</span>`).join('')}</div></div><div class="joinc"><div class="qr" id="qrc"></div><div class="u">${esc(SHORT)}</div><small>код вечера</small><div class="cd">${C.code ? fmtCode(C.code) : '······'}</div></div></div>`;
     else if (C.ph === 'between') { const nx = R[C.ri + 1]; h = `<div class="kk">После раунда ${C.ri + 1} из ${C.n}</div><h1 style="font-size:3em">Общий счёт</h1><div class="msc">${rank.slice(0, 8).map((p, i) => `<div class="row${i === 0 && p.s > 0 ? ' t1' : ''}" style="animation-delay:${i * 80}ms"><span class="p">${i + 1}</span><span class="n">${esc(p.n)}</span><span class="s">${nums(p.s)}</span></div>`).join('') || '<p>Команд пока нет</p>'}</div>${nx ? `<div class="nxt">Дальше: ${esc(nx.t)} · ${GM[nx.k].n}</div>` : ''}`; }
     else if (C.ph === 'final') { const t = rank.slice(0, 3), o = [t[1], t[0], t[2]], hh = [62, 88, 44], pl = [2, 1, 3]; h = `<h1 style="text-align:center;font-size:3.4em">Победители вечера</h1><div class="pod">${o.map((p, i) => p ? `<div class="${pl[i] === 1 ? 'w' : ''}"><div class="nm">${esc(p.n)}</div><div class="sc">${nums(p.s)}</div><div class="bl" style="height:${hh[i]}%;animation-delay:${[.6, 1.2, 0][i]}s">${pl[i]}</div></div>` : '<div></div>').join('')}</div>`; }
     sf.innerHTML = `<div class="mst"><div class="in">${mark()}${h}</div></div>`;
