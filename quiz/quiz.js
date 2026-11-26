@@ -998,6 +998,12 @@ function tplThanksgiving() {
 }
 
 /* красивое раскрытие числового ответа: шкала, правильный ответ и отметки команд */
+function slStage(q) {
+  const [a0, a1] = slR(q), f = v => Math.abs(v) < 10000 ? String(v) : nums(v), tk = Array.from({ length: 11 }, (_, i) => `<i class="${i % 5 ? '' : 'mj'}"></i>`).join('');
+  return `<div class="slst"><div class="slcap">${ico('phone', 22)}<span>Двигайте ползунок на телефоне</span></div>` +
+    `<div class="slrail"><div class="slline"></div><div class="sltk">${tk}</div><div class="slknob"><span>?</span></div></div>` +
+    `<div class="slends"><div><b>${f(a0)}</b></div><div class="slu">${q.unit ? esc(q.unit) : ''}</div><div><b>${f(a1)}</b></div></div></div>`;
+}
 function numReveal(q, all) {
   const lo0 = +q.num, hi0 = hasRng(q) ? +q.num2 : lo0, sr = slR(q);
   let lo, hi;
@@ -1416,7 +1422,7 @@ function updScreen(box, g, snd) {
     const nq = box.querySelector('#numq');
     if (nq && nq.dataset.st !== (rev ? 'r' : 'q')) {
       nq.dataset.st = rev ? 'r' : 'q';
-      if (!rev) nq.innerHTML = hasSl(q) ? `<div class="ph">Двигайте ползунок на телефоне</div><div class="slsc"><b>${slR(q)[0]}</b><i></i><b>${slR(q)[1]}</b></div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}` : `<div class="ph">Введите ответ на телефоне</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}`;
+      if (!rev) nq.innerHTML = hasSl(q) ? slStage(q) : `<div class="ph">Введите ответ на телефоне</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}`;
       else {
         const all = Object.keys(A).map(id => ({ name: (g.players[id] || {}).name || 'Гость', v: +A[id].v, gain: (g.players[id] || {}).gain || 0 })).filter(x => isFinite(x.v)).sort((x, y) => numErr(q, x.v) - numErr(q, y.v));
         const arr = all.slice(0, 3);
@@ -1536,7 +1542,7 @@ function buildPhone(box, g, cl) {
       if (q.type === 'open') { title = st === 'ok' ? 'Засчитано!' : 'Правильный ответ'; sub = `<b>${esc(q.ans || (g.ok && g.ok.ans) || '')}</b>`; }
       else if (st === 'none' && mine) { title = 'Ответ опоздал'; sub = 'Он пришёл уже после окончания таймера — проверьте интернет'; }
       if (st === 'wait') h = `<div class="pv">${head(g, me)}<div class="wait"><div class="spin"></div><p class="sub">Подсчитываем очки…</p></div></div>`;
-      else h = `<div class="pv">${head(g, me)}<div class="res ${st === 'ok' ? 'ok' : st === 'bad' ? 'bad' : 'none'}"><b>${title}</b>` +
+      else h = `<div class="pv${q.img && !isPicQ(q) && IMG.get(q.aimg || q.img) ? ' wimg' : ''}">${head(g, me)}${q.img && !isPicQ(q) ? picHtml(IMG.get(q.aimg) ? q.aimg : q.img, 'pimg rv') : ''}<div class="res ${st === 'ok' ? 'ok' : st === 'bad' ? 'bad' : 'none'}"><b>${title}</b>` +
         (st === 'ok' ? `<div class="g">+${nums(me.gain)}</div>${me.streak >= 3 ? `<div>🔥 серия ${me.streak} подряд</div>` : ''}` : '') + (sub ? `<small>${sub}</small>` : '') + '</div>' +
         `<div class="rank">Ваше место<br><b>${g._rank || rankOf(g, cl.pid)}</b> из ${g._np || Object.keys(g.players).length}</div>${me.table && g._trank ? `<div class="rank">Ваш стол ${me.table}: <b>${g._trank}</b> место из ${g._tn}</div>` : ''}</div>`;
     } else if (g.phase === 'board') {
@@ -2627,7 +2633,7 @@ function bootHost() {
     updScreen($('stg'), G, soundHere()); updPhone($('ph'), G, me);
     if (!soundHere() && Date.now() - scrAlive > 4000 && scrAlive) { scrAlive = 0; render(); }
   }, 250);
-  window.__quiz = { get g() { return G; }, next, cfg: () => CFG, net: NET, acc: ACC, kick, startIntro, coupleAnswer, newGame, award, renameP };
+  window.__quiz = { get g() { return G; }, next, cfg: () => CFG, net: NET, acc: ACC, kick, startIntro, coupleAnswer, newGame, award, renameP, rp: renderPhone };
   IMG.ready.then(() => {
     render();
     netReady.then(ok => {
