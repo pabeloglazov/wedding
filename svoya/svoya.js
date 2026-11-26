@@ -392,7 +392,7 @@ const A = {
     else { p.score -= v; if (G.ph === 'q' && G.wr.indexOf(id) < 0) G.wr.push(id); }
     publish();
   },
-  reveal() { if (G.ph !== 'q' && G.ph !== 'cell') return; G.hp = 0; G.ph = 'ans'; G.pl[keyOf(G, G.cur.ci, G.cur.qi)] = G.pl[keyOf(G, G.cur.ci, G.cur.qi)] || { by: '' }; publish(); },
+  reveal() { if (G.ph !== 'q' && G.ph !== 'cell') return; if (G.ph === 'q' && G.mode === 'buzz' && queue(G)[0]) { const z = document.querySelector('#ctl .buzz.on'); if (z) { z.classList.remove('nudge'); void z.offsetWidth; z.classList.add('nudge'); } toast('Сначала отметьте ответ «' + G.players[queue(G)[0]].name + '»: верно или неверно'); return; } G.hp = 0; G.ph = 'ans'; G.pl[keyOf(G, G.cur.ci, G.cur.qi)] = G.pl[keyOf(G, G.cur.ci, G.cur.qi)] || { by: '' }; publish(); },
   board() { if (G.cur) G.pl[keyOf(G, G.cur.ci, G.cur.qi)] = G.pl[keyOf(G, G.cur.ci, G.cur.qi)] || { by: G.by || '' }; G.ph = 'board'; G.cur = null; G.ov = ''; publish(); },
   round(i) { if (!G.rounds[i]) return; if (G.cur && ['cell', 'q', 'ans'].indexOf(G.ph) >= 0) A.board(); G.ri = i; G.cur = null; G.ov = ''; G.qi = -1; G.res = null; G.ph = isQuiz(G) ? 'rintro' : 'board'; publish(); },
   qStart(i) {
@@ -1044,7 +1044,7 @@ function renderLive(force) {
   const [lbl, fn, sub] = nextAct();
   const nb = $('bNext'); nb.innerHTML = esc(lbl) + (sub ? `<small style="display:block;font-size:12px;font-weight:700;opacity:.7;margin-top:2px">${esc(sub)}</small>` : ''); nb.disabled = !fn; nb.style.display = isQuiz(G) || (fn && (G.ph === 'lobby' || G.ph === 'board')) ? 'block' : 'none';
   $('ctl').innerHTML = ctlHtml(); bindCtl();
-  $('tl').innerHTML = teamsHostHtml(); bindTeams();
+  if (!window._scEd) { $('tl').innerHTML = teamsHostHtml(); bindTeams(); }
   $('cd').textContent = G.code ? `${SHORT} · ${fmtCode(G.code)}` : 'подключаемся…';
   const on = onlineN(); $('onl').textContent = G.netOn ? `на связи: ${on}` : '';
   drawStage($('stg'), scrOf(G), soundHere()); logoDrag($('stg'));
@@ -1087,6 +1087,7 @@ function ctlHtml() {
   const PB = (c, i, t) => `<button data-c="${c}">${ico(i, 18)}${t}</button>`;
   let pb;
   if (G.ph === 'cell' && q) pb = PB('showQ', 'play', qMed ? (vid ? 'Включить видео' : 'Включить музыку') : 'Показать вопрос');
+  else if (G.ph === 'q' && G.mode === 'buzz' && act) pb = (hasM ? PB('pause', G.hp ? 'play' : 'pause', G.hp ? 'Продолжить' : 'Пауза') : '') + `<button data-c="reveal" class="wait">${ico('hand', 18)}Отвечает ${esc(G.players[act].name)}</button>`;
   else if (G.ph === 'q') pb = hasM ? PB('pause', G.hp ? 'play' : 'pause', G.hp ? 'Продолжить' : 'Пауза') + PB('reveal', 'check', 'Показать ответ') : PB('reveal', 'check', 'Показать ответ');
   else if (G.ph === 'ans') pb = (hasM ? PB('pause', G.hp ? 'play' : 'pause', G.hp ? 'Продолжить' : 'Пауза') : '') + PB('board', 'grid', 'К табло');
   else pb = `<button disabled>${ico('play', 18)}Включить музыку</button>`;
@@ -1148,7 +1149,8 @@ function bindCtl() {
 function teamsHostHtml() {
   const l = ranked(G), v = curV(G), canPm = (!!G.cur && G.ph !== 'board') || G.ph === 'qq' || G.ph === 'qr';
   if (!l.length) return '<div class="muted" style="font-size:14px">Пока никого. Команды заходят по QR-коду на экране или по коду игры.</div>';
-  return l.map(p => `<div class="tm"><span class="dot${p.man || ONLINE[p.id] ? ' on' : ''}"></span><span class="n">${esc(p.name)}</span><button class="ed" data-rn="${p.id}" title="Переименовать">${ico('pencil', 14)}</button>` +
+  const ans = G.ph === 'q' && G.mode === 'buzz' ? queue(G)[0] : '';
+  return l.map(p => `<div class="tm${p.id === ans ? ' ans' : ''}"><span class="dot${p.man || ONLINE[p.id] ? ' on' : ''}"></span><span class="n">${esc(p.name)}</span><button class="ed" data-rn="${p.id}" title="Переименовать">${ico('pencil', 14)}</button>` +
     (canPm ? `<button class="pm p" data-aw="${p.id}" data-s="1">+${nums(v)}</button><button class="pm m" data-aw="${p.id}" data-s="-1">−${nums(v)}</button>` : '') +
     `<span class="s" data-sc="${p.id}" style="cursor:pointer" title="Изменить очки">${nums(p.score)}</span><button class="ed" data-kick="${p.id}" title="Убрать">${ico('x', 14)}</button></div>`).join('') +
     (Object.keys(G.players).length >= G.cap && G.demo ? `<div class="hint" style="margin-top:6px">Демо: максимум ${G.cap} команды. Войдите с тарифом, чтобы больше.</div>` : '');
@@ -1157,7 +1159,13 @@ function bindTeams() {
   const t = $('tl');
   t.querySelectorAll('[data-aw]').forEach(b => b.onclick = () => A.award(b.dataset.aw, +b.dataset.s));
   t.querySelectorAll('[data-rn]').forEach(b => b.onclick = () => { A.rename(b.dataset.rn); if (G.players[b.dataset.rn]) G.players[b.dataset.rn].ren = 1; });
-  t.querySelectorAll('[data-sc]').forEach(b => b.onclick = () => A.setScore(b.dataset.sc));
+  t.querySelectorAll('[data-sc]').forEach(b => b.onclick = () => {
+    const id = b.dataset.sc, p = G.players[id]; if (!p) return; window._scEd = id;
+    b.outerHTML = `<input class="sci" id="sci" inputmode="numeric" value="${p.score}">`; const i = $('sci'); i.focus(); i.select();
+    let done = false; const fin = ok => { if (done) return; done = true; window._scEd = ''; if (ok) { const v = Math.round(+String(i.value).replace(/[\s ]/g, '').replace('−', '-')); if (isFinite(v) && G.players[id]) G.players[id].score = v; } publish(); };
+    i.onkeydown = e => { if (e.key === 'Enter') fin(true); else if (e.key === 'Escape') fin(false); };
+    i.onblur = () => fin(true);
+  });
   t.querySelectorAll('[data-kick]').forEach(b => b.onclick = () => { if (!confirm2(b, '?')) return; A.kick(b.dataset.kick); });
 }
 if (VIEW === 'host') setInterval(() => {
@@ -1296,5 +1304,5 @@ function bootHost() {
 if (VIEW === 'screen') viewScreen();
 else if (VIEW === 'play') viewPlay();
 else bootHost();
-window.__svoya = { get g() { return G; }, A, get cfg() { return CFG; } };
+window.__svoya = { get g() { return G; }, A, get cfg() { return CFG; }, get ANS() { return ANS; } };
 })();

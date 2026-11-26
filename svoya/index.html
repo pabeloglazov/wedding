@@ -574,12 +574,20 @@ button.kc:hover .kb{background:var(--acc);border-color:transparent;color:#fff}
 .codebox{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
 .codebox .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:5px}
 #tl>.muted{padding:4px 0;line-height:1.4}
+.buzz.on{animation:bzGlow 1.4s ease-in-out infinite}
+@keyframes bzGlow{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 0%,transparent)}50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 35%,transparent)}}
+.buzz.nudge{animation:bzNudge .5s ease 2}
+@keyframes bzNudge{0%,100%{transform:none}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.ctlr .accw button.wait{background:rgba(0,0,0,.18);font-weight:800}
+.tm.ans{box-shadow:inset 0 0 0 1.5px var(--acc);background:color-mix(in srgb,var(--acc) 16%,#171716)}
+.tm .s{cursor:text;border-radius:8px;padding:4px 6px}.tm .s:hover{background:rgba(255,255,255,.08)}
+.tm .sci{width:84px;text-align:right;font:inherit;font-weight:800;background:#0f0f0e;color:var(--ink);border:1px solid var(--acc);border-radius:8px;padding:4px 6px;outline:0}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="svoya.js?v=30"></script>
+<script src="svoya.js?v=31"></script>
 </body>
 </html>
