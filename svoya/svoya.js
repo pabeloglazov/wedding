@@ -593,7 +593,7 @@ function drawStage(root, S, snd) {
   if (S.ph === 'ans' && S.cur) {
     const c = S.cur, am = c.am, vis = am && am.k !== 'audio';
     if (!same) {
-      inn.innerHTML = `<div class="qtop"><span class="chip2">${esc(c.cat)}</span><span class="vv">${esc(c.v)}</span></div><div class="ansv${vis ? ' wm' : ''}"><div class="q">${esc(c.q)}</div><div class="lb">Правильный ответ</div><div class="a">${esc(c.a || '—')}</div>` +
+      inn.innerHTML = `<div class="qtop"><span class="chip2">${esc(c.cat)}</span><span class="vv">${esc(c.v)}</span></div><div class="ansv${vis ? ' wm' : ''}">${ansHtml(c.a)}` +
         (vis ? '<div class="qm amv" id="am"></div>' : '') + `<div id="gw"></div></div>${am && !vis ? '<div class="qm aud" id="am" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></div>' : ''}`;
       if (am) { const m = inn.querySelector('#am'); mountMedia(m, am, mute, S.id); m._mr = S.mr; m._snd = mute; }
       fitText(inn.querySelector('.ansv .a'), inn.querySelector('.ansv'), .4);
@@ -601,7 +601,7 @@ function drawStage(root, S, snd) {
       const m = inn.querySelector('#am');
       if (m && m._mr !== S.mr && am.k !== 'image') { m._mr = S.mr; mountMedia(m, am, mute, S.id); m._snd = mute; } else if (m && m._snd !== mute) { m._snd = mute; setMute(m, mute); }
     }
-    const gw = inn.querySelector('#gw'), gh = S.by ? `<span class="gain">+${nums(S.gain)} · ${esc(S.by)}</span>` : `<span class="gain no">Никто не ответил</span>`;
+    const gw = inn.querySelector('#gw'), gh = S.by ? `<span class="gain">+${nums(S.gain)} · ${esc(S.by)}</span>` : `<span class="gain no sm">без очков</span>`;
     if (gw && gw._h !== gh) { gw._h = gh; gw.innerHTML = gh; }
     return;
   }
@@ -633,6 +633,12 @@ function drawStage(root, S, snd) {
 }
 /* Firebase не хранит пустые массивы — восстанавливаем */
 function fixS(S) { if (!S) return S; ['players', 'qn', 'cats', 'vals'].forEach(k => { if (!Array.isArray(S[k])) S[k] = S[k] ? Object.values(S[k]) : []; }); if (!Array.isArray(S.grid)) S.grid = S.grid ? Object.values(S.grid) : []; S.grid = S.grid.map(r => Array.isArray(r) ? r : r ? Object.values(r) : []); return S; }
+/* «Исполнитель — «Песня»» → крупно песня, под ней исполнитель */
+function ansHtml(a) {
+  a = String(a || '—'); const m = a.split(/\s+[—–-]\s+/);
+  if (m.length >= 2 && m[0].trim() && m.slice(1).join(' — ').trim()) { const t = m.slice(1).join(' — ').trim().replace(/^[«"“]|[»"”]$/g, ''); return `<div class="a">${esc(t)}</div><div class="who">${esc(m[0].trim())}</div>`; }
+  return `<div class="a">${esc(a)}</div>`;
+}
 const teamsHtml = S => S.players.length ? S.players.map(p => `<span>${esc(p.n)}</span>`).join('') : '<span class="ph">Команды появятся здесь</span>';
 function scoresHtml(S, t) {
   const l = S.players.slice(0, 10);
