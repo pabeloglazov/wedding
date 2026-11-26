@@ -1219,7 +1219,7 @@ function renderScreen(box, g, snd) {
     const prevPhase = st.phase;
     st.key = key; st.phase = g && g.phase; st.tick = -1; st.up = false; st.rev = false; st.nPlayers = g ? Object.keys(g.players).length : 0; st.code = '';
     buildScreen(box, g);
-    if (g && (g.phase === 'question' || g.phase === 'reveal')) { const q = g.qs[g.qi], mw = box.querySelector('#mdw'); if (mw) { const ans = g.phase === 'reveal' && mdOk(q.am); if (ans || mdOk(q.qm)) { mw.dataset.s = ans ? 'a' : 'q'; mountMedia(mw, ans ? q.am : q.qm, !!snd); } } }
+    if (g && (g.phase === 'question' || g.phase === 'reveal')) { const q = g.qs[g.qi], mw = box.querySelector('#mdw'); if (mw) { const ans = g.phase === 'reveal' && mdOk(q.am); if (ans || mdOk(q.qm)) { mw.dataset.s = ans ? 'a' : 'q'; mountMedia(mw, ans ? q.am : q.qm, !!snd && box.id !== 'stg'); } } }
     if (snd && g) {
       if (g.phase === 'question') setTimeout(() => SND.play('start'), Math.max(0, g.t0 - now() - 400));
       else if (g.phase === 'reveal') { st.rev = true; SND.play('reveal'); }
@@ -1344,11 +1344,11 @@ function syncQz(box, g) {
 function updScreen(box, g, snd) {
   if (!g || !box) return;
   syncQz(box, g);
-  { const st0 = box._st || (box._st = {}), sv = !!snd; if (st0.snd === undefined) st0.snd = sv; else if (st0.snd !== sv) { st0.snd = sv; setMediaMute(box.querySelector('#mdw'), sv); } }
+  { const st0 = box._st || (box._st = {}), sv = !!snd && box.id !== 'stg'; if (st0.snd === undefined) st0.snd = sv; else if (st0.snd !== sv) { st0.snd = sv; setMediaMute(box.querySelector('#mdw'), sv); } }
   const st = box._st || {};
   if (g.phase === 'question' || g.phase === 'reveal') {
     const mw = box.querySelector('#mdw'), r = String(g.mr || 0), q = g.qs[g.qi];
-    if (mw && q) { if (st.mr === undefined || st.mrq !== g.qi) { st.mr = r; st.mrq = g.qi; } else if (st.mr !== r) { st.mr = r; const m = g.phase === 'reveal' && mdOk(q.am) ? q.am : mdOk(q.qm) ? q.qm : q.am; if (mdOk(m)) mountMedia(mw, m, !!snd); } }
+    if (mw && q) { if (st.mr === undefined || st.mrq !== g.qi) { st.mr = r; st.mrq = g.qi; } else if (st.mr !== r) { st.mr = r; const m = g.phase === 'reveal' && mdOk(q.am) ? q.am : mdOk(q.qm) ? q.qm : q.am; if (mdOk(m)) mountMedia(mw, m, !!snd && box.id !== 'stg'); } }
   }
   if (g.phase === 'lobby') {
     const chips = box.querySelector('#chips'), ps = ranked(g).sort((a, b) => (a.jt || 0) - (b.jt || 0));
@@ -1379,7 +1379,7 @@ function updScreen(box, g, snd) {
   const n = Object.keys(g.players).length, A = (g.ans && g.ans[g.qi]) || {}, a = Object.keys(A).length;
   const ac = box.querySelector('#ansCnt'); if (ac) ac.textContent = isStage(g) ? '' : `Ответили ${a} из ${n}`;
   const fr = box.querySelector('#footR');
-  const mw = box.querySelector('#mdw'); if (mw && rev && mdOk(q.am) && mw.dataset.s !== 'a') { mw.dataset.s = 'a'; mountMedia(mw, q.am, !!snd); }
+  const mw = box.querySelector('#mdw'); if (mw && rev && mdOk(q.am) && mw.dataset.s !== 'a') { mw.dataset.s = 'a'; mountMedia(mw, q.am, !!snd && box.id !== 'stg'); }
   if (q.type === 'open') {
     const oq = box.querySelector('#openq'), aw = (g.aw && g.aw['q' + g.qi]) || {}, ids = Object.keys(aw).filter(id => g.players[id]), k = rev ? 'r:' + ids.sort().join(',') : 'q';
     if (oq && oq.dataset.st !== k) {
