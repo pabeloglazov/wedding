@@ -596,7 +596,7 @@ function drawStage(root, S, snd) {
       inn.innerHTML = `<div class="qtop"><span class="chip2">${esc(c.cat)}</span><span class="vv">${esc(c.v)}</span></div><div class="ansv${vis ? ' wm' : ''}">${ansHtml(c.a)}` +
         (vis ? '<div class="qm amv" id="am"></div>' : '') + `<div id="gw"></div></div>${am && !vis ? '<div class="qm aud" id="am" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"></div>' : ''}`;
       if (am) { const m = inn.querySelector('#am'); mountMedia(m, am, mute, S.id); m._mr = S.mr; m._snd = mute; }
-      fitText(inn.querySelector('.ansv .a'), inn.querySelector('.ansv'), .4);
+      { const ae = inn.querySelector('.ansv .a'); if (ae) { ae.style.fontSize = ''; const fit = () => { let k = 1; ae.style.fontSize = ''; while (ae.scrollWidth > ae.clientWidth + 1 && k > .3) { k -= .04; ae.style.fontSize = (4.6 * k).toFixed(2) + 'em'; } }; fit(); requestAnimationFrame(fit); if (document.fonts) document.fonts.ready.then(fit); } }
     } else if (am) {
       const m = inn.querySelector('#am');
       if (m && m._mr !== S.mr && am.k !== 'image') { m._mr = S.mr; mountMedia(m, am, mute, S.id); m._snd = mute; } else if (m && m._snd !== mute) { m._snd = mute; setMute(m, mute); }
