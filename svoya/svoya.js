@@ -307,7 +307,7 @@ function ytCmd(f, func) { try { f.contentWindow.postMessage(JSON.stringify({ eve
 function pauseMedia(box) { if (!box) return; box.querySelectorAll('iframe').forEach(f => ytCmd(f, 'pauseVideo')); box.querySelectorAll('audio,video').forEach(el => el.pause()); }
 function playMedia(box) { if (!box) return; box.querySelectorAll('iframe').forEach(f => ytCmd(f, 'playVideo')); box.querySelectorAll('audio,video').forEach(el => el.play().catch(() => {})); }
 /* звуки: кнопка на телефоне и сигнал на экране — синтез, без файлов */
-const BZ = { id: 'VReGLwDPMpE', t0: 0, len: 1200, f: null, at: 0, tm: 0 };
+const BZ = { p: null, b: null, src: null };
 const SFX = (() => {
   let ac = null; const ctx = () => { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {} return ac; };
   const tone = (f0, f1, dur, type, vol, delay = 0) => { const a = ctx(); if (!a) return; const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02); };
@@ -315,13 +315,12 @@ const SFX = (() => {
     unlock: ctx,
     press() { tone(220, 880, .12, 'square', .18); tone(660, 1320, .16, 'triangle', .22, .1); tone(990, 1980, .22, 'sine', .18, .2); },
     synthBuzz() { tone(140, 120, .5, 'sawtooth', .22); tone(280, 240, .5, 'square', .08); tone(880, 1760, .25, 'sine', .2, .05); },
-    /* сигнал «кто-то нажал»: первая секунда «Tense music from game show» (royalty free, YouTube), заранее загружен скрытым плеером; запасной — синтез */
-    prep() { if (BZ.f) return; const f = document.createElement('iframe'); f.allow = 'autoplay'; f.src = `https://www.youtube.com/embed/${BZ.id}?enablejsapi=1&controls=0&playsinline=1&start=0&origin=${encodeURIComponent(location.origin)}`; f.style.cssText = 'position:fixed;left:-10px;top:-10px;width:2px;height:2px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(f); BZ.f = f; BZ.at = Date.now(); },
+    /* сигнал «кто-то нажал»: buzz.mp3 («мяу»), заранее декодирован; запасной — синтез */
+    prep() { if (BZ.p) return; const a = ctx(); if (!a) return; BZ.p = fetch(new URL('buzz.mp3?v=2', location.href)).then(r => r.arrayBuffer()).then(x => new Promise((ok, no) => a.decodeAudioData(x, ok, no))).then(b => { BZ.b = b; }).catch(() => { BZ.p = null; }); },
     buzz() {
-      const f = BZ.f; if (!f || Date.now() - BZ.at < 2500) { this.synthBuzz(); this.prep(); return; }
-      const c = (func, args) => { try { f.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), '*'); } catch (e) {} };
-      c('unMute'); c('setVolume', [100]); c('seekTo', [BZ.t0, true]); c('playVideo');
-      clearTimeout(BZ.tm); BZ.tm = setTimeout(() => { c('pauseVideo'); c('seekTo', [BZ.t0, true]); c('pauseVideo'); }, BZ.len);
+      const a = ctx(); if (!a || !BZ.b) { this.synthBuzz(); this.prep(); return; }
+      try { if (BZ.src) BZ.src.stop(); } catch (e) {}
+      const s = a.createBufferSource(), g = a.createGain(); g.gain.value = .9; s.buffer = BZ.b; s.connect(g).connect(a.destination); s.start(); BZ.src = s;
     }
   };
 })();
