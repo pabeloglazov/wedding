@@ -315,12 +315,12 @@ const SFX = (() => {
     unlock: ctx,
     press() { tone(220, 880, .12, 'square', .18); tone(660, 1320, .16, 'triangle', .22, .1); tone(990, 1980, .22, 'sine', .18, .2); },
     synthBuzz() { tone(140, 120, .5, 'sawtooth', .22); tone(280, 240, .5, 'square', .08); tone(880, 1760, .25, 'sine', .2, .05); },
-    /* сигнал «кто-то нажал»: buzz.mp3 («мяу»), заранее декодирован; запасной — синтез */
-    prep() { if (BZ.p) return; const a = ctx(); if (!a) return; BZ.p = fetch(new URL('buzz.mp3?v=2', location.href)).then(r => r.arrayBuffer()).then(x => new Promise((ok, no) => a.decodeAudioData(x, ok, no))).then(b => { BZ.b = b; }).catch(() => { BZ.p = null; }); },
+    /* сигнал «кто-то нажал»: buzz.mp3 (низкий гонг), заранее декодирован; запасной — синтез */
+    prep() { if (BZ.p) return; const a = ctx(); if (!a) return; BZ.p = fetch(new URL('buzz.mp3?v=3', location.href)).then(r => r.arrayBuffer()).then(x => new Promise((ok, no) => a.decodeAudioData(x, ok, no))).then(b => { BZ.b = b; }).catch(() => { BZ.p = null; }); },
     buzz() {
       const a = ctx(); if (!a || !BZ.b) { this.synthBuzz(); this.prep(); return; }
       try { if (BZ.src) BZ.src.stop(); } catch (e) {}
-      const s = a.createBufferSource(), g = a.createGain(); g.gain.value = .9; s.buffer = BZ.b; s.connect(g).connect(a.destination); s.start(); BZ.src = s;
+      const s = a.createBufferSource(), g = a.createGain(); g.gain.value = 1; s.buffer = BZ.b; s.connect(g).connect(a.destination); s.start(); BZ.src = s;
     }
   };
 })();
