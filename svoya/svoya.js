@@ -341,14 +341,14 @@ const A = {
     if (!G || ['board', 'cell', 'ans'].indexOf(G.ph) < 0 && !(G.ph === 'lobby')) return;
     if (isQuiz(G)) return; const q = curR(G).cats[ci] && curR(G).cats[ci].qs[qi]; if (!validQ(q) || G.pl[keyOf(G, ci, qi)]) return;
     if (G.ph === 'ans' && G.cur) G.pl[keyOf(G, G.cur.ci, G.cur.qi)] = G.pl[keyOf(G, G.cur.ci, G.cur.qi)] || { by: G.by || '' };
-    G.cur = { ci, qi }; G.ph = 'cell'; G.wr = []; G.by = null; G.gain = 0; G.ov = ''; publish();
+    G.cur = { ci, qi }; G.hp = 0; G.ph = 'cell'; G.wr = []; G.by = null; G.gain = 0; G.ov = ''; publish();
   },
-  showQ() { if (G.ph !== 'cell') return; G.ph = 'q'; G.bz++; G.t0 = now(); publish(); },
+  showQ() { if (G.ph !== 'cell') return; G.hp = 0; G.ph = 'q'; G.bz++; G.t0 = now(); publish(); },
   skip() { if (G.ph !== 'q') return; const id = queue(G)[0]; if (!id) return; G.wr.push(id); publish(); },
   judge(ok) {
     if (G.ph !== 'q') return; const qq = queue(G), id = qq[0]; if (!id) return; const v = curV(G), p = G.players[id];
     if (ok) { p.score += v; G.by = id; G.gain = v; G.ph = 'ans'; G.pl[keyOf(G, G.cur.ci, G.cur.qi)] = { by: id }; }
-    else { if (G.minus) p.score -= v; G.wr.push(id); }
+    else { if (G.minus) p.score -= v; G.wr.push(id); G.hp = 0; }
     publish();
   },
   award(id, sign) {
@@ -358,7 +358,7 @@ const A = {
     else { p.score -= v; if (G.ph === 'q' && G.wr.indexOf(id) < 0) G.wr.push(id); }
     publish();
   },
-  reveal() { if (G.ph !== 'q' && G.ph !== 'cell') return; G.ph = 'ans'; G.pl[keyOf(G, G.cur.ci, G.cur.qi)] = G.pl[keyOf(G, G.cur.ci, G.cur.qi)] || { by: '' }; publish(); },
+  reveal() { if (G.ph !== 'q' && G.ph !== 'cell') return; G.hp = 0; G.ph = 'ans'; G.pl[keyOf(G, G.cur.ci, G.cur.qi)] = G.pl[keyOf(G, G.cur.ci, G.cur.qi)] || { by: '' }; publish(); },
   board() { if (G.cur) G.pl[keyOf(G, G.cur.ci, G.cur.qi)] = G.pl[keyOf(G, G.cur.ci, G.cur.qi)] || { by: G.by || '' }; G.ph = 'board'; G.cur = null; G.ov = ''; publish(); },
   round(i) { if (!G.rounds[i]) return; if (G.cur && ['cell', 'q', 'ans'].indexOf(G.ph) >= 0) A.board(); G.ri = i; G.cur = null; G.ov = ''; G.qi = -1; G.res = null; G.ph = isQuiz(G) ? 'rintro' : 'board'; publish(); },
   qStart(i) {
@@ -377,13 +377,14 @@ const A = {
     if (r.gain > 0) { p.score -= r.gain; r.gain = 0; r.ok = false; } else { r.gain = q.pts; r.ok = true; p.score += q.pts; }
     publish();
   },
-  scores() { G.ov = G.ov === 'scores' ? '' : 'scores'; publish(); },
+  scores() { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'score' }, location.origin); return; } G.ov = G.ov === 'scores' ? '' : 'scores'; publish(); },
+  pause() { if (G.ph !== 'q' && G.ph !== 'ans') return; G.hp = G.hp ? 0 : 1; publish(); },
   rnext() { A.round(G.ri + 1); },
   final() { G.ph = 'final'; G.ov = ''; G.cur = null; publish(); },
   qr() { G.qrz = G.qrz ? 0 : 1; publish(); },
   qrbig() { G.qrb = G.qrb ? 0 : 1; publish(); },
   snd() { G.snd = !G.snd; publish(); },
-  replay() { const q = curQ(G) || curQQ(G); if (q && (G.ph === 'qq' || G.ph === 'qr' || G.cur) && (G.ph === 'ans' || G.ph === 'qr' ? mOk(q.am) && q.am.k !== 'image' : mOk(q.qm) && q.qm.k !== 'image')) { G.mr = (G.mr || 0) + 1; publish(); toast('Играем ещё раз'); } },
+  replay() { const q = curQ(G) || curQQ(G); if (q && (G.ph === 'qq' || G.ph === 'qr' || G.cur) && (G.ph === 'ans' || G.ph === 'qr' ? mOk(q.am) && q.am.k !== 'image' : mOk(q.qm) && q.qm.k !== 'image')) { G.mr = (G.mr || 0) + 1; G.hp = 0; publish(); toast('Играем ещё раз'); } },
   rename(id) {
     const p = G.players[id]; if (!p) return;
     modal(`<h3>Название команды</h3><input class="inp" id="rnI" maxlength="24" value="${esc(p.name)}"><div style="display:flex;gap:10px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" data-close>Отмена</button><button class="btn gold" id="rnOk">Сохранить</button></div>`, b => {
@@ -434,7 +435,7 @@ function scrOf(g) {
     grid: board ? R.cats.map((c, ci) => c.qs.map((x, qi) => !validQ(x) ? 2 : g.pl[keyOf(g, ci, qi)] ? 1 : 0)) : [],
     cur: g.cur && q ? { ci: g.cur.ci, qi: g.cur.qi, cat: R.cats[g.cur.ci].n, v: curV(g), q: q.q, mus: mOk(q.qm) && q.qm.k === 'audio' ? 1 : 0, qm: mOk(q.qm) ? q.qm : null, am: g.ph === 'ans' && mOk(q.am) ? q.am : null, a: g.ph === 'ans' ? q.a : '' } : null,
     qz: board ? null : qqPub(g),
-    act: nm(qq[0]), qn: qq.slice(1, 4).map(nm), by: g.by ? nm(g.by) : '', gain: g.gain || 0, wr: g.wr.length, mode: g.mode,
+    act: nm(qq[0]), hp: g.hp ? 1 : 0, qn: qq.slice(1, 4).map(nm), by: g.by ? nm(g.by) : '', gain: g.gain || 0, wr: g.wr.length, mode: g.mode,
     ov: g.ov || '', mr: g.mr || 0, players: ranked(g).map(p => ({ n: p.name, s: p.score }))
   };
 }
@@ -564,8 +565,8 @@ function drawStage(root, S, snd) {
     const m = inn.querySelector('#qm'), sp = inn.querySelector('.splash');
     if (m && m._mr !== S.mr) { m._mr = S.mr; mountMedia(m, c.qm, mute, S.id); m._snd = mute; m._pz = false; }
     else if (m && m._snd !== mute) { m._snd = mute; setMute(m, mute); }
-    const pz = !!S.act;
-    if (m && m._pz !== pz) { m._pz = pz; pz ? pauseMedia(m) : playMedia(m); if (pz && mute) SFX.buzz(); }
+    const pz = !!S.act || !!S.hp;
+    if (m && m._pz !== pz) { m._pz = pz; pz ? pauseMedia(m) : playMedia(m); if (S.act && pz && mute) SFX.buzz(); }
     if (sp) sp.classList.toggle('paused', pz); { const k2 = inn.querySelector('.spk'); if (k2) k2.classList.toggle('paused', pz); }
     const f = inn.querySelector('#qf');
     const fh = S.act ? `<span class="bzp"><i>${ico('bolt')}</i>${esc(S.act)}</span>${S.qn.length ? `<span class="bzq">дальше: ${S.qn.map(esc).join(', ')}</span>` : ''}` :
@@ -589,7 +590,7 @@ function drawStage(root, S, snd) {
     const fh = S.act ? `<span class="bzp"><i>${ico('bolt')}</i>${esc(S.act)}</span>${S.qn.length ? `<span class="bzq">дальше: ${S.qn.map(esc).join(', ')}</span>` : ''}` :
       S.mode === 'voice' ? `<span class="hintb">${ico('hand')}Поднимайте руку — отвечает тот, кто первый</span>` : `<span class="hintb">${ico('phone')}${S.wr ? 'Кто ещё знает? Жмите «Ответить!»' : 'Знаете ответ? Жмите «Ответить!» на телефоне'}</span>`;
     if (f && f._h !== fh) { if (S.act && !f._act && mute) SFX.buzz(); f._act = !!S.act; f._h = fh; f.innerHTML = fh; }
-    { const m = inn.querySelector('#qm'); if (m && c.qm && c.qm.k !== 'image') { const pz = !!S.act; if (m._pz !== pz) { m._pz = pz; pz ? pauseMedia(m) : playMedia(m); } } }
+    { const m = inn.querySelector('#qm'); if (m && c.qm && c.qm.k !== 'image') { const pz = !!S.act || !!S.hp; if (m._pz !== pz) { m._pz = pz; pz ? pauseMedia(m) : playMedia(m); } } }
     return;
   }
   if (S.ph === 'ans' && S.cur) {
@@ -603,6 +604,7 @@ function drawStage(root, S, snd) {
       const m = inn.querySelector('#am');
       if (m && m._mr !== S.mr && am.k !== 'image') { m._mr = S.mr; mountMedia(m, am, mute, S.id); m._snd = mute; } else if (m && m._snd !== mute) { m._snd = mute; setMute(m, mute); }
     }
+    { const m = inn.querySelector('#am'); if (m && am && am.k !== 'image') { const pz = !!S.hp; if (!!m._pz !== pz) { m._pz = pz; pz ? pauseMedia(m) : playMedia(m); } } }
     const gw = inn.querySelector('#gw'), gh = S.by ? `<span class="gain">+${nums(S.gain)} · ${esc(S.by)}</span>` : `<span class="gain no sm">без очков</span>`;
     if (gw && gw._h !== gh) { gw._h = gh; gw.innerHTML = gh; }
     return;
@@ -987,7 +989,7 @@ function renderLive(force) {
     $('bNext').onclick = () => nextAct()[1] && nextAct()[1]();
   }
   const [lbl, fn, sub] = nextAct();
-  const nb = $('bNext'); nb.innerHTML = esc(lbl) + (sub ? `<small style="display:block;font-size:12px;font-weight:700;opacity:.7;margin-top:2px">${esc(sub)}</small>` : ''); nb.disabled = !fn; nb.style.display = 'block';
+  const nb = $('bNext'); nb.innerHTML = esc(lbl) + (sub ? `<small style="display:block;font-size:12px;font-weight:700;opacity:.7;margin-top:2px">${esc(sub)}</small>` : ''); nb.disabled = !fn; nb.style.display = isQuiz(G) || (fn && (G.ph === 'lobby' || G.ph === 'board')) ? 'block' : 'none';
   $('ctl').innerHTML = ctlHtml(); bindCtl();
   $('tl').innerHTML = teamsHostHtml(); bindTeams();
   $('cd').textContent = G.code ? `${SHORT} · ${fmtCode(G.code)}` : 'подключаемся…';
@@ -1026,12 +1028,20 @@ function ctlHtml() {
       `<div class="mb">${R.cats.map((c, ci) => `<div class="r" style="grid-template-columns:1.4fr repeat(${n},minmax(0,1fr))"><span class="cn">${esc(c.n || '—')}</span>${c.qs.map((x, qi) => !validQ(x) ? '<span></span>' : `<button data-pk="${ci}.${qi}" class="${G.pl[keyOf(G, ci, qi)] ? 'pl' : ''}${G.cur && G.cur.ci === ci && G.cur.qi === qi ? ' cur' : ''}">${esc(R.vals[qi])}</button>`).join('')}</div>`).join('')}</div>`;
   }
   const hasM = !!(q && (G.ph === 'ans' ? mOk(q.am) && q.am.k !== 'image' : mOk(q.qm) && q.qm.k !== 'image'));
-  h += `<div class="ctlr"><button data-c="scores" class="${G.ov === 'scores' ? 'on' : ''}"${G.ph === 'lobby' || G.ph === 'final' ? ' disabled' : ''}>${ico('list', 18)}Счёт на экран</button>` +
-    (G.ph === 'cell' && q && mOk(q.qm) && q.qm.k !== 'image' ? `<button data-c="showQ" class="acc">${ico('play', 18)}Включить музыку</button>` : `<button data-c="replay"${hasM && (G.ph === 'q' || G.ph === 'ans') ? '' : ' disabled'}>${ico('replay', 18)}Ещё раз</button>`) +
+  const qMed = !!(q && mOk(q.qm) && q.qm.k !== 'image'), vid = qMed && q.qm.k === 'video';
+  let pb;
+  if (G.ph === 'cell' && q) pb = qMed ? `<button data-c="showQ" class="acc">${ico('play', 18)}${vid ? 'Включить видео' : 'Включить музыку'}</button>` : `<button data-c="showQ" class="acc">${ico('play', 18)}Показать вопрос</button>`;
+  else if ((G.ph === 'q' || G.ph === 'ans') && hasM) pb = `<button data-c="pause" class="acc">${ico(G.hp ? 'play' : 'pause', 18)}${G.hp ? 'Продолжить' : 'Пауза'}</button>`;
+  else pb = `<button class="acc" disabled>${ico('play', 18)}Включить музыку</button>`;
+  h += `<div class="ctlr">${pb}` +
+    `<button data-c="board"${G.ph === 'board' || G.ph === 'lobby' ? ' disabled' : ''}>${ico('grid', 18)}К табло</button>` +
+    `<button data-c="qrbig" class="${G.qrb ? 'on' : ''}">${ico('qr', 18)}QR-код</button>` +
+    `<button data-c="scores" class="${G.ov === 'scores' ? 'on' : ''}"${!MIX && (G.ph === 'lobby' || G.ph === 'final') ? ' disabled' : ''}>${ico('list', 18)}Рейтинг</button>` +
+    (G.ph === 'q' ? `<button data-c="reveal">${ico('check', 18)}Показать ответ</button>` : '') +
+    `<button data-c="replay"${hasM && (G.ph === 'q' || G.ph === 'ans') ? '' : ' disabled'}>${ico('replay', 18)}Ещё раз</button>` +
     `<button data-c="snd" class="${G.snd ? '' : 'on'}">${ico(G.snd ? 'vol' : 'mute', 18)}${G.snd ? 'Звук вкл.' : 'Звук выкл.'}</button>` +
-    `<button data-c="qr" class="${G.qrz ? 'on' : ''}">${ico('pencil', 18)}Код на табло</button><button data-c="qrbig" class="${G.qrb ? 'on' : ''}">${ico('qr', 18)}QR на экран</button>` +
-    `<button data-c="final"${G.ph === 'final' ? ' disabled' : ''}>${ico('trophy', 18)}Победители</button>` +
-    `<button data-c="board"${G.ph === 'board' || G.ph === 'lobby' ? ' disabled' : ''}>${ico('grid', 18)}К табло</button></div>`;
+    `<button data-c="qr" class="${G.qrz ? 'on' : ''}">${ico('pencil', 18)}Код на табло</button>` +
+    `<button data-c="final"${G.ph === 'final' ? ' disabled' : ''}>${ico('trophy', 18)}Победители</button></div>`;
   return h;
 }
 function ctlQuizHtml() {

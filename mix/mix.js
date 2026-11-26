@@ -204,6 +204,16 @@ const A = {
   /* переключение на любой раунд: текущий закрываем (счёт сохраняется), выбранный запускаем */
   go(i) { if (i === S.ri && (S.ph === 'round' || S.ph === 'starting')) return; if (S.ph === 'round' || S.ph === 'starting') A.finishRound(() => A.start(i)); else A.start(i); },
   ov(k) { S.ov = S.ov === k ? '' : k; pub(); },
+  /* рейтинг с учётом очков идущего раунда */
+  liveScore() {
+    if (S.ov === 'score') { S.ov = ''; pub(); return; }
+    const fr = $('rf'), ri = S.ri, r = S.rounds[ri];
+    const show = players => { if (players && r && r.k !== 'sm') { const m = {}; players.forEach(p => { if (!p || !p.id) return; m[p.id] = +p.score || 0; if (!S.names[p.id] && p.name) S.names[p.id] = p.name; }); S.res[ri] = m; S.tot = {}; Object.values(S.res).forEach(x => Object.keys(x).forEach(id => { S.tot[id] = (S.tot[id] || 0) + x[id]; })); } S.ov = 'score'; pub(); };
+    if (!(S.ph === 'round' || S.ph === 'starting') || !fr || !fr.contentWindow) return show(null);
+    let got = false; const h = e => { if (e.origin !== location.origin || !e.data || e.data.pbmix !== 'res') return; got = true; window.removeEventListener('message', h); show(e.data.players); };
+    window.addEventListener('message', h); fr.contentWindow.postMessage({ pbmix: 'req' }, location.origin);
+    setTimeout(() => { if (!got) { window.removeEventListener('message', h); show(null); } }, 2000);
+  },
   scoresNow() { if (S.ph === 'round' || S.ph === 'starting') A.finishRound(() => { S.ph = 'between'; pub(); }); else { S.ph = 'between'; S.ov = ''; built = false; pub(); } },
   final() { const f = () => { S.ph = 'final'; S.rg = ''; S.ov = ''; built = false; pub(); }; if (S.ph === 'round' || S.ph === 'starting') A.finishRound(f); else f(); }
 };
@@ -211,6 +221,7 @@ window.addEventListener('message', e => {
   if (VIEW !== 'host' || e.origin !== location.origin || !e.data || !S) return;
   if (e.data.pbmix === 'started' && (S.ph === 'starting' || S.ph === 'round') && e.data.gid) { if (S.rg !== e.data.gid) { S.rg = e.data.gid; S.ph = 'round'; pub(); } }
   if (e.data.pbmix === 'err') toast(e.data.msg || 'Ошибка раунда');
+  if (e.data.pbmix === 'ov' && e.data.k === 'score') A.liveScore();
 });
 let built = false;
 function renderLive(force) {
@@ -231,9 +242,9 @@ function renderLive(force) {
   }
   const run = S.ph === 'round' || S.ph === 'starting';
   $('ctl').innerHTML = `<div class="rtabs">${S.rounds.map((x, i) => `<button class="rt${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}">${gIco(x.k)}<span class="tx"><b>Раунд ${i + 1}</b><small>${esc(x.t)}</small></span>${i === S.ri && run ? '<span class="st live">идёт</span>' : S.done.indexOf(i) >= 0 ? '<span class="st">✓</span>' : ''}</button>`).join('')}</div>` +
-    `<div class="sctl"><div class="k" style="margin:12px 0 8px">Экран</div><div class="sg"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Общий счёт</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div></div>`;
+    `<div class="sctl"><div class="k" style="margin:12px 0 8px">Экран</div><div class="sg"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Рейтинг</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div></div>`;
   $('ctl').querySelectorAll('[data-go]').forEach(b => b.onclick = () => A.go(+b.dataset.go));
-  $('ctl').querySelectorAll('[data-ov]').forEach(b => b.onclick = () => A.ov(b.dataset.ov));
+  $('ctl').querySelectorAll('[data-ov]').forEach(b => b.onclick = () => b.dataset.ov === 'score' ? A.liveScore() : A.ov(b.dataset.ov));
   $('bFinal').onclick = A.final;
   const rank = Object.keys(S.names).map(id => ({ id, n: S.names[id], s: S.tot[id] || 0 })).sort((a, b) => b.s - a.s);
   $('tt').innerHTML = rank.length ? rank.map((p, i) => `<div><em class="muted" style="font-style:normal;width:18px">${i + 1}</em><span>${esc(p.n)}</span><b>${nums(p.s)}</b></div>`).join('') : '<p class="muted" style="margin:0;font-size:14px">Команды появятся, когда войдут по QR</p>';
