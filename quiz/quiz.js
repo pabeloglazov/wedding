@@ -44,7 +44,10 @@ const ACCENTS = ['#f2efe9', '#e2cd92', '#e8a0a8', '#9cc5a1', '#9db8e8', '#c7a4e8
 const BRAND = sub => window.PB_BRAND ? PB_BRAND.lockup(sub) : '<b>Beloglazov Event</b>';
 const MARK = n => window.PB_BRAND ? PB_BRAND.mark(n) : '';
 const BOTS = ['Аня', 'Максим К.', 'Оля', 'Дима', 'Лиза', 'Артём', 'Катя', 'Игорь', 'Маша', 'Саша', 'Вера', 'Паша'];
-const TYPES = { choice: 'Обычный', photo: 'Фото-вопрос', couple: 'Угадай ответ пары', number: 'Число' };
+const TYPES = { choice: 'Обычный', photo: 'Фото-вопрос', couple: 'Угадай ответ пары', number: 'Число', open: 'Открытый ответ' };
+const qPts = q => q && +q.pts > 0 ? +q.pts : 0;
+const ptsTxt = q => { const p = qPts(q); return (q.bonus ? 'Бонус · ' : '') + p + ' ' + plural(p, 'очко', 'очка', 'очков'); };
+const brk = (g, i) => g.qs.some(q => q && q.rb) ? !!(g.qs[i] && g.qs[i].rb) : (i + 1) % g.s.every === 0;
 const isCh = q => !!q && (q.type === 'choice' || q.type === 'photo');
 
 function coupleNames(s) { const p = String(s || '').split(/\s+(?:и|&|and|\+)\s+/i).map(x => x.trim()).filter(Boolean); return [p[0] || 'Жених', p[1] || 'Невеста']; }
@@ -394,13 +397,14 @@ function normQ(q) {
   delete q.oimg;
   if (typeof q.ok === 'number') q.ok = [q.ok];
   q.ok = (q.ok || []).filter(i => i >= 0 && i < q.opts.length);
-  if (q.type !== 'number') {
+  if (q.type !== 'number' && q.type !== 'open') {
     while (q.opts.length > 2 && !optFilled(q.opts[q.opts.length - 1]) && q.ok.indexOf(q.opts.length - 1) < 0) q.opts.pop();
     while (q.opts.length < 2) q.opts.push(O());
   }
   if (isCh(q) && !q.ok.length) q.ok = [0];
   if (!isCh(q)) q.ok = [];
   if (q.type !== 'photo') { delete q.aimg; delete q.blur; }
+  if (q.type === 'open') { q.opts = []; q.ok = []; q.ans = String(q.ans || ''); }
   return q;
 }
 function defaultCfg(blank) {
@@ -446,6 +450,7 @@ function factsToQs(facts, show) {
 function validQ(q) {
   if (!((q.text || '').trim() || q.img)) return false;
   if (q.type === 'number') return q.num !== '' && q.num != null && isFinite(+q.num) && (!q.rng || (hasRng(q) && +q.num2 >= +q.num));
+  if (q.type === 'open') return !!String(q.ans || '').trim();
   const f = q.opts.filter(optFilled).length;
   if (f < 2) return false;
   if (q.type === 'photo' && !q.img) return false;
@@ -456,6 +461,7 @@ function qIssue(q) {
   if (!((q.text || '').trim() || q.img)) return 'Добавьте текст вопроса или фото';
   if (q.type === 'photo' && !q.img) return 'Добавьте фото — это фото-вопрос';
   if (q.type === 'number') return q.num === '' || q.num == null || !isFinite(+q.num) ? (q.rng ? 'Укажите диапазон: от и до' : 'Укажите правильное число') : q.rng && !hasRng(q) ? 'Укажите, до какого числа засчитывать' : q.rng && +q.num2 < +q.num ? '«До» должно быть больше, чем «от»' : '';
+  if (q.type === 'open') return String(q.ans || '').trim() ? '' : 'Впишите правильный ответ — его покажем на экране';
   if (q.opts.filter(optFilled).length < 2) return 'Нужно минимум два варианта ответа';
   if (isCh(q) && !q.ok.some(i => optFilled(q.opts[i]))) return 'Отметьте правильный ответ — нажмите на букву';
   return '';
@@ -507,7 +513,7 @@ function newGame() {
   const qs = (GAME === 'fact' ? factsToQs(CFG.facts, CFG.s.show) : CFG.qs).filter(validQ).map(q => JSON.parse(JSON.stringify(q)));
   endNet();
   G = { id: uid(12), net: NET.ok, ts: Date.now(), code: '', rkey: uid(20), title: CFG.title, couple: CFG.couple, accent: CFG.accent, photo: CFG.photo || '',
-    wifi: CFG.wifi && CFG.wifi.ssid ? { ssid: CFG.wifi.ssid, pass: CFG.wifi.pass || '' } : null, mode: CFG.mode, s: Object.assign({}, CFG.s), qs,
+    wifi: CFG.wifi && CFG.wifi.ssid ? { ssid: CFG.wifi.ssid, pass: CFG.wifi.pass || '' } : null, mode: CFG.mode, s: Object.assign({}, CFG.s), qs, theme: CFG.theme || '', tn: (CFG.teams || []).slice(0, 12), aw: {},
     phase: 'lobby', qi: -1, ii: 0, t0: 0, t1: 0, players: {}, ans: {}, cpl: {}, prevRank: {}, banned: {}, final: false, ver: 0,
     demo: !unlocked(), cap: guestCap(), res: '', bots: !!CFG.bots && CFG.s.play !== 'teams' && !(GAME === 'fact' && CFG.s.show === 'stage') };
   if (GAME === 'fact') { G.s.every = 999; G.s.lastX2 = false; }
@@ -605,7 +611,12 @@ function okSet(g, i) {
   return [];
 }
 function scoreQuestion() {
-  const i = G.qi, q = G.qs[i], A = G.ans[i] || {}, dur = G.t1 - G.t0, m = mult(G, i);
+  const i = G.qi, q = G.qs[i], A = G.ans[i] || {}, dur = G.t1 - G.t0, m = mult(G, i), fx = qPts(q);
+  if (q.type === 'open') {
+    const aw = (G.aw && G.aw['q' + i]) || {};
+    Object.keys(G.players).forEach(id => { const p = G.players[id]; p.lv = null; p.gain = 0; p.last = 'none'; if (aw[id]) { p.gain = fx || 1; p.score += p.gain; p.last = 'ok'; p.ok++; } });
+    return;
+  }
   if (q.type === 'number') {
     const lo = +q.num, hi = hasRng(q) ? +q.num2 : lo, tol = Math.max(Math.abs((lo + hi) / 2) * .5, hi - lo, 1);
     let best = Infinity; Object.values(A).forEach(x => { best = Math.min(best, numErr(q, x.v)); });
@@ -628,9 +639,9 @@ function scoreQuestion() {
     p.last = x ? (ok.indexOf(x.o) >= 0 ? 'ok' : 'bad') : 'none';
     if (q.type === 'couple' && !ok.length) p.last = x ? 'nocpl' : 'none';
     if (p.last === 'ok') {
-      let g = G.s.speed ? 500 + Math.round(500 * Math.max(0, 1 - x.t / dur)) : 1000;
-      p.streak++; if (p.streak >= 3) g += 100 * Math.min(p.streak - 2, 3);
-      g = Math.round(g * m);
+      let g = fx || (G.s.speed ? 500 + Math.round(500 * Math.max(0, 1 - x.t / dur)) : 1000);
+      p.streak++; if (!fx && p.streak >= 3) g += 100 * Math.min(p.streak - 2, 3);
+      if (!fx) g = Math.round(g * m);
       p.best = Math.max(p.best, p.streak); p.ok++; p.times.push(x.t);
       p.gain = g; p.score += g;
     } else if (p.last !== 'nocpl') p.streak = 0;
@@ -645,6 +656,17 @@ function reveal() {
   G.phase = 'reveal';
   publish();
 }
+/* открытый вопрос (блиц): ведущий сам отмечает, кто ответил верно */
+function award(pid) {
+  if (!G || (G.phase !== 'reveal' && G.phase !== 'board')) return;
+  const i = G.qi, q = G.qs[i], p = G.players[pid];
+  if (!q || q.type !== 'open' || !p) return;
+  G.aw = G.aw || {}; const a = G.aw['q' + i] = G.aw['q' + i] || {}, v = qPts(q) || 1, rv = G.phase === 'reveal';
+  if (a[pid]) { delete a[pid]; p.score -= v; p.ok = Math.max(0, (p.ok || 0) - 1); if (rv) { p.gain = 0; p.last = 'none'; } }
+  else { a[pid] = 1; p.score += v; p.ok = (p.ok || 0) + 1; if (rv) { p.gain = v; p.last = 'ok'; } }
+  publish();
+}
+function renameP(pid, name) { name = String(name || '').trim().slice(0, 24); if (!G || !G.players[pid] || !name) return; G.players[pid].name = name; publish(); }
 function rescoreCouple() {
   if (!G.snap) return;
   const snap = JSON.parse(JSON.stringify(G.snap));
@@ -664,7 +686,7 @@ function next() {
   if (G.phase === 'reveal') {
     if (isLastQ(G, G.qi) && isStage(G)) { G.phase = 'final'; G.final = true; G.fts = now(); publish(); return; }
     if (isLastQ(G, G.qi)) { G.phase = 'board'; G.final = true; publish(); return; }
-    if ((G.qi + 1) % G.s.every === 0) { G.phase = 'board'; publish(); return; }
+    if (brk(G, G.qi)) { G.phase = 'board'; publish(); return; }
     startQuestion(G.qi + 1); return;
   }
   if (G.phase === 'board') { if (G.final) { G.phase = 'final'; G.fts = now(); publish(); saveResults(); } else startQuestion(G.qi + 1); }
@@ -698,7 +720,7 @@ function nextLabel0(g) {
     case 'lobby': return [n ? 'Начать игру' : 'Ждём гостей…', n + ' ' + grp + ' в игре'];
     case 'intro': { const E = entities(g); return g.ii < E.length - 1 ? ['Следующая ' + (g.s.play === 'teams' ? 'команда' : 'стол'), (g.ii + 2) + ' из ' + E.length] : ['Начать игру', 'все представлены']; }
     case 'question': return ['Показать ответ', 'сейчас идёт таймер'];
-    case 'reveal': return isLastQ(g, g.qi) ? ['Итоговая таблица', 'последний вопрос'] : ((g.qi + 1) % g.s.every === 0 ? ['Таблица лидеров', 'после ' + (g.qi + 1) + '-го вопроса'] : ['Следующий вопрос', (g.qi + 2) + ' из ' + g.qs.length]);
+    case 'reveal': return isLastQ(g, g.qi) ? ['Итоговая таблица', 'последний вопрос'] : (brk(g, g.qi) ? ['Таблица лидеров', 'после ' + (g.qi + 1) + '-го вопроса'] : ['Следующий вопрос', (g.qi + 2) + ' из ' + g.qs.length]);
     case 'board': return g.final ? ['Победители', 'финал · 3, 2, 1'] : ['Следующий вопрос', (g.qi + 2) + ' из ' + g.qs.length];
     case 'final': return ['Игра окончена', ''];
   }
@@ -724,6 +746,7 @@ function dist(g) {
 /* Готовые шаблоны: ?tpl=teens — квиз «Агент 3:16» для TEENS PARTY */
 function tplCfg(name) {
   if (name === 'feed') return tplFeed();
+  if (name === 'thanksgiving') return tplThanksgiving();
   if (name === 'agent') return tplAgent();
   if (name !== 'teens') return null;
   const C = (text, opts, ok, extra) => {
@@ -876,6 +899,74 @@ function tplFeed() {
     accent: '#fe2c55', photo: '', wifi: { ssid: '', pass: '' }, form: '', facts: [], qs, updated: Date.now() };
 }
 
+/* ?tpl=thanksgiving — «Большой квиз Дня благодарения»: 3 семьи, очки 1/2/3, блиц вслух */
+const TURKEY = '<svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+  [['#c8283f', -78], ['#ff7a1a', -52], ['#ffc145', -26], ['#c8283f', 0], ['#ff7a1a', 26], ['#ffc145', 52], ['#c8283f', 78]].map(([c, a]) => `<ellipse cx="110" cy="62" rx="21" ry="60" fill="${c}" transform="rotate(${a} 110 122)"/><ellipse cx="110" cy="74" rx="9" ry="34" fill="rgba(255,255,255,.18)" transform="rotate(${a} 110 122)"/>`).join('') +
+  '<ellipse cx="110" cy="132" rx="50" ry="46" fill="#7a4325"/><ellipse cx="110" cy="142" rx="32" ry="30" fill="#9a5a34"/>' +
+  '<circle cx="110" cy="86" r="27" fill="#8b4c2a"/><circle cx="100" cy="80" r="7" fill="#fff"/><circle cx="120" cy="80" r="7" fill="#fff"/><circle cx="101" cy="81" r="3.6" fill="#2a140f"/><circle cx="119" cy="81" r="3.6" fill="#2a140f"/>' +
+  '<path d="M103 92 L117 92 L110 104 Z" fill="#ffc145"/><path d="M114 98 q8 6 2 20 q-8 -4 -6 -14 Z" fill="#c8283f"/>' +
+  '<path d="M92 174 l-6 14 M92 174 l2 14 M92 174 l9 12 M128 174 l-9 12 M128 174 l-2 14 M128 174 l6 14" stroke="#ffc145" stroke-width="4" stroke-linecap="round"/></svg>';
+function tgTheme(box, g) {
+  const on = !!(g && g.theme === 'tg'), b = document.body;
+  if (box) box.classList.toggle('th-tg', on);
+  b.classList.toggle('th-tg', on && (b.classList.contains('solo-screen') || b.classList.contains('solo-play')));
+  if (on && !document.getElementById('tgfonts')) { const l = document.createElement('link'); l.id = 'tgfonts'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;700&family=Rubik:wght@400;500;600;700;800&display=swap'; document.head.appendChild(l); }
+}
+function tplThanksgiving() {
+  const C = (rn, pts, text, opts, ok, extra) => {
+    const right = opts[ok], o = opts.slice();
+    for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
+    return normQ(Object.assign({ type: 'choice', text, opts: o.map(O), ok: [o.indexOf(right)], rn, pts }, extra || {}));
+  };
+  const A = (yt, t0, t1) => ({ qm: { k: 'audio', yt, t0, t1 }, time: 35 });
+  const R1 = '🦃 Раунд 1 · История праздника', R2 = '🥧 Раунд 2 · Индейка и стол', R3 = '🎵 Раунд 3 · Российские хиты', R4 = '🎸 Раунд 4 · Американские хиты', R5 = '⚡ Раунд 5 · Блиц';
+  const B = (text, ans, extra) => normQ(Object.assign({ type: 'open', text, ans, rn: R5, pts: 1, time: 20 }, extra || {}));
+  const qs = [
+    C(R1, 1, 'В каком году прошёл первый День благодарения в Плимуте?', ['1621', '1492', '1620', '1776'], 0),
+    C(R1, 1, 'Как назывался корабль, на котором приплыли пилигримы?', ['Мэйфлауэр', 'Санта-Мария', 'Титаник', 'Виктория'], 0),
+    C(R1, 1, 'Какое индейское племя разделило с пилигримами первый праздник?', ['Вампаноаги', 'Апачи', 'Чероки', 'Сиу'], 0),
+    C(R1, 1, 'Сколько дней длился первый праздник?', ['3', '1', '7', '40'], 0),
+    C(R1, 1, 'Какой президент в 1863 году сделал День благодарения общенациональным праздником?', ['Авраам Линкольн', 'Джордж Вашингтон', 'Томас Джефферсон', 'Теодор Рузвельт'], 0),
+    C(R1, 1, 'Сара Хейл 17 лет добивалась национального праздника. Какую детскую песенку она написала?', ['Mary Had a Little Lamb', 'Twinkle, Twinkle, Little Star', 'Old MacDonald', 'Baa, Baa, Black Sheep'], 0),
+    C(R1, 1, 'Какой президент в 1939 году перенёс праздник на неделю раньше ради рождественских покупок?', ['Франклин Рузвельт', 'Джон Кеннеди', 'Рональд Рейган', 'Гарри Трумэн'], 0),
+    C(R1, 1, 'Когда отмечают День благодарения в США?', ['Четвёртый четверг ноября', 'Последний понедельник ноября', '25 ноября', 'Первая пятница ноября'], 0, { rb: 1 }),
+    C(R2, 1, 'Как по-английски называют самца индейки?', ['Tom', 'Jack', 'Bob', 'Gobbler King'], 0),
+    C(R2, 1, 'Как называется красный кожистый вырост под клювом индейки?', ['Серёжка (wattle)', 'Гребень', 'Бородка', 'Хохолок'], 0),
+    C(R2, 1, 'Умеют ли дикие индейки летать?', ['Да, рывками до ~80 км/ч', 'Нет, совсем', 'Только птенцы', 'Только вниз с дерева'], 0),
+    C(R2, 1, 'Кто из отцов-основателей считал индейку достойнее белоголового орлана?', ['Бенджамин Франклин', 'Джордж Вашингтон', 'Джон Адамс', 'Александр Гамильтон'], 0),
+    C(R2, 1, 'Как отличают спелую клюкву от неспелой?', ['Спелая подпрыгивает', 'По запаху', 'Спелая тонет', 'Спелая светится'], 0),
+    C(R2, 1, 'С какого года проводится парад Macy’s в Нью-Йорке?', ['1924', '1900', '1950', '1969'], 0),
+    C(R2, 1, 'Какая команда НФЛ играет на День благодарения почти каждый год с 1934 года?', ['Detroit Lions', 'San Francisco 49ers', 'New York Giants', 'Green Bay Packers'], 0),
+    C(R2, 1, 'Что президент США делает с индейкой перед праздником?', ['«Милует» её', 'Съедает её', 'Дарит Канаде', 'Отправляет в зоопарк'], 0, { rb: 1 }),
+    C(R3, 2, 'Угадай мелодию! Как называется песня?', ['Тучи', 'Тополиный пух', 'Кукла', 'Колечко'], 0, A('X5Z9-4JV99c', 18, 33)),
+    C(R3, 2, 'Угадай мелодию! Кто исполняет?', ['Мумий Тролль', 'Сплин', 'Би-2', 'Агата Кристи'], 0, A('SraTD8cpg0o', 0, 15)),
+    C(R3, 2, 'Угадай мелодию! Как называется песня?', ['Миллион алых роз', 'Айсберг', 'Позови меня с собой', 'Арлекино'], 0, A('At3Qo9n4_Uc', 13, 28)),
+    C(R3, 2, 'Угадай мелодию! Кто исполняет?', ['Земляне', 'Любэ', 'Машина времени', 'Песняры'], 0, A('iPIiMvyO-SQ', 0, 15)),
+    C(R3, 2, 'Угадай мелодию! Кто исполняет?', ['Леонид Агутин', 'Валерий Меладзе', 'Валерий Леонтьев', 'Филипп Киркоров'], 0, A('mlhfnvTmaek', 54, 68)),
+    C(R3, 2, 'Угадай мелодию! Как называется песня?', ['Районы-кварталы', 'Всё, что тебя касается', 'Напитки покрепче', 'До скорой встречи'], 0, A('is5iND3XNH0', 46, 61)),
+    C(R3, 2, 'С этой песней артист выиграл Евровидение. Кто это?', ['Дима Билан', 'Сергей Лазарев', 'Полина Гагарина', 'Алсу'], 0, A('uE9oiDOsEmU', 80, 95)),
+    C(R3, 2, 'Угадай мелодию! Как называется песня?', ['Конь', 'Комбат', 'Атас', 'Позови меня тихо по имени'], 0, Object.assign(A('LQDayLAfAHs', 36, 48), { rb: 1 })),
+    C(R4, 2, 'Угадай мелодию! Как называется песня?', ['Country Roads', 'Sweet Home Alabama', 'Hotel California', 'Born in the USA'], 0, A('1vrEljMfXYo', 62, 76)),
+    C(R4, 2, 'Угадай мелодию! Кто исполняет?', ['Pharrell Williams', 'Bruno Mars', 'Justin Timberlake', 'Ed Sheeran'], 0, A('ZbZSe6N_BXs', 33, 48)),
+    C(R4, 2, 'Угадай мелодию! Как называется песня?', ['Billie Jean', 'Thriller', 'Beat It', 'Bad'], 0, A('Zi_XLOBDo_Y', 0, 15)),
+    C(R4, 2, 'Угадай мелодию! Кто поёт в этой песне?', ['Bruno Mars', 'The Weeknd', 'Usher', 'Pharrell Williams'], 0, A('OPf0YbXqDm0', 0, 15)),
+    C(R4, 2, 'Угадай мелодию! Какая группа?', ['Backstreet Boys', 'NSYNC', 'Boyz II Men', 'Jonas Brothers'], 0, A('4fndeDfaWCg', 55, 70)),
+    C(R4, 2, 'Угадай мелодию! Как называется песня?', ['Don’t Stop Believin’', 'Livin’ on a Prayer', 'Eye of the Tiger', 'Final Countdown'], 0, A('1k8craCGpgs', 0, 15)),
+    C(R4, 2, 'Угадай мелодию! Кто исполняет?', ['Taylor Swift', 'Katy Perry', 'Selena Gomez', 'Ariana Grande'], 0, A('nfWlot6h_JM', 42, 57)),
+    C(R4, 2, 'Угадай мелодию! Как называется песня?', ['September', 'December', 'Celebration', 'Boogie Wonderland'], 0, A('Gs069dndIYk', 0, 15)),
+    C(R4, 3, 'Бонус! Кто исполняет?', ['Mariah Carey', 'Whitney Houston', 'Celine Dion', 'Christina Aguilera'], 0, Object.assign(A('yXQViqx6GMY', 47, 62), { bonus: 1, rb: 1 })),
+    B('Какой овощ чаще всего идёт на начинку праздничного пирога?', 'Тыква'),
+    B('Как зовут детёныша индейки по-английски?', 'Poult'),
+    B('В каком месяце День благодарения отмечают в Канаде?', 'В октябре'),
+    B('Какой штат выращивает больше всего индеек в США?', 'Миннесота'),
+    B('Что по-английски говорит индейка?', 'Gobble gobble'),
+    B('Как называется пятница после Дня благодарения?', 'Black Friday', { rb: 1 })
+  ];
+  return { id: 'tg' + new Date().getFullYear() + 'quiz', title: 'Большой квиз Дня благодарения', couple: '', mode: 'pub', theme: 'tg', teams: ['Семья 1', 'Семья 2', 'Семья 3'],
+    s: Object.assign({}, MODES.pub.s, { play: 'teams', tables: 3, time: 30, speed: false, change: false, lastX2: false, sound: true, every: 99 }), bots: false,
+    accent: '#ffc145', photo: '', wifi: { ssid: '', pass: '' }, form: '', facts: [], qs, updated: Date.now() };
+}
+
 /* ================= канал между вкладками одного устройства ================= */
 let ch = null; const handlers = [];
 try { ch = new BroadcastChannel('pbquiz2'); ch.onmessage = e => handlers.forEach(h => h(e.data)); } catch (e) {}
@@ -888,7 +979,7 @@ let REM = {}, ONLINE = {};
 const doneCmd = {};
 const coupleRoles = () => [...new Set(Object.values(REM).map(r => r.role).filter(r => r === 'groom' || r === 'bride'))];
 const hasCoupleDevices = () => coupleRoles().length > 0;
-function pubQs(g) { return g.qs.map((q, i) => ({ type: q.type, text: q.text || '', img: q.img || '', blur: q.blur ? 1 : 0, mk: mdOk(q.qm) ? q.qm.k : '', opts: (q.opts || []).map(o => ({ t: o.t || '', img: o.img || '' })), unit: q.unit || '', x2: mult(g, i) > 1 })); }
+function pubQs(g) { return g.qs.map((q, i) => ({ type: q.type, text: q.text || '', img: q.img || '', blur: q.blur ? 1 : 0, mk: mdOk(q.qm) ? q.qm.k : '', opts: (q.opts || []).map(o => ({ t: o.t || '', img: o.img || '' })), unit: q.unit || '', x2: mult(g, i) > 1, pts: qPts(q), rn: q.rn || '' })); }
 async function allocCode(gid) {
   for (let i = 0; i < 8; i++) {
     const c = String(100000 + Math.floor(Math.random() * 900000));
@@ -940,6 +1031,7 @@ function onCmd(k, c) {
   else if (c.a === 'qr') toggleQr();
   else if (c.a === 'snd') toggleSound();
   else if (c.a === 'kick') kick(String(c.p || ''));
+  else if (c.a === 'aw') award(String(c.p || ''));
   else if (c.a === 'cplset') coupleAnswer('host', G.qi, +c.o);
   else if (c.a === 'intro') startIntro();
 }
@@ -968,7 +1060,8 @@ function coreOf(g) {
   const c = (g.cpl && g.cpl[g.qi]) || {};
   return { id: g.id, phase: g.phase, qi: g.qi, ii: g.ii, t0: g.t0, t1: g.t1, nq: g.qs.length, title: g.title || '', couple: g.couple || '', accent: g.accent || '', final: !!g.final, code: g.code || '', res: g.res || '', demo: !!g.demo,
     s: { change: !!g.s.change, play: g.s.play, speed: !!g.s.speed, tables: g.s.tables || 10, show: g.s.show || '' },
-    ok: rev && q ? (q.type === 'number' ? (hasRng(q) ? { num: +q.num, num2: +q.num2 } : { num: +q.num }) : { set: okSet(g, g.qi), cpl: q.type === 'couple' ? { groom: c.groom == null ? -1 : c.groom, bride: c.bride == null ? -1 : c.bride, host: c.host == null ? -1 : c.host } : null }) : null,
+    theme: g.theme || '', tn: g.tn || [],
+    ok: rev && q ? (q.type === 'open' ? { ans: q.ans || '', set: [] } : q.type === 'number' ? (hasRng(q) ? { num: +q.num, num2: +q.num2 } : { num: +q.num }) : { set: okSet(g, g.qi), cpl: q.type === 'couple' ? { groom: c.groom == null ? -1 : c.groom, bride: c.bride == null ? -1 : c.bride, host: c.host == null ? -1 : c.host } : null }) : null,
     n: g.phase === 'lobby' ? 0 : Object.keys(g.players).length,
     intro: e ? { i: g.ii, of: E.length, pid: e.pid || '', table: e.table || 0, name: e.name } : null };
 }
@@ -976,7 +1069,7 @@ function scrOf(g) {
   const rev = g.phase === 'reveal' || g.phase === 'board' || g.phase === 'final';
   const v = JSON.parse(JSON.stringify(g));
   delete v.snap; delete v.rkey; delete v.banned;
-  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: mdOk(q.qm) ? q.qm : null, am: mdOk(q.am) ? q.am : null }; if (rev && i === g.qi) { o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; if (hasRng(q)) { o.rng = 1; o.num2 = +q.num2; } } return o; });
+  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: mdOk(q.qm) ? q.qm : null, am: mdOk(q.am) ? q.am : null, pts: qPts(q), bonus: q.bonus ? 1 : 0, rn: q.rn || '', rb: q.rb ? 1 : 0, ans: '' }; if (rev && i === g.qi) { o.ans = q.ans || ''; o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; if (hasRng(q)) { o.rng = 1; o.num2 = +q.num2; } } return o; });
   const a = {}; if (g.qi >= 0) a['q' + g.qi] = g.ans[g.qi] || {}; v.ans = a;
   const c = g.cpl[g.qi] || {};
   v.cpl = {}; if (g.qi >= 0) v.cpl['q' + g.qi] = rev ? c : { groom: c.groom != null ? 9 : null, bride: c.bride != null ? 9 : null };
@@ -990,7 +1083,8 @@ function fixScr(v) {
   Object.keys(v.players).forEach(k => { const p = v.players[k]; p.times = p.times || []; p.score = p.score || 0; });
   const a = {}; if (v.ans && v.ans['q' + v.qi]) a[v.qi] = v.ans['q' + v.qi]; v.ans = a;
   const c = {}; if (v.cpl && v.cpl['q' + v.qi]) c[v.qi] = v.cpl['q' + v.qi]; v.cpl = c;
-  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, rng: q.rng ? 1 : 0, num2: q.num2 == null ? null : q.num2, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: q.qm || null, am: q.am || null }; });
+  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, rng: q.rng ? 1 : 0, num2: q.num2 == null ? null : q.num2, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: q.qm || null, am: q.am || null, pts: q.pts || 0, bonus: q.bonus ? 1 : 0, rn: q.rn || '', rb: q.rb ? 1 : 0, ans: q.ans || '' }; });
+  v.aw = v.aw || {};
   return v;
 }
 function netPush(force) {
@@ -1016,7 +1110,7 @@ function pushScores() {
 function rvOf() {
   const q = G.qs[G.qi], A = (G.ans[G.qi] || {}), E = entities(G);
   return { phase: G.phase, qi: G.qi, nq: G.qs.length, next: nextLabel(G), title: G.title || '', code: G.code || '', qz: !!G.qrz, snd: G.s.sound !== false, md: hasMedia(), demo: !!G.demo, rtt: NET.rtt, res: G.res || '',
-    q: q ? { text: q.text || '', type: q.type, opts: q.opts.map(o => o.t || ''), ok: q.ok || [], num: q.num == null ? null : q.num, unit: q.unit || '' } : null,
+    q: q ? { text: q.text || '', type: q.type, opts: q.opts.map(o => o.t || ''), ok: q.ok || [], num: q.num == null ? null : q.num, unit: q.unit || '', ans: q.ans || '', pts: qPts(q) } : null, aw: (G.aw && G.aw['q' + G.qi]) || {},
     cpl: (G.cpl[G.qi]) || {}, roles: coupleRoles(), answered: Object.keys(A).length, n: Object.keys(G.players).length,
     online: Object.keys(ONLINE).length, canIntro: G.phase === 'lobby' && E.length > 0, play: G.s.play,
     intro: G.phase === 'intro' && E[G.ii] ? { i: G.ii, of: E.length, name: E[G.ii].name } : null,
@@ -1071,6 +1165,7 @@ function factTiles(q) {
 function heroCard() { return `<div class="hero" id="hero"><div class="hcard"><div class="hback"><span>?</span><em>Кто это?</em></div><div class="hfront"><div class="hph" id="hph"></div><div class="hnm"><small>Это</small><b id="hnm"></b></div></div></div></div>`; }
 function renderScreen(box, g, snd) {
   if (!box) return;
+  tgTheme(box, g);
   const key = scrKey(g), st = box._st || (box._st = {});
   if (key !== st.key || !box.firstChild) {
     const prevPhase = st.phase;
@@ -1106,7 +1201,7 @@ function buildScreen(box, g) {
       `<div class="stn"><b>${g.qs.length}</b><span>${plural(g.qs.length, 'удивительный факт', 'удивительных факта', 'удивительных фактов')} о гостях</span></div>` +
       `<div class="stq">${g.qs.slice(0, 7).map((q, i) => `<i style="animation-delay:${i * 120}ms">?</i>`).join('')}</div><p class="stp">Угадайте, о ком каждый</p></div>`;
   } else if (g.phase === 'lobby') {
-    h = `<div class="glow"></div><div class="sv"><div class="lob"><div class="left"><div class="ttl">${g.photo && IMG.get(g.photo) ? `<div class="cph" style="${bgUrl(g.photo)}"></div>` : ''}<div>${g.couple ? `<div class="kk">${esc(g.title)}</div><h1 class="cpl">${esc(g.couple)}</h1>` : `<h1>${esc(g.title)}</h1>`}</div></div>` +
+    h = `<div class="glow"></div><div class="sv"><div class="lob"><div class="left">${g.theme === 'tg' ? `<div class="tgturkey">${TURKEY}</div>` : ''}<div class="ttl">${g.photo && IMG.get(g.photo) ? `<div class="cph" style="${bgUrl(g.photo)}"></div>` : ''}<div>${g.couple ? `<div class="kk">${esc(g.title)}</div><h1 class="cpl">${esc(g.couple)}</h1>` : `<h1>${esc(g.title)}</h1>`}</div></div>` +
       `<div class="kk lcount">${g.s.play === 'teams' ? 'Команды' : 'В игре'} · <b style="color:var(--ink)" id="lcnt">0</b></div><div class="chips" id="chips"></div></div>` +
       `<div class="right"><div class="join"><div class="qr" id="lqr"></div><div class="jurl">${esc(SHORT.replace(/^https?:\/\//, ''))}</div><div class="jcode" id="lcode" ${g.code ? '' : 'style="visibility:hidden"'}><span>код</span><b>${fmtCode(g.code)}</b></div></div>${g.wifi ? `<div class="wifi"><div class="wq" id="wq"></div><div>Wi‑Fi<b>${esc(g.wifi.ssid)}</b>${g.wifi.pass ? 'пароль: ' + esc(g.wifi.pass) : ''}</div></div>` : ''}</div></div></div>`;
   } else if (g.phase === 'intro') {
@@ -1118,7 +1213,7 @@ function buildScreen(box, g) {
   } else if (g.phase === 'question' || g.phase === 'reveal') {
     const q = g.qs[g.qi], pic = isPicQ(q), hasMd = !q.fact && q.type !== 'photo' && (mdOk(q.qm) || mdOk(q.am)), img = !pic && !hasMd && q.img ? picHtml(q.img, 'qpic') : '';
     const [gn, bn] = coupleNames(g.couple);
-    const badge = (mult(g, g.qi) > 1 ? '<span class="x2">×2 очки</span>' : '') + (q.type === 'photo' ? '<span class="ctype">📷 Фото-вопрос</span>' : q.type === 'couple' ? '<span class="ctype">💍 Угадайте ответ пары</span>' : q.type === 'number' ? '<span class="ctype">🔢 Ответ — число</span>' : '');
+    const badge = (qPts(q) ? `<span class="x2 pts${q.bonus ? ' bonus' : ''}">${ptsTxt(q)}</span>` : mult(g, g.qi) > 1 ? '<span class="x2">×2 очки</span>' : '') + (q.rn ? `<span class="ctype">${esc(q.rn)}</span>` : '') + (q.type === 'open' ? '<span class="ctype">🗣 Блиц — отвечайте вслух</span>' : q.type === 'photo' ? '<span class="ctype">📷 Фото-вопрос</span>' : q.type === 'couple' ? '<span class="ctype">💍 Угадайте ответ пары</span>' : q.type === 'number' ? '<span class="ctype">🔢 Ответ — число</span>' : '');
     const stg = isStage(g);
     const head = `<div class="qtop2"><span class="n">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}</span>${q.fact ? '<span class="ctype">💡 Кто это?</span>' : badge}${stg ? '' : ringSvg}</div>`;
     const cst = q.type === 'couple' ? `<div class="cst" id="cst"><span data-r="groom">${esc(gn)} …</span><span data-r="bride">${esc(bn)} …</span></div><div class="cres" id="cres" style="display:none"></div>` : '';
@@ -1126,6 +1221,7 @@ function buildScreen(box, g) {
     if (q.fact && stg) body = `<div class="qbody fq stg"><div class="qleft"><div class="qtext">${esc(q.text)}</div></div>${heroCard()}</div>`;
     else if (q.fact) body = `<div class="qbody fq"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${factTiles(q)}</div>${heroCard()}</div>`;
     else if (q.type === 'photo') { const dur = Math.max(1000, g.t1 - g.t0); body = `<div class="qbody pq"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${tilesHtml(q, false)}</div><div class="pqw${q.blur ? ' bl' : ''}${g.phase === 'reveal' ? ' rv' : ''}" style="--dur:${dur}ms;--del:${g.phase === 'question' ? (g.t0 - now()) : 0}ms">${picHtml(q.img, 'qpic qa')}${q.aimg ? picHtml(q.aimg, 'qpic qb') : ''}${q.aimg ? '<span class="atag">Ответ</span>' : ''}</div></div>`; }
+    else if (q.type === 'open') body = `<div class="qtext" style="flex:none">${esc(q.text)}</div><div class="numq openq" id="openq"></div>`;
     else if (q.type === 'number') body = `<div class="qtext" style="flex:none">${esc(q.text)}</div>${img ? `<div class="qbody" style="grid-template-columns:1fr 1fr"><div class="numq" id="numq"></div>${img}</div>` : '<div class="numq" id="numq"></div>'}`;
     else if (img) body = `<div class="qbody"><div class="qleft"><div class="qtext">${esc(q.text)}</div>${cst}${tilesHtml(q, false)}</div>${img}</div>`;
     else body = `<div class="qtext"${pic ? ' style="flex:none;font-size:2.8em"' : ''}>${esc(q.text)}</div>${cst}${tilesHtml(q, pic)}`;
@@ -1149,11 +1245,12 @@ function buildScreen(box, g) {
       hs.slice(0, 12).map((x, i) => `<div style="animation-delay:${300 + i * 160}ms">${faceHtml(x.hp, x.nm, 'hf')}<b>${esc(x.nm)}</b></div>`).join('') + `</div><p class="stp">Спасибо, что вы с нами!</p></div>`;
   } else if (g.phase === 'final') {
     const tables = g.s.play === 'tables' && tableRank(g).length > 1;
-    const list = tables ? tableRank(g).map(t => ({ name: t.name, score: t.score, sub: 'средний балл' })) : ranked(g).map(p => ({ name: p.name, score: p.score, sub: 'очков' }));
+    const list = tables ? tableRank(g).map(t => ({ name: t.name, score: t.score, sub: 'средний балл' })) : ranked(g).map(p => ({ name: p.name, score: p.score, sub: plural(p.score, 'очко', 'очка', 'очков') }));
     const top = list.slice(0, 3), order = [top[1], top[0], top[2]], hs = [62, 86, 44], pl = [2, 1, 3];
-    h = `<div class="glow"></div><div class="sv"><div class="kk" style="text-align:center">${esc(g.couple)}</div><h1 style="text-align:center;font-size:3.2em;margin-bottom:0">${tables ? 'Лучшие столы' : g.qs[0] && g.qs[0].fact ? 'Лучше всех знают гостей' : 'Победители'}</h1><div class="pod">` +
-      order.map((p, i) => p ? `<div data-h="${hs[i]}" data-p="${pl[i]}"><div class="nm">${esc(p.name)}</div><div class="ps">${nums(p.score)} ${p.sub}</div><div class="b">${pl[i]}</div></div>` : '<div></div>').join('') +
-      `</div><div class="noms">${nominations(g).map(x => `<div><i>${x[0]}</i><span>${esc(x[1])}</span><b>${esc(x[2])}</b></div>`).join('')}</div></div>`;
+    h = `<div class="glow"></div><div class="sv"><div class="kk" style="text-align:center">${esc(g.couple)}</div><h1 style="text-align:center;font-size:3.2em;margin-bottom:0">${g.theme === 'tg' ? 'Главная индейка года' : tables ? 'Лучшие столы' : g.qs[0] && g.qs[0].fact ? 'Лучше всех знают гостей' : 'Победители'}</h1><div class="pod">` +
+      order.map((p, i) => p ? `<div data-h="${hs[i]}" data-p="${pl[i]}">${g.theme === 'tg' && pl[i] === 1 ? '<div class="tgcrown">🦃 Главная индейка года</div>' : ''}<div class="nm">${esc(p.name)}</div><div class="ps">${nums(p.score)} ${p.sub}</div><div class="b">${pl[i]}</div></div>` : '<div></div>').join('') +
+      `</div>${g.theme === 'tg' ? '' : `<div class="noms">${nominations(g).map(x => `<div><i>${x[0]}</i><span>${esc(x[1])}</span><b>${esc(x[2])}</b></div>`).join('')}</div>`}</div>` +
+      (g.theme === 'tg' ? `<div class="tgturkey fin">${TURKEY}</div><div class="tgburst">${Array.from({ length: 34 }, (_, k) => `<i style="left:${(k * 37) % 100}%;animation-delay:${5.2 + (k % 9) * .35}s;animation-duration:${3.2 + (k % 5) * .6}s;--r:${(k * 53) % 360}deg" class="l${k % 3}"></i>`).join('')}</div>` : '');
   }
   if (g && (g.phase === 'lobby' || g.phase === 'final' || g.phase === 'intro')) h += BRAND();
   box.innerHTML = h;
@@ -1227,6 +1324,17 @@ function updScreen(box, g, snd) {
   const ac = box.querySelector('#ansCnt'); if (ac) ac.textContent = isStage(g) ? '' : `Ответили ${a} из ${n}`;
   const fr = box.querySelector('#footR');
   const mw = box.querySelector('#mdw'); if (mw && rev && mdOk(q.am) && mw.dataset.s !== 'a') { mw.dataset.s = 'a'; mountMedia(mw, q.am, !!snd); }
+  if (q.type === 'open') {
+    const oq = box.querySelector('#openq'), aw = (g.aw && g.aw['q' + g.qi]) || {}, ids = Object.keys(aw).filter(id => g.players[id]), k = rev ? 'r:' + ids.sort().join(',') : 'q';
+    if (oq && oq.dataset.st !== k) {
+      oq.dataset.st = k;
+      oq.innerHTML = !rev ? '<div class="ph">Отвечайте вслух — ведущий засчитает верный ответ</div>' :
+        `<div class="ph">Правильный ответ</div><div class="big oans">${esc(q.ans || '')}</div>` + (ids.length ? `<div class="close3">${ids.map(id => `<div><small>Засчитано</small><b>${esc(g.players[id].name)}</b><em>+${qPts(q) || 1}</em></div>`).join('')}</div>` : '');
+    }
+    if (ac) ac.textContent = '';
+    if (fr) fr.textContent = '';
+    return;
+  }
   if (q.type === 'number') {
     const nq = box.querySelector('#numq');
     if (nq && nq.dataset.st !== (rev ? 'r' : 'q')) {
@@ -1298,6 +1406,7 @@ function phoneKey(g, cl) {
 }
 function renderPhone(box, g, cl) {
   if (!box) return;
+  tgTheme(null, g);
   const key = phoneKey(g, cl);
   if (key !== box.dataset.k || !box.firstChild) { box.dataset.k = key; buildPhone(box, g, cl); }
   updPhone(box, g, cl);
@@ -1319,6 +1428,7 @@ function buildPhone(box, g, cl) {
       if (g.phase === 'final') h = wait('<div class="kk">' + esc(g.couple) + '</div>', 'Игра завершена', 'Спасибо, что были с нами!');
       else h = `<div class="pv"><div class="pbrand">${MARK(40)}</div><div class="kk">${esc(g.couple)}</div><h2>${esc(g.title)}</h2><p class="sub">${teams ? 'Придумайте название команды' : 'Как вас зовут?'}</p>` +
         `<input class="pin" id="pName" maxlength="24" autocomplete="off" placeholder="${teams ? 'Название команды' : 'Ваше имя'}" value="${esc(cl.lastName || '')}">` +
+        (teams && g.tn && g.tn.length ? `<div class="tnc">${g.tn.map(t => `<button type="button" onclick="var i=document.getElementById('pName');i.value=this.textContent;i.focus()">${esc(t)}</button>`).join('')}</div>` : '') +
         (tables ? `<div class="lblc">Ваш стол</div><div class="tbls" id="pTbl">${Array.from({ length: g.s.tables || 10 }, (_, i) => `<button data-t="${i + 1}" class="${cl.table === i + 1 ? 'on' : ''}">${i + 1}</button>`).join('')}</div>` : '') +
         `<button class="pbtn acc" id="pJoin"${cl.joining ? ' disabled' : ''}>${cl.joining ? 'Входим…' : 'Войти в игру'}</button><p class="note">Приложение не нужно — всё работает в браузере</p><p class="note w" id="pErr"></p></div>`;
     } else if (g.phase === 'lobby') h = `<div class="pv">${head(g, me)}<div class="wait"><div class="big">✓</div><h2>${teams ? 'Команда в игре' : 'Вы в игре'}</h2><p class="sub">Смотрите на экран — скоро первый вопрос</p></div></div>`;
@@ -1328,9 +1438,10 @@ function buildPhone(box, g, cl) {
       h = `<div class="pv">${head(g, me)}<div class="wait">${mine ? '<div class="big" style="font-size:56px">🎉</div><h2>Сейчас представляют вас!</h2><p class="sub">Помашите залу 👋</p>' : `<div class="big" style="font-size:48px">🎤</div><h2>Знакомимся</h2><p class="sub">На экране: ${esc(i.name || '')}</p>`}</div></div>`;
     } else if (g.phase === 'question') {
       const q = g.qs[g.qi], pic = isPicQ(q), ppic = q.img && !pic ? picHtml(q.img, 'pimg' + (q.blur ? ' bl' : '')) : '';
-      const top = `<div class="pv${ppic ? ' wimg' : ''}">${head(g, me)}<div class="kk" style="text-align:left">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}${q.fact ? ' · кто это?' : mult(g, g.qi) > 1 ? ' · ×2 очки' : ''}</div><div class="pq">${esc(q.text)}</div>` +
+      const top = `<div class="pv${ppic ? ' wimg' : ''}">${head(g, me)}<div class="kk" style="text-align:left">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}${q.fact ? ' · кто это?' : qPts(q) ? ' · ' + ptsTxt(q) : mult(g, g.qi) > 1 ? ' · ×2 очки' : ''}</div><div class="pq">${esc(q.text)}</div>` +
         (q.type === 'couple' ? '<div class="hintc">💍 Угадайте, что ответила пара</div>' : '') + (q.mk || mdOk(q.qm) ? `<div class="hintc">${(q.mk || q.qm.k) === 'audio' ? '🎧 Слушайте — звук на большом экране' : '🎬 Смотрите видео на большом экране'}</div>` : '') + ppic + '<div class="tm"><i id="ptm" style="width:100%"></i></div>';
-      if (q.type === 'number') h = top + `<div class="numin"><input class="pin" id="pNum" inputmode="decimal" autocomplete="off" placeholder="Ваш ответ">${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}<button class="pbtn acc" id="pNumGo">Ответить</button></div><p class="note" id="pNote"></p></div>`;
+      if (q.type === 'open') h = top + '<div class="wait"><div class="big" style="font-size:52px">🗣</div><h2>Отвечайте вслух!</h2><p class="sub">Ведущий засчитает верный ответ</p></div></div>';
+      else if (q.type === 'number') h = top + `<div class="numin"><input class="pin" id="pNum" inputmode="decimal" autocomplete="off" placeholder="Ваш ответ">${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}<button class="pbtn acc" id="pNumGo">Ответить</button></div><p class="note" id="pNote"></p></div>`;
       else h = top + `<div class="ans${pic ? ' pic' : ''}" id="pAns">` + q.opts.map((o, i) => !optFilled(o) ? '' :
         `<button class="${CL[i]}" data-o="${i}">${pic ? `<span class="im" style="${bgUrl(o.img)}">${IMG.get(o.img) ? '' : `<em>${esc(initial(o.t))}</em>`}</span><span class="rw"><span class="l">${L[i]}</span><span>${esc(o.t)}</span></span>` : `<span class="l">${L[i]}</span><span>${esc(o.t)}</span>`}</button>`).join('') + '</div><p class="note" id="pNote"></p></div>';
     } else if (g.phase === 'reveal') {
@@ -1341,7 +1452,8 @@ function buildPhone(box, g, cl) {
       else if (st !== 'ok') sub = okS.length ? `Правильный ответ: ${okS.map(i => L[i] + ' — ' + esc(txt(i))).join(', ')}` : '';
       let title = st === 'ok' ? 'Верно!' : st === 'bad' ? 'Мимо' : st === 'nocpl' ? 'Пара не ответила' : 'Не успели';
       if (st === 'ok' && q.type === 'number') title = me.gain >= 1000 ? 'В точку!' : 'Близко!';
-      if (st === 'none' && mine) { title = 'Ответ опоздал'; sub = 'Он пришёл уже после окончания таймера — проверьте интернет'; }
+      if (q.type === 'open') { title = st === 'ok' ? 'Засчитано!' : 'Правильный ответ'; sub = `<b>${esc(q.ans || (g.ok && g.ok.ans) || '')}</b>`; }
+      else if (st === 'none' && mine) { title = 'Ответ опоздал'; sub = 'Он пришёл уже после окончания таймера — проверьте интернет'; }
       if (st === 'wait') h = `<div class="pv">${head(g, me)}<div class="wait"><div class="spin"></div><p class="sub">Подсчитываем очки…</p></div></div>`;
       else h = `<div class="pv">${head(g, me)}<div class="res ${st === 'ok' ? 'ok' : st === 'bad' ? 'bad' : 'none'}"><b>${title}</b>` +
         (st === 'ok' ? `<div class="g">+${nums(me.gain)}</div>${me.streak >= 3 ? `<div>🔥 серия ${me.streak} подряд</div>` : ''}` : '') + (sub ? `<small>${sub}</small>` : '') + '</div>' +
@@ -1539,9 +1651,9 @@ function viewPlayNet() {
     }
     cl.cur = () => {
       if (!C || !Q || gone) return null;
-      const qs = Q.map((q, i) => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', x2: !!q.x2, blur: !!q.blur, mk: q.mk || '',
+      const qs = Q.map((q, i) => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', x2: !!q.x2, blur: !!q.blur, mk: q.mk || '', pts: q.pts || 0, rn: q.rn || '', ans: i === C.qi && C.ok && C.ok.ans ? C.ok.ans : '',
         ok: i === C.qi && C.ok && C.ok.set ? C.ok.set : [], num: i === C.qi && C.ok && C.ok.num != null ? C.ok.num : null }; });
-      const g = { id: C.id, phase: C.phase, qi: C.qi, ii: C.ii, t0: C.t0, t1: C.t1, s: C.s || {}, title: C.title, couple: C.couple, final: C.final, res: C.res, players: {}, ans: {}, cpl: {}, qs, ok: C.ok, _intro: C.intro };
+      const g = { id: C.id, phase: C.phase, qi: C.qi, ii: C.ii, t0: C.t0, t1: C.t1, s: C.s || {}, title: C.title, couple: C.couple, final: C.final, res: C.res, players: {}, ans: {}, cpl: {}, qs, ok: C.ok, _intro: C.intro, theme: C.theme || '', tn: C.tn || [] };
       const cur = SC && SC.qi === C.qi;
       g._np = C.n || (SC && SC.n) || 0; g._rank = SC && SC.rank; g._trank = SC && SC.trank; g._tn = SC && SC.tn;
       g._ok = C.ok && C.ok.set ? C.ok.set : []; g._num = C.ok && C.ok.num != null ? C.ok.num : null; g._num2 = C.ok && C.ok.num2 != null ? C.ok.num2 : null;
@@ -1579,7 +1691,7 @@ function viewRemote() {
       const v = RV;
       if (!v) { $('rm').innerHTML = '<div class="cur"><div class="k">Пульт ведущего</div><div class="q">Ждём ноутбук ведущего… Держите пульт открытым на ноутбуке.</div></div>'; return; }
       const q = v.q, ph = { lobby: 'Лобби', intro: 'Знакомство', question: 'Идёт вопрос', reveal: 'Ответ', board: 'Таблица', final: 'Финал' }[v.phase] || '';
-      const okTxt = q ? (q.type === 'number' ? `✓ ${numTxt(q.num, q.rng ? q.num2 : null)} ${q.unit || ''}` : q.type === 'couple' ? '💍 правильный ответ даст пара' : '✓ ' + (q.ok || []).map(i => L[i] + ' — ' + (q.opts[i] || '')).join(', ')) : '';
+      const okTxt = q ? (q.type === 'open' ? '✓ ' + (q.ans || '') : q.type === 'number' ? `✓ ${numTxt(q.num, q.rng ? q.num2 : null)} ${q.unit || ''}` : q.type === 'couple' ? '💍 правильный ответ даст пара' : '✓ ' + (q.ok || []).map(i => L[i] + ' — ' + (q.opts[i] || '')).join(', ')) : '';
       const c = v.cpl || {};
       let h = `<div class="hd"><b>${esc(v.title)}</b>${v.code ? `<span class="tag">${fmtCode(v.code)}</span>` : ''}</div>` +
         `<div class="netline"><i class="${!NET.connected ? 'off' : v.rtt > 600 ? 'slow' : ''}"></i>${NET.connected ? 'На связи' : 'Нет связи'} · онлайн ${v.online} из ${v.n}${v.rtt ? ' · ноутбук ' + v.rtt + ' мс' : ''}</div>`;
@@ -1591,6 +1703,7 @@ function viewRemote() {
       if (q && q.type === 'couple' && (v.phase === 'question' || v.phase === 'reveal')) {
         h += `<div class="muted" style="font-size:12px;margin-top:8px">Жених: ${c.groom != null ? L[c.groom] : '—'} · Невеста: ${c.bride != null ? L[c.bride] : '—'}${!v.roles.length ? ' · телефоны пары не подключены — отметьте ответ сами:' : ''}</div><div class="cpl">${q.opts.map((o, i) => o ? `<button data-cpl="${i}" class="${c.host === i ? 'on' : ''}">${L[i]} · ${esc(o)}</button>` : '').join('')}</div>`;
       }
+      if (q && q.type === 'open' && (v.phase === 'reveal' || v.phase === 'board')) { const aw = v.aw || {}; h += `<div class="muted" style="font-size:12px;margin-top:8px">Кто ответил верно? Нажмите, чтобы засчитать:</div><div class="cpl">${v.players.map(p => `<button data-aw="${esc(p.id)}" class="${aw[p.id] ? 'on' : ''}">${aw[p.id] ? '✓' : '+'} ${esc(p.name)}</button>`).join('')}</div>`; }
       h += '</div>';
       if (v.demo) h += `<div class="demo">Демо-режим: до ${DEMO_MAX} телефонов гостей</div>`;
       const acts = [];
@@ -1605,6 +1718,7 @@ function viewRemote() {
       [...document.querySelectorAll('[data-a]')].forEach(b => b.onclick = () => cmd(b.dataset.a));
       [...document.querySelectorAll('[data-cp]')].forEach(b => b.onclick = () => { if (!b.disabled) cmd(b.dataset.cp); });
       [...document.querySelectorAll('[data-cpl]')].forEach(b => b.onclick = () => cmd('cplset', { o: +b.dataset.cpl }));
+      [...document.querySelectorAll('[data-aw]')].forEach(b => b.onclick = () => cmd('aw', { p: b.dataset.aw }));
       [...document.querySelectorAll('[data-k]')].forEach(b => b.onclick = () => { if (sure === b.dataset.k) { cmd('kick', { p: b.dataset.k }); sure = ''; } else { sure = b.dataset.k; setTimeout(() => { if (sure === b.dataset.k) { sure = ''; draw(); } }, 3000); } draw(); });
     }
     NET.subs.push(() => draw());
@@ -2020,7 +2134,8 @@ function confirmTwice(btn, label) { if (btn.dataset.sure) return true; const old
 function cardHtml(q, i) {
   const issue = qIssue(q), n = CFG.qs.length;
   let body = `<textarea class="inp" rows="2" placeholder="${q.type === 'couple' ? 'Например: «Кто первым написал сообщение?»' : 'Текст вопроса'}" data-f="text">${esc(q.text)}</textarea><div class="qimg">${imgSlot(q)}</div><input type="file" accept="image/*" class="qfile" hidden>`;
-  if (q.type === 'number') body += `<div class="nmode"><button data-nm="0" class="${q.rng ? '' : 'on'}">Точное число</button><button data-nm="1" class="${q.rng ? 'on' : ''}">Диапазон</button></div>` + (q.rng ?
+  if (q.type === 'open') body += `<div class="numrow"><input class="inp" data-f="ans" maxlength="80" placeholder="Правильный ответ — покажем на экране" value="${esc(q.ans || '')}"></div><div class="hint tipline">Гости отвечают вслух, ведущий отмечает на пульте, кто ответил верно.</div>`;
+  else if (q.type === 'number') body += `<div class="nmode"><button data-nm="0" class="${q.rng ? '' : 'on'}">Точное число</button><button data-nm="1" class="${q.rng ? 'on' : ''}">Диапазон</button></div>` + (q.rng ?
     `<div class="numrow rng"><span class="nl">от</span><input class="inp" data-f="num" inputmode="decimal" placeholder="10" value="${esc(q.num == null ? '' : q.num)}"><span class="nl">до</span><input class="inp" data-f="num2" inputmode="decimal" placeholder="15" value="${esc(q.num2 == null ? '' : q.num2)}"><input class="inp" data-f="unit" placeholder="ед." maxlength="16" value="${esc(q.unit || '')}"></div><div class="hint tipline">Любой ответ внутри диапазона — полные 1000 очков. Чем дальше за его границами — тем меньше.</div>` :
     `<div class="numrow"><input class="inp" data-f="num" inputmode="decimal" placeholder="Правильное число" value="${esc(q.num == null ? '' : q.num)}"><input class="inp" data-f="unit" placeholder="ед., напр. мес." maxlength="16" value="${esc(q.unit || '')}"></div>`);
   else {
@@ -2031,9 +2146,10 @@ function cardHtml(q, i) {
   }
   if (q.type === 'photo') body += `<div class="pqx"><div class="lbl">Фото-ответ <span class="muted">· по желанию</span> ${tip('Откроется на экране вместе с правильным ответом — например, то же фото целиком или фото героя сейчас.')}</div><div class="qimg aimg">${aimgSlot(q)}</div><input type="file" accept="image/*" class="afile" hidden>` +
     `<label class="sw">Размыть фото — проясняется по таймеру<input type="checkbox" data-blur${q.blur ? ' checked' : ''}></label></div>`;
-  if (q.type !== 'photo') body += mdOk(q.qm) || mdOk(q.am) || q._mo ? `<div class="mdx"><div class="lbl">Видео или аудио ${tip('Ссылка YouTube работает везде. Файл (до 80 МБ) хранится на этом устройстве — показывайте экран с этого же ноутбука. Фрагмент: с какой и по какую секунду играть.')}</div><div class="mdg">${mdSlot(q, 'qm', 'В вопросе')}${mdSlot(q, 'am', 'В ответе')}</div></div>` : '<button class="btn ghost sm mdadd" data-mdopen>🎬 Видео или аудио</button>';
+  if (qPts(q)) body += `<div class="numrow" style="margin-top:8px"><span class="nl">Очки за верный ответ</span><input class="inp" data-f="pts" inputmode="numeric" style="max-width:90px" value="${esc(q.pts)}"></div>`;
+  if (q.type !== 'photo' && q.type !== 'open') body += mdOk(q.qm) || mdOk(q.am) || q._mo ? `<div class="mdx"><div class="lbl">Видео или аудио ${tip('Ссылка YouTube работает везде. Файл (до 80 МБ) хранится на этом устройстве — показывайте экран с этого же ноутбука. Фрагмент: с какой и по какую секунду играть.')}</div><div class="mdg">${mdSlot(q, 'qm', 'В вопросе')}${mdSlot(q, 'am', 'В ответе')}</div></div>` : '<button class="btn ghost sm mdadd" data-mdopen>🎬 Видео или аудио</button>';
   if (issue) body += `<div class="hint w">⚠ ${esc(issue)}</div>`;
-  return `<div class="qcard${issue ? ' warn' : ''}" data-i="${i}"><div class="qtop"><span class="grip qg" title="Перетащить вопрос">${ICON.grip}</span><span class="qnum">${i + 1}</span><div class="seg">${Object.keys(TYPES).map(t => `<button data-t="${t}" class="${q.type === t ? 'on' : ''}">${TYPES[t]}${t === 'couple' && !can('couple') ? '<em class="lk sm">' + ICON_LOCK + '</em>' : ''}</button>`).join('')}</div><button class="x2b${q.x2 ? ' on' : ''}" data-x2 title="Двойные очки">×2</button>` +
+  return `<div class="qcard${issue ? ' warn' : ''}" data-i="${i}"><div class="qtop"><span class="grip qg" title="Перетащить вопрос">${ICON.grip}</span><span class="qnum">${i + 1}</span><div class="seg">${Object.keys(TYPES).filter(t => t !== 'open' || q.type === 'open').map(t => `<button data-t="${t}" class="${q.type === t ? 'on' : ''}">${TYPES[t]}${t === 'couple' && !can('couple') ? '<em class="lk sm">' + ICON_LOCK + '</em>' : ''}</button>`).join('')}</div><button class="x2b${q.x2 ? ' on' : ''}" data-x2 title="Двойные очки">×2</button>` +
     `<div class="qtools">${qTip(q)}<button class="ic" data-a="dup" title="Копия">⧉</button><button class="ic" data-a="del" title="Удалить вопрос">${ICON.trash}</button></div></div>${body}</div>`;
 }
 /* перетаскивание за ручку — мышью и пальцем */
@@ -2301,9 +2417,14 @@ function renderLive() {
   else if (G.phase === 'final') cur = `<div class="k">Финал</div><div class="q">Победители на экране. Спасибо за игру!</div>` + '<div class="links" style="margin-top:6px">' + (!can('keepsake') ? '<button class="btn ghost sm" id="bResL">💌 Итоги для пары ' + lockTag('keepsake') + '</button>' : G.res ? '<button class="btn gold sm" id="bRes">💌 Итоги для пары</button>' : G.net ? '<span class="muted" style="font-size:13px">Готовим итоги для пары…</span>' : '') +
       '<button class="btn ghost sm" id="bXls">⬇ Excel ' + lockTag('excel') + '</button></div>';
   else if (q) {
-    const okT = q.type === 'number' ? `✓ ${numTxt(q.num, hasRng(q) ? q.num2 : null)} ${esc(q.unit || '')}` : q.type === 'couple' ? '💍 ответ даст пара' : '✓ ' + q.ok.map(i => L[i] + ' — ' + esc(q.opts[i].t || 'фото')).join(', ');
+    const okT = q.type === 'open' ? '✓ ' + esc(q.ans || '') : q.type === 'number' ? `✓ ${numTxt(q.num, hasRng(q) ? q.num2 : null)} ${esc(q.unit || '')}` : q.type === 'couple' ? '💍 ответ даст пара' : '✓ ' + q.ok.map(i => L[i] + ' — ' + esc(q.opts[i].t || 'фото')).join(', ');
     if (q.fact) cur = `<div class="k">Факт ${G.qi + 1} из ${G.qs.length}</div><div class="q">${esc(q.text)}</div><div class="a">✓ ${esc((q.opts[q.ok[0]] || {}).t || '')}</div>`;
-    else cur = `<div class="k">Вопрос ${G.qi + 1} из ${G.qs.length}${G.phase === 'board' ? ' · таблица' : ''}${mult(G, G.qi) > 1 ? ' · ×2' : ''}</div><div class="q">${esc(q.text)}</div><div class="a">${okT}</div>`;
+    else cur = `<div class="k">Вопрос ${G.qi + 1} из ${G.qs.length}${G.phase === 'board' ? ' · таблица' : ''}${qPts(q) ? ' · ' + ptsTxt(q) : mult(G, G.qi) > 1 ? ' · ×2' : ''}</div><div class="q">${esc(q.text)}</div><div class="a">${okT}</div>`;
+    if (q.type === 'open' && (G.phase === 'question' || G.phase === 'reveal' || G.phase === 'board')) {
+      const aw = (G.aw && G.aw['q' + G.qi]) || {};
+      cur += G.phase === 'question' ? '<div class="muted" style="font-size:12px;margin-top:8px">Блиц: команды отвечают вслух. Покажите ответ — и отметьте, кто ответил верно.</div>' :
+        `<div class="muted" style="font-size:12px;margin-top:8px">Кто ответил верно? Нажмите — команде добавится ${ptsTxt(q).replace('Бонус · ', '')}:</div><div class="cpl">${ranked().map(p => `<button data-aw="${esc(p.id)}" class="${aw[p.id] ? 'on' : ''}">${aw[p.id] ? '✓' : '+'} ${esc(p.name)}</button>`).join('')}</div>`;
+    }
     if (q.type === 'couple' && (G.phase === 'question' || G.phase === 'reveal')) {
       const [gn, bn] = coupleNames(G.couple), t = i => i != null ? L[i] : '—';
       cur += `<div class="muted" style="font-size:12px;margin-top:8px">${esc(gn)}: ${t(c.groom)} · ${esc(bn)}: ${t(c.bride)}${!hasCoupleDevices() ? ' · телефоны пары не подключены — отметьте ответ пары:' : ' · или отметьте сами:'}</div><div class="cpl">${q.opts.map((o, i) => optFilled(o) ? `<button data-cpl="${i}" class="${c.host === i ? 'on' : ''}">${L[i]} · ${esc(o.t || 'фото')}</button>` : '').join('')}</div>`;
@@ -2311,10 +2432,18 @@ function renderLive() {
   }
   $('cur').innerHTML = cur;
   $('cur').querySelectorAll('[data-cpl]').forEach(b => b.onclick = () => coupleAnswer('host', G.qi, +b.dataset.cpl));
+  $('cur').querySelectorAll('[data-aw]').forEach(b => b.onclick = () => award(b.dataset.aw));
   if ($('bRes')) $('bRes').onclick = resultsMenu;
   if ($('bResL')) $('bResL').onclick = () => upsell('keepsake');
   if ($('bXls')) $('bXls').onclick = () => can('excel') ? exportXls() : upsell('excel');
-  $('plist').innerHTML = ranked().map((p, i) => `<div class="p"><span class="muted" style="width:20px">${i + 1}</span><span class="dot ${A[p.id] && G.phase === 'question' ? 'on' : p.net && G.net && !ONLINE[p.id] ? 'off' : ''}"></span><b>${esc(p.name)}${p.id === 'me' ? ' (вы)' : ''}${p.table ? ` <small>стол ${p.table}</small>` : ''}</b><span>${nums(p.score)}</span><button class="kick${sureKick === p.id ? ' sure' : ''}" data-kick="${esc(p.id)}" title="Убрать из игры">${sureKick === p.id ? 'Убрать?' : '✕'}</button></div>`).join('') || '<div class="p muted">Пока никого</div>';
+  $('plist').innerHTML = ranked().map((p, i) => `<div class="p"><span class="muted" style="width:20px">${i + 1}</span><span class="dot ${A[p.id] && G.phase === 'question' ? 'on' : p.net && G.net && !ONLINE[p.id] ? 'off' : ''}"></span><b>${esc(p.name)}${p.id === 'me' ? ' (вы)' : ''}${p.table ? ` <small>стол ${p.table}</small>` : ''}</b>${G.s.play === 'teams' ? `<button class="kick ren" data-ren="${esc(p.id)}" title="Переименовать команду">✎</button>` : ''}<span>${nums(p.score)}</span><button class="kick${sureKick === p.id ? ' sure' : ''}" data-kick="${esc(p.id)}" title="Убрать из игры">${sureKick === p.id ? 'Убрать?' : '✕'}</button></div>`).join('') || '<div class="p muted">Пока никого</div>';
+  $('plist').querySelectorAll('[data-ren]').forEach(b => b.onclick = () => {
+    const id = b.dataset.ren, row = b.closest('.p'), nm = row && row.querySelector('b'); if (!nm || !G.players[id]) return;
+    nm.innerHTML = `<input class="inp" style="padding:4px 8px;font-size:14px" maxlength="24" value="${esc(G.players[id].name)}">`; b.style.display = 'none';
+    const inp = nm.querySelector('input'); inp.focus(); inp.select();
+    let done = false; const fin = ok => { if (done) return; done = true; if (ok) renameP(id, inp.value); else render(); };
+    inp.onkeydown = e => { if (e.key === 'Enter') fin(true); else if (e.key === 'Escape') fin(false); }; inp.onblur = () => fin(true);
+  });
   $('plist').querySelectorAll('[data-kick]').forEach(b => b.onclick = () => { const id = b.dataset.kick; if (sureKick === id) { sureKick = ''; kick(id); } else { sureKick = id; setTimeout(() => { if (sureKick === id) { sureKick = ''; render(); } }, 3000); render(); } });
   renderNetLine();
   renderScreen($('stg'), G, soundHere());
@@ -2408,7 +2537,7 @@ function bootHost() {
     updScreen($('stg'), G, soundHere()); updPhone($('ph'), G, me);
     if (!soundHere() && Date.now() - scrAlive > 4000 && scrAlive) { scrAlive = 0; render(); }
   }, 250);
-  window.__quiz = { get g() { return G; }, next, cfg: () => CFG, net: NET, acc: ACC, kick, startIntro, coupleAnswer };
+  window.__quiz = { get g() { return G; }, next, cfg: () => CFG, net: NET, acc: ACC, kick, startIntro, coupleAnswer, newGame, award, renameP };
   IMG.ready.then(() => {
     render();
     netReady.then(ok => {
@@ -2417,6 +2546,7 @@ function bootHost() {
       if (DEMO_GO && !G) { newGame(); window.scrollTo(0, 0); }
       accLoad().then(() => {
         if (G) { if (unlocked() && (G.demo || G.cap !== guestCap())) { G.demo = false; G.cap = guestCap(); G.capHit = 0; publish(); } return; }
+        if (TPL) STORE.save();
         renderTop(); if (edBuilt) { if (GAME === 'fact') paintShows(); else paintModes(); paintDesign(); paintForm(); paintQs(); const ac = document.querySelector('[data-add=couple]'); if (ac) ac.innerHTML = '+ Угадай ответ пары' + lockTag('couple'); } const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
         if (wsKey() && ok && OPEN && OPEN !== CFG.id) { STORE.open(OPEN).then(c => { CFG = c; ls('set', KEY_CFG, CFG); renderEditor(); window.scrollTo(0, 0); STORE.synced = 'ok'; paintSync(); }, () => toast('Не получилось открыть игру')); }
         else if (wsKey() && ok) {

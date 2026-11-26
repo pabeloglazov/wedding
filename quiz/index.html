@@ -679,12 +679,56 @@ body.solo-play #ph>.pv{flex:1}
 .lt .fph.has{border-style:solid}
 .lt .fcin{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
 .lt .fcin textarea{resize:vertical;font-family:inherit}
+/* ===== тема «День благодарения» (?tpl=thanksgiving) ===== */
+.stage.th-tg{--hf:Unbounded,Rubik,system-ui,sans-serif;--gold:#ffc145;--gold2:#ffc145;--g1:#ffd36b;--g2:#e89b1c;--gink:#2a140f;--gsoft:rgba(255,193,69,.16);--a:#ff7a1a;--b:#c8283f;--c:#b7791f;--d:#6d7d2c;--ok:#3fae6a;--bad:#c8283f;--ink:#fff6e8;--muted:#dcc3aa;
+  font-family:Rubik,system-ui,sans-serif;background:radial-gradient(ellipse at 50% 30%,#3a1c14,#2a140f 75%);isolation:isolate}
+.stage.th-tg:before,.stage.th-tg:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-repeat:repeat}
+.stage.th-tg:before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23ff7a1a' transform='translate%2840 30%29 rotate%2820 50 50%29 scale%280.55%29'/%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23ffc145' transform='translate%28300 120%29 rotate%28-35 50 50%29 scale%280.42%29'/%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23c8283f' transform='translate%28470 330%29 rotate%2860 50 50%29 scale%280.5%29'/%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23ff7a1a' transform='translate%28130 380%29 rotate%28-15 50 50%29 scale%280.38%29'/%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23ffc145' transform='translate%28380 500%29 rotate%2835 50 50%29 scale%280.32%29'/%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23c8283f' transform='translate%28520 40%29 rotate%28-60 50 50%29 scale%280.3%29'/%3E%3C/svg%3E");background-size:40cqw;opacity:.42;animation:tgFall1 46s linear infinite}
+.stage.th-tg:after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900' viewBox='0 0 900 900'%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23c8283f' transform='translate%28120 90%29 rotate%2840 50 50%29 scale%280.9%29'/%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23ff7a1a' transform='translate%28600 260%29 rotate%28-20 50 50%29 scale%280.75%29'/%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23ffc145' transform='translate%28320 620%29 rotate%2875 50 50%29 scale%280.85%29'/%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23ff7a1a' transform='translate%28760 700%29 rotate%28-50 50 50%29 scale%280.6%29'/%3E%3C/svg%3E");background-size:64cqw;opacity:.22;filter:blur(1.5px);animation:tgFall2 78s linear infinite}
+@keyframes tgFall1{to{background-position:8cqw 40cqw}}
+@keyframes tgFall2{to{background-position:-12cqw 64cqw}}
+.stage.th-tg .glow{background:radial-gradient(ellipse at 15% 0%,rgba(255,122,26,.18),transparent 55%)}
+.stage.th-tg .sv h1,.stage.th-tg .qtext,.stage.th-tg .intro .nm,.stage.th-tg .pod .nm,.stage.th-tg .numq .big{font-family:Unbounded,Rubik,sans-serif;font-stretch:normal;letter-spacing:0}
+.stage.th-tg .sv h1{color:#ffc145;font-weight:700;text-transform:none;font-size:3.2em}
+.stage.th-tg .lob h1{font-size:3.4em;line-height:1.08}
+.stage.th-tg .qtext{font-weight:500;font-size:2.5em}
+.stage.th-tg .qtop2 .n{color:#ffc145}
+.stage.th-tg .x2.pts{background:#c8283f;color:#fff}
+.stage.th-tg .x2.pts.bonus{background:linear-gradient(90deg,#c8283f,#ff7a1a);animation:tgPulse 1.2s ease-in-out infinite}
+@keyframes tgPulse{50%{transform:scale(1.08)}}
+.stage.th-tg .tile{box-shadow:0 .5em 1.4em rgba(0,0,0,.25)}
+.stage.th-tg .tiles.rev .tile{opacity:.18;filter:grayscale(.85)}
+.stage.th-tg .tiles.rev .tile.ok{opacity:1;filter:none;background:#3fae6a;box-shadow:0 0 0 .18em #fff6e8,0 0 2.4em rgba(63,174,106,.6)}
+.stage.th-tg .brow .pl,.stage.th-tg .close3 em{color:#ffc145}
+.stage.th-tg .numq .big.oans{color:#3fae6a;font-size:5em;text-align:center;line-height:1.05;max-width:90%}
+.stage.th-tg .numq .ph{color:#dcc3aa}
+.stage.th-tg .close3 div,.stage.th-tg .brow{background:rgba(255,193,69,.08);border-color:rgba(255,193,69,.2)}
+.tgturkey{width:11em;margin:0 0 .4em -.4em;animation:tgBob 3s ease-in-out infinite;transform-origin:50% 90%}
+.tgturkey svg{display:block;width:100%;height:auto;filter:drop-shadow(0 .6em 1.2em rgba(0,0,0,.4))}
+.tgturkey.fin{position:absolute;left:3cqw;bottom:2.5cqw;width:13cqw;margin:0;z-index:2}
+@keyframes tgBob{50%{transform:rotate(-4deg) translateY(-.2em)}}
+.tgcrown{background:#c8283f;color:#fff;border-radius:999px;padding:.25em .9em;font-weight:800;font-size:1em;margin-bottom:.5em;white-space:nowrap;box-shadow:0 .4em 1em rgba(0,0,0,.3)}
+.tgburst{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+.tgburst i{position:absolute;top:-6cqw;width:3.4cqw;height:3.4cqw;background:center/contain no-repeat;animation:tgDrop 4s linear both;opacity:0}
+.tgburst i.l0{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23ff7a1a'/%3E%3C/svg%3E")}
+.tgburst i.l1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23ffc145'/%3E%3C/svg%3E")}
+.tgburst i.l2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 4 L58 28 L74 20 L70 40 L92 37 L79 52 L90 60 L63 65 L67 88 L53 76 L52 98 L48 98 L47 76 L33 88 L37 65 L10 60 L21 52 L8 37 L30 40 L26 20 L42 28 Z' fill='%23c8283f'/%3E%3C/svg%3E")}
+@keyframes tgDrop{0%{opacity:0;transform:translateY(0) rotate(var(--r))}8%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translate(4cqw,62cqw) rotate(calc(var(--r) + 540deg))}}
+body.solo-screen.th-tg{background:#2a140f}
+body.solo-play.th-tg{--cream:#2a140f;--cink:#fff6e8;--cmuted:#dcc3aa;--a:#ff7a1a;--b:#c8283f;--c:#b7791f;--d:#6d7d2c;--ok:#3fae6a;font-family:Rubik,system-ui,sans-serif;background:radial-gradient(ellipse at 50% 0%,#3a1c14,#2a140f 70%) fixed}
+body.solo-play.th-tg .pv h2{font-family:Unbounded,Rubik,sans-serif;color:#ffc145}
+body.solo-play.th-tg .pbtn.acc{background:#ff7a1a;color:#fff}
+.tnc{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+.tnc button{border:1.5px solid rgba(255,193,69,.5);background:rgba(255,193,69,.1);color:#ffc145;border-radius:999px;padding:8px 14px;font-weight:800;font-size:14px}
+.plist .kick.ren{font-size:14px}
+.stage.th-tg .qbody.md .qtext{font-size:2em}.stage.th-tg .qbody.md .tile{font-size:1.25em;padding:.6em 1em}
+@media (prefers-reduced-motion:reduce){.stage.th-tg:before,.stage.th-tg:after,.tgturkey,.tgburst,.x2.pts.bonus{animation:none!important}.tgburst{display:none}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=36"></script>
+<script src="quiz.js?v=37"></script>
 </body>
 </html>
