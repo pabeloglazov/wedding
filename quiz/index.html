@@ -82,13 +82,16 @@ select.inp{appearance:none;-webkit-appearance:none}
 .mode span{font-size:12px;color:var(--muted);line-height:1.35;display:block}
 .mode i{font-style:normal;font-size:22px}
 .mode.on{border-color:var(--gold);background:#232322}
-.lbl{font-size:12px;color:var(--muted);font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin:16px 0 8px}
-.tune{margin-top:16px;border:1.5px solid var(--gsoft);background:var(--gsoft);border-radius:16px;padding:0 14px}
+.lbl{font-size:12px;color:var(--muted);font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin:18px 0 10px;display:flex;align-items:center;gap:8px;line-height:20px}
+.lbl .tip{width:20px;height:20px}
+.tune{margin-top:14px;border:1.5px solid var(--gsoft);background:var(--gsoft);border-radius:16px;padding:0 14px}
 .tune summary{cursor:pointer;color:var(--ink);font-weight:800;font-size:15px;list-style:none;display:flex;align-items:center;gap:12px;padding:14px 0}
 .tune summary::-webkit-details-marker{display:none}
 .tune summary span:first-child{width:34px;height:34px;border-radius:10px;background:var(--gold);display:grid;place-items:center;font-size:17px;flex:none}
 .tune summary small{display:block;font-size:12px;color:var(--muted);font-weight:600}
-.tune summary .chev{margin-left:auto;color:var(--gold);font-size:18px;transition:transform .2s}
+.tune summary .chev{margin-left:auto;color:var(--gold);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.06);display:grid;place-items:center;flex:none;transition:transform .2s}
+.tune summary .chev svg{display:block}
+.tune summary>span:nth-child(2){display:flex;flex-direction:column;gap:2px;line-height:1.2;min-width:0}
 .tune[open] summary .chev{transform:rotate(180deg)}
 .tune[open]{padding-bottom:14px}
 .tune .tgrid{margin-top:4px}
@@ -106,6 +109,7 @@ select.inp{appearance:none;-webkit-appearance:none}
 .swatches button.on{border-color:#fff}
 .swatches label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;margin-left:4px}
 .swatches input[type=color]{width:38px;height:38px;border:0;padding:0;background:none;border-radius:50%;cursor:pointer}
+.swatches input[type=color]{-webkit-appearance:none;appearance:none;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);overflow:hidden}.swatches input[type=color]::-webkit-color-swatch-wrapper{padding:0}.swatches input[type=color]::-webkit-color-swatch{border:none;border-radius:50%}.swatches input[type=color]::-moz-color-swatch{border:none;border-radius:50%}
 .photoSlot{display:flex;gap:14px;align-items:center}
 .photoSlot .ph{width:84px;height:84px;border-radius:50%;background:var(--bg) center/cover no-repeat;border:1.5px dashed var(--line);flex:none;display:grid;place-items:center;font-size:26px;color:var(--muted)}
 .photoSlot .ph{cursor:pointer;transition:border-color .15s,transform .15s}
@@ -139,7 +143,8 @@ body.sorting,body.sorting *{-webkit-user-select:none;user-select:none;cursor:gra
 @keyframes tipIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 @media (hover:hover){.tip:hover .tipb{display:block}}
 .tip.on .tipb,.tip:focus-visible .tipb{display:block}
-.tipline{display:flex;align-items:center;gap:8px;margin-top:12px}
+.tipline{display:flex;align-items:center;gap:8px;margin-top:12px;line-height:20px}
+.tipline .tip{width:20px;height:20px}
 .lk{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:2px 8px 2px 6px;border-radius:99px;border:1px solid rgba(255,255,255,.22);font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);vertical-align:middle;white-space:nowrap}
 .lk svg{width:11px;height:11px}
 .lk.sm{padding:0;border:0;margin-left:5px}
@@ -741,6 +746,6 @@ body.solo-play.th-tg .pbtn.acc{background:#ff7a1a;color:#fff}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=40"></script>
+<script src="quiz.js?v=41"></script>
 </body>
 </html>

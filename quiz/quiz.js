@@ -1982,7 +1982,7 @@ function renderEditor() {
     `<div class="panel"><div class="row2"><div class="fld"><label>Название игры</label><input class="inp" id="fTitle" maxlength="60"></div><div class="fld"><label id="lCouple">Имена пары</label><input class="inp" id="fCouple" maxlength="60" placeholder="Максим и Алина"></div></div></div>` +
     (GAME === 'fact' ? `<div class="panel"><h3>Как показываем</h3><div class="modes" id="shows"></div><div id="showTune"></div></div>` : '') +
     (GAME === 'fact' ? '' : `<div class="panel"><h3>Формат</h3><div class="modes" id="modes"></div><div class="lbl">Как играем</div><div class="modes" id="plays"></div><div id="tblRow"></div>` +
-    `<details class="tune"><summary><span>⚙️</span><span>Тонкая настройка<small>время, очки, звук, боты для проверки</small></span><span class="chev">▾</span></summary><div class="tgrid">` +
+    `<details class="tune"><summary><span>⚙️</span><span>Тонкая настройка<small>время, очки, звук, боты для проверки</small></span><span class="chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="tgrid">` +
     `<div class="rng"><span>Время на вопрос</span><input type="range" id="sTime" min="10" max="90" step="5"><b id="sTimeV"></b></div>` +
     `<div class="rng"><span>Лидеры каждые</span><input type="range" id="sEvery" min="1" max="10"><b id="sEveryV"></b></div>` +
     `<label class="sw">Очки за скорость<input type="checkbox" id="sSpeed"></label><label class="sw">Можно менять ответ<input type="checkbox" id="sChange"></label>` +
