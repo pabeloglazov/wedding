@@ -46,6 +46,20 @@ const MARK = n => window.PB_BRAND ? PB_BRAND.mark(n) : '';
 const BOTS = ['Аня', 'Максим К.', 'Оля', 'Дима', 'Лиза', 'Артём', 'Катя', 'Игорь', 'Маша', 'Саша', 'Вера', 'Паша'];
 const TYPES = { choice: 'Обычный', photo: 'Фото-вопрос', couple: 'Угадай ответ пары', number: 'Число', open: 'Открытый ответ' };
 const qPts = q => q && +q.pts > 0 ? +q.pts : 0;
+/* ползунок для числовых вопросов: q.sl = '' (ввод числа) | 'auto' (диапазон считает система) | 'man' (свой диапазон smin…smax) */
+function slR(q) {
+  if (!q || q.type !== 'number') return null;
+  if (q.sl === 'man' || (q.sl == null && q.smin != null && q.smin !== '')) { const a = +q.smin, b = +q.smax; return q.smin !== '' && q.smax !== '' && isFinite(a) && isFinite(b) && b > a ? [a, b, +q.sst || 1] : null; }
+  if (q.sl !== 'auto' || q.num === '' || q.num == null) return null;
+  const n = +q.num; if (!isFinite(n)) return null;
+  const yr = Number.isInteger(n) && n >= 1000 && n <= 2100, raw = yr ? 150 : Math.max(10, Math.abs(n) * 1.5);
+  const mag = Math.pow(10, Math.floor(Math.log10(raw))), w = yr ? 150 : Math.ceil(raw / mag) * mag, g = w >= 100 ? 10 : w >= 20 ? 5 : 1;
+  let h = 0; for (const ch of String(q.text || '') + n) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  let lo = Math.floor((n - (.2 + (h % 61) / 100) * w) / g) * g; if (n >= 0 && lo < 0) lo = 0;
+  let hi = lo + w; if (yr && hi > 2030) { lo -= hi - 2030; hi = 2030; }
+  return [lo, hi, Number.isInteger(n) ? 1 : .1];
+}
+const hasSl = q => !!slR(q);
 const ptsTxt = q => { const p = qPts(q); return (q.bonus ? 'Бонус · ' : '') + p + ' ' + plural(p, 'очко', 'очка', 'очков') + (q.type === 'number' ? ' · ближе всех' : ''); };
 const brk = (g, i) => g.qs.some(q => q && q.rb) ? !!(g.qs[i] && g.qs[i].rb) : (i + 1) % g.s.every === 0;
 const isCh = q => !!q && (q.type === 'choice' || q.type === 'photo');
@@ -918,8 +932,9 @@ function tplThanksgiving() {
     for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
     return normQ(Object.assign({ type: 'choice', text, opts: o.map(O), ok: [o.indexOf(right)], rn, pts }, extra || {}));
   };
-  const A = (yt, t0, t1) => ({ qm: { k: 'audio', yt, t0, t1 }, time: 35 });
-  const N = (rn, text, num, unit) => normQ({ type: 'number', text, opts: [], ok: [], num, unit, rn, pts: 1, time: 30 });
+  const CH = { 'X5Z9-4JV99c': [49, 75], SraTD8cpg0o: [34, 58], At3Qo9n4_Uc: [61, 86], 'iPIiMvyO-SQ': [69, 95], mlhfnvTmaek: [51, 73], is5iND3XNH0: [62, 88], uE9oiDOsEmU: [76, 100], LQDayLAfAHs: [48, 73], '1vrEljMfXYo': [77, 103], ZbZSe6N_BXs: [31, 57], Zi_XLOBDo_Y: [85, 110], OPf0YbXqDm0: [64, 90], '4fndeDfaWCg': [47, 73], '1k8craCGpgs': [202, 228], nfWlot6h_JM: [47, 73], Gs069dndIYk: [49, 75], yXQViqx6GMY: [84, 110] };
+  const A = (yt, t0, t1) => ({ qm: { k: 'audio', yt, t0, t1 }, am: CH[yt] ? { k: 'video', yt, t0: CH[yt][0], t1: CH[yt][1] } : null, time: 35 });
+  const N = (rn, text, num, unit) => normQ({ type: 'number', text, opts: [], ok: [], num, unit, rn, pts: 1, time: 30, sl: 'auto' });
   const R1 = '🦃 Раунд 1 · История праздника', R2 = '🥧 Раунд 2 · Индейка и стол', R3 = '🎵 Раунд 3 · Российские хиты', R4 = '🎸 Раунд 4 · Американские хиты', R5 = '⚡ Раунд 5 · Блиц';
   const B = (text, ans, extra) => normQ(Object.assign({ type: 'open', text, ans, rn: R5, pts: 1, time: 20 }, extra || {}));
   const qs = [
@@ -980,7 +995,7 @@ let REM = {}, ONLINE = {};
 const doneCmd = {};
 const coupleRoles = () => [...new Set(Object.values(REM).map(r => r.role).filter(r => r === 'groom' || r === 'bride'))];
 const hasCoupleDevices = () => coupleRoles().length > 0;
-function pubQs(g) { return g.qs.map((q, i) => ({ type: q.type, text: q.text || '', img: q.img || '', blur: q.blur ? 1 : 0, mk: mdOk(q.qm) ? q.qm.k : '', opts: (q.opts || []).map(o => ({ t: o.t || '', img: o.img || '' })), unit: q.unit || '', x2: mult(g, i) > 1, pts: qPts(q), rn: q.rn || '' })); }
+function pubQs(g) { return g.qs.map((q, i) => ({ type: q.type, text: q.text || '', img: q.img || '', blur: q.blur ? 1 : 0, mk: mdOk(q.qm) ? q.qm.k : '', opts: (q.opts || []).map(o => ({ t: o.t || '', img: o.img || '' })), unit: q.unit || '', x2: mult(g, i) > 1, pts: qPts(q), rn: q.rn || '', smin: slR(q) ? slR(q)[0] : null, smax: slR(q) ? slR(q)[1] : null, sst: slR(q) ? slR(q)[2] : 1 })); }
 async function allocCode(gid) {
   for (let i = 0; i < 8; i++) {
     const c = String(100000 + Math.floor(Math.random() * 900000));
@@ -1070,7 +1085,7 @@ function scrOf(g) {
   const rev = g.phase === 'reveal' || g.phase === 'board' || g.phase === 'final';
   const v = JSON.parse(JSON.stringify(g));
   delete v.snap; delete v.rkey; delete v.banned;
-  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: mdOk(q.qm) ? q.qm : null, am: mdOk(q.am) ? q.am : null, pts: qPts(q), bonus: q.bonus ? 1 : 0, rn: q.rn || '', rb: q.rb ? 1 : 0, ans: '' }; if (rev && i === g.qi) { o.ans = q.ans || ''; o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; if (hasRng(q)) { o.rng = 1; o.num2 = +q.num2; } } return o; });
+  v.qs = v.qs.map((q, i) => { const o = { type: q.type, text: q.text || '', img: q.img || '', opts: (q.opts || []).map(x => ({ t: x.t || '', img: x.img || '' })), unit: q.unit || '', ok: [], num: null, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: mdOk(q.qm) ? q.qm : null, am: mdOk(q.am) ? q.am : null, pts: qPts(q), bonus: q.bonus ? 1 : 0, rn: q.rn || '', rb: q.rb ? 1 : 0, ans: '', smin: slR(q) ? slR(q)[0] : null, smax: slR(q) ? slR(q)[1] : null, sst: slR(q) ? slR(q)[2] : 1 }; if (rev && i === g.qi) { o.ans = q.ans || ''; o.ok = q.ok || []; o.num = q.num == null || q.num === '' ? null : +q.num; if (hasRng(q)) { o.rng = 1; o.num2 = +q.num2; } } return o; });
   const a = {}; if (g.qi >= 0) a['q' + g.qi] = g.ans[g.qi] || {}; v.ans = a;
   const c = g.cpl[g.qi] || {};
   v.cpl = {}; if (g.qi >= 0) v.cpl['q' + g.qi] = rev ? c : { groom: c.groom != null ? 9 : null, bride: c.bride != null ? 9 : null };
@@ -1084,7 +1099,7 @@ function fixScr(v) {
   Object.keys(v.players).forEach(k => { const p = v.players[k]; p.times = p.times || []; p.score = p.score || 0; });
   const a = {}; if (v.ans && v.ans['q' + v.qi]) a[v.qi] = v.ans['q' + v.qi]; v.ans = a;
   const c = {}; if (v.cpl && v.cpl['q' + v.qi]) c[v.qi] = v.cpl['q' + v.qi]; v.cpl = c;
-  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, rng: q.rng ? 1 : 0, num2: q.num2 == null ? null : q.num2, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: q.qm || null, am: q.am || null, pts: q.pts || 0, bonus: q.bonus ? 1 : 0, rn: q.rn || '', rb: q.rb ? 1 : 0, ans: q.ans || '' }; });
+  v.qs = (v.qs || []).map(q => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', ok: q.ok || [], num: q.num, rng: q.rng ? 1 : 0, num2: q.num2 == null ? null : q.num2, x2: !!q.x2, fact: q.fact ? 1 : 0, hp: q.hp || '', aimg: q.aimg || '', blur: q.blur ? 1 : 0, qm: q.qm || null, am: q.am || null, pts: q.pts || 0, bonus: q.bonus ? 1 : 0, rn: q.rn || '', rb: q.rb ? 1 : 0, ans: q.ans || '', smin: q.smin == null ? null : q.smin, smax: q.smax == null ? null : q.smax, sst: q.sst || 1 }; });
   v.aw = v.aw || {};
   return v;
 }
@@ -1340,7 +1355,7 @@ function updScreen(box, g, snd) {
     const nq = box.querySelector('#numq');
     if (nq && nq.dataset.st !== (rev ? 'r' : 'q')) {
       nq.dataset.st = rev ? 'r' : 'q';
-      if (!rev) nq.innerHTML = `<div class="ph">Введите ответ на телефоне</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}`;
+      if (!rev) nq.innerHTML = hasSl(q) ? `<div class="ph">Двигайте ползунок на телефоне</div><div class="slsc"><b>${slR(q)[0]}</b><i></i><b>${slR(q)[1]}</b></div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}` : `<div class="ph">Введите ответ на телефоне</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}`;
       else {
         const arr = Object.keys(A).map(id => ({ name: (g.players[id] || {}).name || 'Гость', v: A[id].v, gain: (g.players[id] || {}).gain || 0 })).sort((x, y) => numErr(q, x.v) - numErr(q, y.v)).slice(0, 3);
         nq.innerHTML = `<div class="ph">${hasRng(q) ? 'Засчитываем от и до' : 'Правильный ответ'}</div><div class="big${hasRng(q) ? ' rg' : ''}">${esc(numTxt(q.num, hasRng(q) ? q.num2 : null))}</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}` +
@@ -1442,6 +1457,8 @@ function buildPhone(box, g, cl) {
       const top = `<div class="pv${ppic ? ' wimg' : ''}">${head(g, me)}<div class="kk" style="text-align:left">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}${q.fact ? ' · кто это?' : qPts(q) ? ' · ' + ptsTxt(q) : mult(g, g.qi) > 1 ? ' · ×2 очки' : ''}</div><div class="pq">${esc(q.text)}</div>` +
         (q.type === 'couple' ? '<div class="hintc">💍 Угадайте, что ответила пара</div>' : '') + (q.mk || mdOk(q.qm) ? `<div class="hintc">${(q.mk || q.qm.k) === 'audio' ? '🎧 Слушайте — звук на большом экране' : '🎬 Смотрите видео на большом экране'}</div>` : '') + ppic + '<div class="tm"><i id="ptm" style="width:100%"></i></div>';
       if (q.type === 'open') h = top + '<div class="wait"><div class="big" style="font-size:52px">🗣</div><h2>Отвечайте вслух!</h2><p class="sub">Ведущий засчитает верный ответ</p></div></div>';
+      else if (q.type === 'number' && hasSl(q)) { const [a0, a1, st] = slR(q), mid = +(Math.round(((a0 + a1) / 2) / st) * st).toFixed(st < 1 ? 1 : 0);
+        h = top + `<div class="numin sl"><div class="slv"><b id="pSlV">${mid}</b>${q.unit ? ` <span>${esc(q.unit)}</span>` : ''}</div><input type="range" class="rng" id="pNum" min="${a0}" max="${a1}" step="${st}" value="${mid}" oninput="document.getElementById('pSlV').textContent=this.value"><div class="slr"><span>${a0}</span><span>${a1}</span></div><button class="pbtn acc" id="pNumGo">Ответить</button></div><p class="note" id="pNote"></p></div>`; }
       else if (q.type === 'number') h = top + `<div class="numin"><input class="pin" id="pNum" inputmode="decimal" autocomplete="off" placeholder="Ваш ответ">${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}<button class="pbtn acc" id="pNumGo">Ответить</button></div><p class="note" id="pNote"></p></div>`;
       else h = top + `<div class="ans${pic ? ' pic' : ''}" id="pAns">` + q.opts.map((o, i) => !optFilled(o) ? '' :
         `<button class="${CL[i]}" data-o="${i}">${pic ? `<span class="im" style="${bgUrl(o.img)}">${IMG.get(o.img) ? '' : `<em>${esc(initial(o.t))}</em>`}</span><span class="rw"><span class="l">${L[i]}</span><span>${esc(o.t)}</span></span>` : `<span class="l">${L[i]}</span><span>${esc(o.t)}</span>`}</button>`).join('') + '</div><p class="note" id="pNote"></p></div>';
@@ -1652,7 +1669,7 @@ function viewPlayNet() {
     }
     cl.cur = () => {
       if (!C || !Q || gone) return null;
-      const qs = Q.map((q, i) => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', x2: !!q.x2, blur: !!q.blur, mk: q.mk || '', pts: q.pts || 0, rn: q.rn || '', ans: i === C.qi && C.ok && C.ok.ans ? C.ok.ans : '',
+      const qs = Q.map((q, i) => { q = q || {}; return { type: q.type || 'choice', text: q.text || '', img: q.img || '', opts: (q.opts || []).map(o => ({ t: (o && o.t) || '', img: (o && o.img) || '' })), unit: q.unit || '', x2: !!q.x2, blur: !!q.blur, mk: q.mk || '', pts: q.pts || 0, rn: q.rn || '', smin: q.smin == null ? null : q.smin, smax: q.smax == null ? null : q.smax, sst: q.sst || 1, ans: i === C.qi && C.ok && C.ok.ans ? C.ok.ans : '',
         ok: i === C.qi && C.ok && C.ok.set ? C.ok.set : [], num: i === C.qi && C.ok && C.ok.num != null ? C.ok.num : null }; });
       const g = { id: C.id, phase: C.phase, qi: C.qi, ii: C.ii, t0: C.t0, t1: C.t1, s: C.s || {}, title: C.title, couple: C.couple, final: C.final, res: C.res, players: {}, ans: {}, cpl: {}, qs, ok: C.ok, _intro: C.intro, theme: C.theme || '', tn: C.tn || [] };
       const cur = SC && SC.qi === C.qi;
@@ -2147,6 +2164,13 @@ function cardHtml(q, i) {
   }
   if (q.type === 'photo') body += `<div class="pqx"><div class="lbl">Фото-ответ <span class="muted">· по желанию</span> ${tip('Откроется на экране вместе с правильным ответом — например, то же фото целиком или фото героя сейчас.')}</div><div class="qimg aimg">${aimgSlot(q)}</div><input type="file" accept="image/*" class="afile" hidden>` +
     `<label class="sw">Размыть фото — проясняется по таймеру<input type="checkbox" data-blur${q.blur ? ' checked' : ''}></label></div>`;
+  if (q.type === 'number') {
+    const sm = q.sl === 'auto' ? 'auto' : q.sl === 'man' || (q.sl == null && q.smin != null && q.smin !== '') ? 'man' : '', r = slR(q);
+    body += `<div class="lbl" style="margin-top:12px">Как гости отвечают</div><div class="nmode"><button data-slm="" class="${sm === '' ? 'on' : ''}">Вводят число</button><button data-slm="auto" class="${sm === 'auto' ? 'on' : ''}">Ползунок · авто</button><button data-slm="man" class="${sm === 'man' ? 'on' : ''}">Ползунок · свой диапазон</button></div>` +
+      (sm === 'auto' ? `<div class="hint tipline" data-slh>${r ? `Шкала ${r[0]} … ${r[1]} — система подбирает её сама, ответ не в середине.` : 'Впишите правильное число — шкала посчитается сама.'}</div>` :
+        sm === 'man' ? `<div class="numrow rng"><span class="nl">от</span><input class="inp" data-f="smin" inputmode="decimal" value="${esc(q.smin == null ? '' : q.smin)}"><span class="nl">до</span><input class="inp" data-f="smax" inputmode="decimal" value="${esc(q.smax == null ? '' : q.smax)}"></div>` : '') +
+      `<div class="hint tipline">${qPts(q) ? 'Очко получает тот, кто ближе всех к ответу.' : 'Чем ближе к ответу — тем больше очков.'}</div>`;
+  }
   if (qPts(q)) body += `<div class="numrow" style="margin-top:8px"><span class="nl">Очки за верный ответ</span><input class="inp" data-f="pts" inputmode="numeric" style="max-width:90px" value="${esc(q.pts)}"></div>`;
   if (q.type !== 'photo' && q.type !== 'open') body += mdOk(q.qm) || mdOk(q.am) || q._mo ? `<div class="mdx"><div class="lbl">Видео или аудио ${tip('Ссылка YouTube работает везде. Файл (до 80 МБ) хранится на этом устройстве — показывайте экран с этого же ноутбука. Фрагмент: с какой и по какую секунду играть.')}</div><div class="mdg">${mdSlot(q, 'qm', 'В вопросе')}${mdSlot(q, 'am', 'В ответе')}</div></div>` : '<button class="btn ghost sm mdadd" data-mdopen>🎬 Видео или аудио</button>';
   if (issue) body += `<div class="hint w">⚠ ${esc(issue)}</div>`;
@@ -2245,6 +2269,7 @@ function bindCard(c) {
   c.querySelectorAll('[data-mclr]').forEach(b => b.onclick = () => { const key = b.dataset.mclr; q[key] = { k: q[key].k }; STORE.save(); repaintCard(i); });
   c.querySelectorAll('[data-mt]').forEach(inp => inp.onchange = () => { const [key, f] = inp.dataset.mt.split('|'); q[key][f] = parseT(inp.value); inp.value = q[key][f] ? mmss(q[key][f]) : ''; STORE.save(); });
   c.querySelectorAll('[data-nm]').forEach(b => b.onclick = () => { q.rng = b.dataset.nm === '1'; STORE.save(); repaintCard(i); });
+  c.querySelectorAll('[data-slm]').forEach(b => b.onclick = () => { const m = b.dataset.slm; q.sl = m; if (m === 'man' && (q.smin == null || q.smin === '')) { const r = slR(Object.assign({}, q, { sl: 'auto' })); if (r) { q.smin = r[0]; q.smax = r[1]; } } STORE.save(); repaintCard(i); });
   c.querySelector('[data-x2]').onclick = e => { q.x2 = !q.x2; e.currentTarget.classList.toggle('on', q.x2); STORE.save(); };
   c.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
     const a = b.dataset.a;

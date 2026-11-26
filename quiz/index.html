@@ -722,7 +722,17 @@ body.solo-play.th-tg .pbtn.acc{background:#ff7a1a;color:#fff}
 .tnc button{border:1.5px solid rgba(255,193,69,.5);background:rgba(255,193,69,.1);color:#ffc145;border-radius:999px;padding:8px 14px;font-weight:800;font-size:14px}
 .plist .kick.ren{font-size:14px}
 .stage.th-tg .qtop2{flex-wrap:nowrap;gap:.7em}.stage.th-tg .qtop2 .x2,.stage.th-tg .qtop2 .ctype,.stage.th-tg .qtop2 .n{white-space:nowrap}.stage.th-tg .qtop2 .ctype{font-size:.78em}
-.stage.th-tg .qbody.pq .qtext{font-size:1.75em}.stage.th-tg .qbody.pq .tile{font-size:1.2em;padding:.55em 1em}
+.stage.th-tg .qbody.pq{display:flex;flex-direction:column;gap:.5em;margin-top:.3em}
+.stage.th-tg .qbody.pq .qleft{display:contents}
+.stage.th-tg .qbody.pq .qtext{order:0;font-size:1.55em;text-align:center;flex:none;line-height:1.15}
+.stage.th-tg .qbody.pq .pqw{order:1;flex:1 1 0;min-height:12cqw;width:100%;align-self:center}
+.stage.th-tg .qbody.pq .pqw>.qpic{height:100%}
+.stage.th-tg .qbody.pq .tiles{order:2;grid-template-columns:1fr 1fr;gap:.6em 1.2em;flex:none}
+.stage.th-tg .qbody.pq .tile{font-size:1em;padding:.38em 1em;clip-path:polygon(1.2em 0,calc(100% - 1.2em) 0,100% 50%,calc(100% - 1.2em) 100%,1.2em 100%,0 50%);border-radius:0;padding-left:1.8em;padding-right:1.8em}
+.slsc{display:flex;align-items:center;gap:.8em;font-size:1.6em;font-weight:800;color:var(--gold);margin:.3em 0}.slsc i{width:12em;height:.25em;border-radius:1em;background:linear-gradient(90deg,var(--a,#ff7a1a),var(--gold,#ffc145))}
+.pv .numin.sl .slv{text-align:center;font-size:44px;font-weight:800;color:var(--gold,#ffc145);line-height:1.1}.pv .numin.sl .slv span{font-size:18px;color:var(--cmuted)}
+.pv .numin.sl .rng{width:100%;height:44px;accent-color:#ff7a1a;margin:4px 0 0}
+.pv .numin.sl .slr{display:flex;justify-content:space-between;color:var(--cmuted);font-weight:700;font-size:13px;margin-top:-6px}
 .stage.th-tg .qbody.md .qtext{font-size:2em}.stage.th-tg .qbody.md .tile{font-size:1.25em;padding:.6em 1em}
 @media (prefers-reduced-motion:reduce){.stage.th-tg:before,.stage.th-tg:after,.tgturkey,.tgburst,.x2.pts.bonus{animation:none!important}.tgburst{display:none}}
 </style>
@@ -731,6 +741,6 @@ body.solo-play.th-tg .pbtn.acc{background:#ff7a1a;color:#fff}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=38"></script>
+<script src="quiz.js?v=40"></script>
 </body>
 </html>
