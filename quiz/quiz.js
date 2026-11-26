@@ -997,6 +997,25 @@ function tplThanksgiving() {
     accent: '#ffc145', photo: '', wifi: { ssid: '', pass: '' }, form: '', facts: [], qs, updated: Date.now() };
 }
 
+/* красивое раскрытие числового ответа: шкала, правильный ответ и отметки команд */
+function numReveal(q, all) {
+  const lo0 = +q.num, hi0 = hasRng(q) ? +q.num2 : lo0, sr = slR(q);
+  let lo, hi;
+  if (sr) { lo = sr[0]; hi = sr[1]; }
+  else { const vs = all.map(x => x.v).concat([lo0, hi0]); lo = Math.min.apply(null, vs); hi = Math.max.apply(null, vs); const pad = Math.max((hi - lo) * .12, 1); lo -= pad; hi += pad; }
+  const pc = v => Math.max(0, Math.min(100, (v - lo) / ((hi - lo) || 1) * 100));
+  const rows = [[], [], []], best = numErr(q, all[0].v);
+  const mk = all.slice().sort((a, b) => a.v - b.v).map(x => {
+    const xp = pc(x.v); let r = rows.findIndex(rw => !rw.length || xp - rw[rw.length - 1] > 19); if (r < 0) r = 2; rows[r].push(xp);
+    return { x, xp, r, top: numErr(q, x.v) === best, out: x.v < lo || x.v > hi };
+  });
+  const u = q.unit ? ` <small>${esc(q.unit)}</small>` : '';
+  return `<div class="nrv"><div class="nhead"><span>${hasRng(q) ? 'Засчитываем от и до' : 'Правильный ответ'}</span><b>${esc(numTxt(q.num, hasRng(q) ? q.num2 : null))}${u}</b></div>` +
+    `<div class="ntrack" style="--th:${rows[2].length ? 9.6 : rows[1].length ? 7 : 4.4}em"><div class="nbar"></div>` +
+    (hasRng(q) ? `<div class="nband" style="left:${pc(lo0)}%;width:${Math.max(.8, pc(hi0) - pc(lo0))}%"></div>` : `<div class="npin" style="left:${pc(lo0)}%"><span>${esc(nums(lo0))}</span></div>`) +
+    mk.map((m, i) => `<div class="nmk r${m.r}${m.top ? ' top' : ''}" style="left:${m.xp}%;--d:${(.35 + i * .22).toFixed(2)}s"><i></i><b>${esc(m.x.name)}<em>${m.out && m.x.v < lo ? '← ' : ''}${esc(nums(m.x.v))}${m.out && m.x.v > hi ? ' →' : ''}</em>${m.x.gain > 0 ? `<u>+${nums(m.x.gain)}</u>` : ''}</b></div>`).join('') +
+    `<span class="nend l">${esc(nums(+lo.toFixed(2)))}</span><span class="nend r">${esc(nums(+hi.toFixed(2)))}</span></div></div>`;
+}
 /* ================= канал между вкладками одного устройства ================= */
 let ch = null; const handlers = [];
 try { ch = new BroadcastChannel('pbquiz2'); ch.onmessage = e => handlers.forEach(h => h(e.data)); } catch (e) {}
@@ -1371,7 +1390,10 @@ function updScreen(box, g, snd) {
       nq.dataset.st = rev ? 'r' : 'q';
       if (!rev) nq.innerHTML = hasSl(q) ? `<div class="ph">Двигайте ползунок на телефоне</div><div class="slsc"><b>${slR(q)[0]}</b><i></i><b>${slR(q)[1]}</b></div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}` : `<div class="ph">Введите ответ на телефоне</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}`;
       else {
-        const arr = Object.keys(A).map(id => ({ name: (g.players[id] || {}).name || 'Гость', v: A[id].v, gain: (g.players[id] || {}).gain || 0 })).sort((x, y) => numErr(q, x.v) - numErr(q, y.v)).slice(0, 3);
+        const all = Object.keys(A).map(id => ({ name: (g.players[id] || {}).name || 'Гость', v: +A[id].v, gain: (g.players[id] || {}).gain || 0 })).filter(x => isFinite(x.v)).sort((x, y) => numErr(q, x.v) - numErr(q, y.v));
+        const arr = all.slice(0, 3);
+        if (all.length && all.length <= 12) { nq.innerHTML = numReveal(q, all); nq.classList.add('nrvw'); return; }
+        nq.classList.remove('nrvw');
         nq.innerHTML = `<div class="ph">${hasRng(q) ? 'Засчитываем от и до' : 'Правильный ответ'}</div><div class="big${hasRng(q) ? ' rg' : ''}">${esc(numTxt(q.num, hasRng(q) ? q.num2 : null))}</div>${q.unit ? `<div class="unit">${esc(q.unit)}</div>` : ''}` +
           (arr.length ? `<div class="close3">${arr.map((x, i) => `<div><small>${i === 0 ? 'Ближе всех' : (i + 1) + '-е место'}</small><b>${esc(x.name)}</b>${esc(nums(x.v))} · <em>+${nums(x.gain)}</em></div>`).join('')}</div>` : '');
       }

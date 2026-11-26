@@ -693,6 +693,36 @@ body.solo-play #ph>.pv{flex:1}
 .lt .fph.has{border-style:solid}
 .lt .fcin{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
 .lt .fcin textarea{resize:vertical;font-family:inherit}
+/* раскрытие числового ответа — шкала */
+.numq.nrvw{justify-content:center;padding:0 2em}
+.nrv{width:100%;max-width:62em;display:flex;flex-direction:column;gap:.4em}
+.nrv .nhead{display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:1.6em}
+.nrv .nhead span{font-size:1em;color:var(--muted);font-weight:700;letter-spacing:.06em}
+.nrv .nhead b{font-family:var(--hf);font-weight:700;font-size:3.4em;line-height:1;color:var(--ok,#5fbf8a);animation:nPop .6s cubic-bezier(.2,1.4,.4,1) both}
+.nrv .nhead b small{font-size:.32em;color:var(--muted);font-weight:700;font-family:inherit;letter-spacing:.04em}
+@keyframes nPop{from{transform:scale(.6);opacity:0}}
+.ntrack{position:relative;height:var(--th,9em);margin:0 4.5em}
+.nbar{position:absolute;left:0;right:0;top:1.4em;height:.5em;border-radius:1em;background:linear-gradient(90deg,var(--a,#e8b07a),var(--gold));opacity:.85}
+.nband{position:absolute;top:.9em;height:1.5em;border-radius:.4em;background:rgba(95,191,138,.45);border:2px solid var(--ok,#5fbf8a);animation:fiN .6s .2s both}
+.npin{position:absolute;top:-1.9em;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;animation:nDrop .7s .15s cubic-bezier(.3,1.5,.5,1) both;z-index:3}
+.npin span{background:var(--ok,#5fbf8a);color:#fff;font-weight:800;font-size:1.05em;border-radius:.5em;padding:.15em .6em;white-space:nowrap}
+.npin:after{content:"";width:.25em;height:2.4em;background:var(--ok,#5fbf8a);border-radius:.2em;box-shadow:0 0 1em var(--ok,#5fbf8a)}
+@keyframes nDrop{from{transform:translate(-50%,-2em);opacity:0}}
+@keyframes fiN{from{opacity:0}}
+.nmk{position:absolute;top:1.25em;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.15em;animation:nMk .55s var(--d) cubic-bezier(.2,1.2,.4,1) both;white-space:nowrap}
+.nmk i{width:.8em;height:.8em;border-radius:50%;background:var(--ink);box-shadow:0 0 0 .2em rgba(0,0,0,.35);flex:none}
+.nmk b{font-size:1em;font-weight:800;color:var(--ink);background:rgba(20,14,10,.75);border:1px solid rgba(255,255,255,.14);border-radius:.7em;padding:.2em .65em;margin-top:.15em;display:flex;align-items:baseline;gap:.45em}
+.nmk em{font-style:normal;font-size:.85em;font-weight:700;color:var(--muted)}.nmk.top em{color:inherit;opacity:.75}
+.nmk u{text-decoration:none;font-size:.85em;font-weight:800;background:var(--ok,#5fbf8a);color:#fff;border-radius:.5em;padding:0 .4em}
+.nmk.r1{top:4.3em}.nmk.r2{top:6.9em}
+.nmk.r1 i,.nmk.r2 i{display:none}
+.nmk.r1:before,.nmk.r2:before{content:"";position:absolute;bottom:100%;width:2px;background:rgba(255,255,255,.2)}
+.nmk.r1:before{height:2.7em}.nmk.r2:before{height:5.3em}
+.nmk.top i{background:var(--gold);box-shadow:0 0 0 .25em rgba(0,0,0,.35),0 0 1.2em var(--gold)}
+.nmk.top b{background:var(--gold);color:var(--gink);border-color:transparent}
+@keyframes nMk{from{opacity:0;transform:translate(-50%,.8em)}}
+.nend{position:absolute;top:1.05em;font-weight:800;color:var(--muted);font-size:.95em;white-space:nowrap}.nend.l{right:calc(100% + .8em)}.nend.r{left:calc(100% + .8em)}
+@media (prefers-reduced-motion:reduce){.nrv *{animation:none!important}}
 /* ===== тема «День благодарения» (?tpl=thanksgiving) ===== */
 .stage.th-tg{--hf:Unbounded,Rubik,system-ui,sans-serif;--gold:#ffc145;--gold2:#ffc145;--g1:#ffd36b;--g2:#e89b1c;--gink:#2a140f;--gsoft:rgba(255,193,69,.16);--a:#ff7a1a;--b:#c8283f;--c:#b7791f;--d:#6d7d2c;--ok:#3fae6a;--bad:#c8283f;--ink:#fff6e8;--muted:#dcc3aa;
   font-family:Rubik,system-ui,sans-serif;background:radial-gradient(ellipse at 50% 30%,#3a1c14,#2a140f 75%);isolation:isolate}
@@ -755,6 +785,6 @@ body.solo-play.th-tg .pbtn.acc{background:#ff7a1a;color:#fff}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=44"></script>
+<script src="quiz.js?v=45"></script>
 </body>
 </html>
