@@ -653,7 +653,7 @@ function renderEditor() {
   const n = cellsOf(CFG), QZ = R.t === 'quiz', cats = QZ ? 0 : R.cats.length, N = QZ ? 0 : R.vals.length;
   const cols = `grid-template-columns:repeat(${N},minmax(0,1fr)) 52px`;
   $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('Своя игра · редактор')}</a><span class="sp"></span><span class="muted" style="font-size:12px" id="syncSt"></span><div class="acc" id="acc"></div></div></div>` +
-    `<div class="wrap wide"><div class="hero"><div class="k">Редактор</div><h1>Своя игра</h1><p>Табло «категории × стоимость» на проекторе. Ведущий открывает клетку, команды жмут «Ответить!» на телефонах — кто первый, тот отвечает. Верно — плюс очки, неверно — минус.</p></div></div>` +
+    `<div class="wrap wide"><div class="hero"><div class="k">Редактор</div><h1>Своя игра</h1><p>Табло «категории × стоимость» на проекторе. Ведущий открывает клетку, команды жмут «Ответить!» на телефонах — кто первый, тот отвечает. Верно — плюс очки, неверно — минус.</p></div>` +
     (!unlocked() ? `<div class="notice">${ico('lock')}<span><b>Демо:</b> всё работает, до ${DEMO_MAX} команд. Свой цвет оформления — на тарифе «Продвинутый».</span><span class="sp"></span>${ACC.token ? '' : '<button class="btn ghost sm" id="nLogin">Войти</button>'}</div>` : '') +
     `<div class="card"><div class="fld"><label for="fTitle">Название игры</label><input class="inp" id="fTitle" maxlength="60" value="${esc(CFG.title)}"></div></div>` +
     `<div class="card"><h3>${ico('grid', 16)}Табло</h3>` +
