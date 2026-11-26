@@ -558,7 +558,7 @@ function drawStage(root, S, snd) {
   if (S.ph === 'q' && S.cur && S.cur.mus) {
     const c = S.cur;
     if (!same) {
-      inn.innerHTML = `<div class="splash mus"><div class="cat">${esc(c.cat)}</div><div class="val">${esc(c.v)}</div></div><div class="qm aud hid" id="qm"></div><div class="qfoot" id="qf"></div>`;
+      inn.innerHTML = `<div class="spk"><i class="c1"></i><i class="c2"></i><i class="c3"></i><b class="r r1"></b><b class="r r2"></b><b class="r r3"></b></div><div class="splash mus"><div class="cat">${esc(c.cat)}</div><div class="val">${esc(c.v)}</div></div><div class="qm aud hid" id="qm"></div><div class="qfoot" id="qf"></div>`;
       const m = inn.querySelector('#qm'); mountMedia(m, c.qm, mute, S.id); m._mr = S.mr; m._snd = mute; m._pz = false;
     }
     const m = inn.querySelector('#qm'), sp = inn.querySelector('.splash');
@@ -566,7 +566,7 @@ function drawStage(root, S, snd) {
     else if (m && m._snd !== mute) { m._snd = mute; setMute(m, mute); }
     const pz = !!S.act;
     if (m && m._pz !== pz) { m._pz = pz; pz ? pauseMedia(m) : playMedia(m); if (pz && mute) SFX.buzz(); }
-    if (sp) sp.classList.toggle('paused', pz);
+    if (sp) sp.classList.toggle('paused', pz); { const k2 = inn.querySelector('.spk'); if (k2) k2.classList.toggle('paused', pz); }
     const f = inn.querySelector('#qf');
     const fh = S.act ? `<span class="bzp"><i>${ico('bolt')}</i>${esc(S.act)}</span>${S.qn.length ? `<span class="bzq">дальше: ${S.qn.map(esc).join(', ')}</span>` : ''}` :
 ''; 
