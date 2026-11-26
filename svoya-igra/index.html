@@ -428,7 +428,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
 .ja{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5em;text-align:center}
 .ja .lb{font-weight:800;letter-spacing:.3em;text-transform:uppercase;opacity:.75}.ja .a{font-family:Unbounded,Manrope,sans-serif;font-weight:600;font-size:4.6em;line-height:1.05;animation:jIn .7s both}
 .ja .g{border-radius:99px;padding:.45em 1.3em;font-weight:800;font-size:1.6em;background:#2fbf74;animation:jPop .5s .3s both}
-.ja .back{margin-top:.8em;border:1px solid rgba(255,255,255,.3);background:none;color:#fff;border-radius:99px;padding:.5em 1.4em;font-weight:800;font-size:1.2em;cursor:pointer}
+.ja .back{margin-top:1em;display:inline-flex;align-items:center;gap:.5em;border:0;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);color:#fff;border-radius:99px;padding:.6em 1.5em;font:inherit;font-weight:800;font-size:1.25em;line-height:1;cursor:pointer;backdrop-filter:blur(6px);transition:background .2s,transform .15s}.ja .back:hover{background:rgba(255,255,255,.24);transform:translateY(-1px)}.ja .back svg{width:1em;height:1em}
 .jtip{text-align:center;color:var(--muted);font-size:14px;margin-top:12px}
 .kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media (max-width:860px){.kinds{grid-template-columns:1fr 1fr}}@media (max-width:560px){.kinds{grid-template-columns:1fr}}
@@ -542,7 +542,7 @@ h1 em,.hero h1 em{font-style:normal!important;color:var(--muted)!important}
       T.push(setTimeout(function () { el.querySelector('.f').innerHTML = '<span class="jbz"><i>⚡</i>' + who + '</span>'; }, 2200));
       T.push(setTimeout(function () {
         played[ci + '.' + qi] = 1;
-        el.innerHTML = '<div class="ja"><div class="lb">Правильный ответ</div><div class="a">' + esc(q[1]) + '</div><div class="g">+' + v + ' · ' + who + '</div><button class="back" type="button">← К табло</button></div>';
+        el.innerHTML = '<div class="ja"><div class="lb">Правильный ответ</div><div class="a">' + esc(q[1]) + '</div><div class="g">+' + v + ' · ' + who + '</div><button class="back" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>К табло</button></div>';
         el.querySelector('.back').onclick = board;
         T.push(setTimeout(board, 6000));
       }, 4600));
