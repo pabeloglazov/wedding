@@ -23,6 +23,10 @@ const BASE = location.origin + location.pathname;
 const SHORT = location.host.replace(/^www\./, '') + '/q';
 const BRAND = sub => window.PB_BRAND ? PB_BRAND.lockup(sub) : '<b>Beloglazov Event</b>';
 const IC = {
+  qr: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-7"/>',
+  trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
   x: '<path d="M6 6l12 12M18 6 6 18"/>', plus: '<path d="M12 5v14M5 12h14"/>', grip: '<path d="M5 7h14M5 12h14M5 17h14"/>', pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
   play: '<path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/>', ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>', monitor: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>', phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18h2"/>',
@@ -231,26 +235,30 @@ function renderLive(force) {
   const inRound = run && r && r.k !== 'sm';
   if (!built || force) {
     built = true;
-    $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('Игра-микс · ' + esc(S.title))}</a><span class="sp"></span><button class="btn ghost sm" id="bScr">${ico('monitor', 15)}Экран для проектора</button><button class="btn ghost sm" id="bPh">${ico('phone', 15)}Телефон</button><button class="btn ghost sm" id="bEnd">Завершить вечер</button></div></div>` +
-      `<div class="mixbar"><div class="in" id="ctl"></div></div>` +
-      `<div class="live2">${inRound ? `<iframe class="frame" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1')}" allow="autoplay; fullscreen"></iframe>` :
-        S.ph === 'round' && r && r.k === 'sm' ? `<div class="hold"><h2>Секретная миссия</h2><p>Гости играют по своим телефонам — экран показывает QR на игру. Панель ведущего — в отдельной вкладке.</p><a class="btn gold" href="${esc(r.adm || '../host/')}" target="_blank" rel="noopener">${ico('ext', 15)}Открыть панель миссии</a></div>` :
+    $('app').innerHTML = `<div class="top mtop"><div class="in"><a class="brand" href="../">${BRAND('')}</a><div class="rpills" id="ctl"></div><span class="sp"></span><span class="cdm" id="cdm"></span><button class="btn ghost sm" id="bScr">${ico('monitor', 15)}Экран</button><button class="btn ghost sm" id="bPh">${ico('phone', 15)}Телефон</button><button class="btn ghost sm" id="bEnd">Завершить вечер</button></div></div>` +
+      (inRound ? `<iframe class="frame full" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1')}" allow="autoplay; fullscreen"></iframe>` :
+        `<div class="live2">${S.ph === 'round' && r && r.k === 'sm' ? `<div class="hold"><h2>Секретная миссия</h2><p>Гости играют по своим телефонам — экран показывает QR на игру. Панель ведущего — в отдельной вкладке.</p><a class="btn gold" href="${esc(r.adm || '../host/')}" target="_blank" rel="noopener">${ico('ext', 15)}Открыть панель миссии</a></div>` :
         `<div class="lgrid"><div class="stg16"><iframe src="${BASE}?view=screen&g=${encodeURIComponent(S.id)}&pv=1" title="Экран"></iframe><span class="stl">${S.ph === 'lobby' ? 'Команды подключаются — нажмите раунд вверху, он сразу запустится' : S.ph === 'between' ? 'Раунд завершён — нажмите следующий раунд вверху' : 'Финал вечера'}</span></div>` +
-        `<div class="pane"><h4>Общий счёт<span class="sp"></span><span class="muted" id="onl" style="letter-spacing:0;text-transform:none;font-size:12px"></span></h4><div class="tt" id="tt"></div><div class="codebox"><div><div class="k">Вход для команд</div><b id="cd"></b></div><span style="flex:1"></span><button class="btn ghost sm" id="bPh2">${ico('phone', 14)}Открыть телефон</button></div></div></div>`}</div>`;
+        `<div><div class="pane"><h4>Общий счёт<span class="sp"></span><span class="muted" id="onl" style="letter-spacing:0;text-transform:none;font-size:12px"></span></h4><div class="tt" id="tt"></div><div class="codebox"><div><div class="k">Вход для команд</div><b id="cd"></b></div><span style="flex:1"></span><button class="btn ghost sm" id="bPh2">${ico('phone', 14)}Открыть телефон</button></div></div>` +
+        `<div class="pane" style="margin-top:14px" id="scp"></div></div></div>`}</div>`);
     { const b2 = $('bPh2'); if (b2) b2.onclick = () => window.open(`${BASE}?view=play&g=${S.id}`, '_blank'); }
     $('bScr').onclick = () => { if (!S.code) { toast('Подключаемся…'); return; } window.open(`${BASE}?view=screen&g=${S.id}`, 'pbm_screen'); };
     $('bPh').onclick = () => window.open(`${BASE}?view=play&g=${S.id}`, '_blank');
     $('bEnd').onclick = () => { if (!sure($('bEnd'))) return; endShow(); };
   }
-  const nT = Object.keys(S.names).length, ids = Object.keys(S.names), ti = Math.min(S.ti || 0, Math.max(0, nT - 1));
-  $('ctl').innerHTML = `<span class="mk">Раунды</span><div class="rpills">${S.rounds.map((x, i) => `<button class="rp${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}" title="${esc(x.t)}">${gIco(x.k)}<span><b>${i + 1}. ${esc(x.t)}</b></span>${i === S.ri && run ? '<i class="lv">идёт</i>' : S.done.indexOf(i) >= 0 ? '<i>✓</i>' : ''}</button>`).join('')}</div>` +
-    `<span class="sp"></span><span class="mk">Экран</span><div class="sgb"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Рейтинг</button><button data-ov="teams" class="${S.ov === 'teams' ? 'on' : ''}"${nT ? '' : ' disabled'}>Участники</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div>` +
-    (S.ov === 'teams' && nT ? `<div class="tpg"><button data-ts="-1"${ti ? '' : ' disabled'}>‹</button><div><small>Команда ${ti + 1} из ${nT}</small><b>${esc(S.names[ids[ti]])}</b></div><button data-ts="1"${ti < nT - 1 ? '' : ' disabled'}>›</button></div>` : '') +
-    `<span class="cdm">код <b>${S.code ? fmtCode(S.code) : '…'}</b></span>`;
+  $('ctl').innerHTML = S.rounds.map((x, i) => `<button class="rp${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}" title="${esc(x.t)}">${gIco(x.k)}<span><b>${i + 1}. ${esc(x.t)}</b></span>${i === S.ri && run ? '<i class="lv">идёт</i>' : S.done.indexOf(i) >= 0 ? '<i>✓</i>' : ''}</button>`).join('');
   $('ctl').querySelectorAll('[data-go]').forEach(b => b.onclick = () => A.go(+b.dataset.go));
-  $('ctl').querySelectorAll('[data-ov]').forEach(b => b.onclick = () => b.dataset.ov === 'score' ? A.liveScore() : A.ov(b.dataset.ov));
-  $('bFinal').onclick = A.final;
-  $('ctl').querySelectorAll('[data-ts]').forEach(b => b.onclick = () => A.tstep(+b.dataset.ts));
+  $('cdm').innerHTML = `код <b>${S.code ? fmtCode(S.code) : '…'}</b>`;
+  /* панель «Экран» — как в «Своей игре»; во время раунда её показывает сама игра */
+  const sp = $('scp');
+  if (sp) {
+    const ids = Object.keys(S.names), nT = ids.length, ti = Math.min(S.ti || 0, Math.max(0, nT - 1));
+    sp.innerHTML = `<h4>${ico('monitor', 14)}Экран</h4><div class="sgr"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">${ico('qr', 16)}QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">${ico('list', 16)}Рейтинг</button><button data-ov="teams" class="${S.ov === 'teams' ? 'on' : ''}"${nT ? '' : ' disabled'}>${ico('users', 16)}Участники</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">${ico('trophy', 16)}Победители</button></div>` +
+      (S.ov === 'teams' && nT ? `<div class="tpg"><button data-ts="-1"${ti ? '' : ' disabled'}>‹</button><div><small>Команда ${ti + 1} из ${nT}</small><b>${esc(S.names[ids[ti]])}</b></div><button data-ts="1"${ti < nT - 1 ? '' : ' disabled'}>›</button></div>` : '');
+    sp.querySelectorAll('[data-ov]').forEach(b => b.onclick = () => b.dataset.ov === 'score' ? A.liveScore() : A.ov(b.dataset.ov));
+    $('bFinal').onclick = A.final;
+    sp.querySelectorAll('[data-ts]').forEach(b => b.onclick = () => A.tstep(+b.dataset.ts));
+  }
   const rank = Object.keys(S.names).map(id => ({ id, n: S.names[id], s: S.tot[id] || 0 })).sort((a, b) => b.s - a.s);
   if ($('tt')) $('tt').innerHTML = rank.length ? rank.map((p, i) => `<div><em class="muted" style="font-style:normal;width:18px">${i + 1}</em><span>${esc(p.n)}</span><b>${nums(p.s)}</b></div>`).join('') : '<p class="muted" style="margin:0;font-size:14px">Команды появятся, когда войдут по QR</p>';
   if ($('cd')) $('cd').textContent = S.code ? `${SHORT} · ${fmtCode(S.code)}` : 'подключаемся…';
