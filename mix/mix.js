@@ -37,7 +37,7 @@ const GM = {
   bingo: { n: 'Человеческое бинго', em: '🎯✅', c: '#6f9fc6', d: 'Карточки примет, знакомство в зале, «БИНГО!»', ed: '../bingo/', app: '../bingo/', p: 'bq', l: 'blist' },
   sm: { n: 'Секретная миссия', em: '🕶️💌', c: '#a7ae86', d: 'Тайные задания для гостей, welcome-зона', ed: '../host/', ext: 1 }
 };
-const gIco = (k, w = 18) => `<span class="gi2" style="background:${GM[k].c}2e;color:${GM[k].c}">${ico('g_' + k, w)}</span>`;
+const gIco = (k, w = 18) => `<span class="gi2" style="background:${GM[k].c}66;color:#fff">${ico('g_' + k, w)}</span>`;
 const appUrl = (k, q) => { const g = GM[k]; return (k === 'fact' ? '../fact/' : g.app) + '?' + q; };
 
 /* ================= Firebase и аккаунт ================= */
@@ -227,7 +227,7 @@ function renderLive(force) {
     $('bEnd').onclick = () => { if (!sure($('bEnd'))) return; endShow(); };
   }
   const run = S.ph === 'round' || S.ph === 'starting';
-  $('ctl').innerHTML = `<div class="rtabs">${S.rounds.map((x, i) => `<button class="rt${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}">${gIco(x.k)}<span class="tx"><b>Раунд ${i + 1}</b><small>${esc(x.t)}</small></span>${i === S.ri && run ? '<i class="live">идёт</i>' : S.done.indexOf(i) >= 0 ? '<i>✓</i>' : ''}</button>`).join('')}</div>` +
+  $('ctl').innerHTML = `<div class="rtabs">${S.rounds.map((x, i) => `<button class="rt${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}">${gIco(x.k)}<span class="tx"><b>Раунд ${i + 1}</b><small>${esc(x.t)}</small></span>${i === S.ri && run ? '<span class="st live">идёт</span>' : S.done.indexOf(i) >= 0 ? '<span class="st">✓</span>' : ''}</button>`).join('')}</div>` +
     `<div class="sctl"><div class="k" style="margin:12px 0 8px">Экран</div><div class="sg"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Общий счёт</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div></div>`;
   $('ctl').querySelectorAll('[data-go]').forEach(b => b.onclick = () => A.go(+b.dataset.go));
   $('ctl').querySelectorAll('[data-ov]').forEach(b => b.onclick = () => A.ov(b.dataset.ov));
