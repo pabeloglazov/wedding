@@ -412,11 +412,14 @@ const A = {
     publish();
   },
   scores() { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'score' }, location.origin); return; } G.ov = G.ov === 'scores' ? '' : 'scores'; publish(); },
+  teams() { G.ov = G.ov === 'teams' ? '' : 'teams'; G.ti = 0; publish(); },
+  tprev() { if (G.ti > 0) { G.ti--; publish(); } },
+  tnext() { if ((G.ti || 0) < Object.keys(G.players).length - 1) { G.ti = (G.ti || 0) + 1; publish(); } },
   pause() { if (G.ph !== 'q' && G.ph !== 'ans') return; G.hp = G.hp ? 0 : 1; publish(); },
   rnext() { A.round(G.ri + 1); },
   final() { G.ph = 'final'; G.ov = ''; G.cur = null; publish(); },
   qr() { G.qrz = G.qrz ? 0 : 1; publish(); },
-  qrbig() { G.qrb = G.qrb ? 0 : 1; publish(); },
+  qrbig() { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'qr' }, location.origin); return; } G.qrb = G.qrb ? 0 : 1; publish(); },
   snd() { G.snd = !G.snd; publish(); },
   replay() { const q = curQ(G) || curQQ(G); if (q && (G.ph === 'qq' || G.ph === 'qr' || G.cur) && (G.ph === 'ans' || G.ph === 'qr' ? mOk(q.am) && q.am.k !== 'image' : mOk(q.qm) && q.qm.k !== 'image')) { G.mr = (G.mr || 0) + 1; G.hp = 0; publish(); toast('Играем ещё раз'); } },
   rename(id) {
@@ -470,7 +473,7 @@ function scrOf(g) {
     cur: g.cur && q ? { ci: g.cur.ci, qi: g.cur.qi, cat: R.cats[g.cur.ci].n, v: curV(g), q: q.q, mus: mOk(q.qm) && q.qm.k === 'audio' ? 1 : 0, qm: mOk(q.qm) ? q.qm : null, am: g.ph === 'ans' && mOk(q.am) ? q.am : null, a: g.ph === 'ans' ? q.a : '' } : null,
     qz: board ? null : qqPub(g),
     act: nm(qq[0]), hp: g.hp ? 1 : 0, qn: qq.slice(1, 4).map(nm), by: g.by ? nm(g.by) : '', gain: g.gain || 0, wr: g.wr.length, mode: g.mode,
-    ov: g.ov || '', mr: g.mr || 0, players: ranked(g).map(p => ({ n: p.name, s: p.score }))
+    tm: g.ov === 'teams' && Object.keys(g.players).length ? (() => { const ids = Object.keys(g.players), i = Math.min(g.ti || 0, ids.length - 1); return { i, n: ids.length, nm: g.players[ids[i]].name }; })() : null, ov: g.ov || '', mr: g.mr || 0, players: ranked(g).map(p => ({ n: p.name, s: p.score }))
   };
 }
 function coreOf(g) {
@@ -568,17 +571,19 @@ function drawStage(root, S, snd) {
   root.style.setProperty('--acc', S && S.acc ? S.acc : DEF_ACC);
   let inn = root.querySelector('.in'); if (!inn) { root.innerHTML = `<div class="in"></div><div class="codem"></div><div class="qrov"></div><div class="brandm">${window.PB_BRAND ? `${PB_BRAND.mark(30)}<img src="${PB_BRAND.base}wordmark-white.png" alt="Beloglazov Event">` : '<b>Beloglazov Event</b>'}</div>`; inn = root.querySelector('.in'); }
   if (!S) { root._k = ''; inn.innerHTML = '<div class="splash"><div class="cat" style="opacity:.6">Ждём игру…</div></div>'; return; }
-  const ov = S.ov === 'scores' && S.ph !== 'final' && S.ph !== 'lobby';
-  const k = [ov ? 'sc' : S.ph, S.ri, S.cur ? S.cur.ci + '.' + S.cur.qi : ''].join('|');
+  const ov = S.ov === 'scores' && S.ph !== 'final' && S.ph !== 'lobby', ovt = S.ov === 'teams' && S.tm && S.ph !== 'final';
+  const k = [ovt ? 'tm' + S.tm.i + S.tm.nm : ov ? 'sc' : S.ph, S.ri, S.cur ? S.cur.ci + '.' + S.cur.qi : ''].join('|');
   stageChrome(root, S);
-  root.classList.toggle('musq', !!(S && S.ph === 'q' && S.cur && S.cur.mus && S.ov !== 'scores'));
+  root.classList.toggle('musq', !!(S && S.ph === 'q' && S.cur && S.cur.mus && !S.ov));
   const same = root._k === k; root._k = k;
   const mute = !!snd;
+  if (ovt) { if (!same) inn.innerHTML = `<div class="tintro"><div class="k">Команда ${S.tm.i + 1} из ${S.tm.n}</div><div class="nm">${esc(S.tm.nm)}</div><div class="dots">${Array.from({ length: Math.min(S.tm.n, 20) }, (_, j) => `<i class="${j === S.tm.i ? 'on' : ''}"></i>`).join('')}</div></div>`; return; }
   if (ov) { inn.innerHTML = scoresHtml(S, 'Счёт'); return; }
   if (S.ph === 'lobby') {
     if (same) { const t = inn.querySelector('.teams'); if (t) t.innerHTML = teamsHtml(S); const cd = inn.querySelector('.joinc .cd'); if (cd) cd.textContent = S.code ? fmtCode(S.code) : '······'; return; }
     inn.innerHTML = `<div class="lob"><div><div class="kk">Подключайтесь по QR-коду</div><h1>${esc(S.title)}</h1><div class="teams">${teamsHtml(S)}</div></div>` +
       (MIX ? '' : `<div class="joinc"><div class="qr" id="sqr"></div><div class="u">${esc(SHORT.replace(/^https?:\/\//, ''))}</div><small>код игры</small><div class="cd">${S.code ? fmtCode(S.code) : '······'}</div></div>`) + `</div>`;
+    { const h1 = inn.querySelector('.lob h1'); if (h1) { const fit = () => { let k = 3.8; h1.style.fontSize = ''; while (h1.scrollWidth > h1.clientWidth + 1 && k > 1.6) { k -= .2; h1.style.fontSize = k + 'em'; } }; fit(); requestAnimationFrame(fit); if (document.fonts) document.fonts.ready.then(fit); } }
     if (!MIX) qr(inn.querySelector('#sqr'), `${location.origin}${location.pathname}?view=play&g=${S.id}`, 600);
     return;
   }
@@ -1047,36 +1052,47 @@ function nextAct() {
 function ctlHtml() {
   if (isQuiz(G)) return ctlQuizHtml();
   const R = curR(G), q = curQ(G), v = curV(G), qq = queue(G), act = qq[0];
+  const has = !!(G.cur && q && (G.ph === 'cell' || G.ph === 'q' || G.ph === 'ans'));
   let h = '';
-  if (G.cur && q && (G.ph === 'cell' || G.ph === 'q' || G.ph === 'ans')) {
-    h += `<div class="qc"><div class="meta"><span class="chip a">${esc(R.cats[G.cur.ci].n)}</span><span class="chip">${esc(v)}</span>${mOk(q.qm) ? `<span class="chip">${ico(MK[q.qm.k][0], 12)}${MK[q.qm.k][1]}</span>` : ''}${mOk(q.am) ? `<span class="chip">ответ: ${MK[q.am.k][1]}</span>` : ''}</div><p class="qt">${esc(q.q || '(вопрос без текста)')}</p><div class="an"><small>Ответ</small>${esc(q.a || '—')}</div>`;
-    if (G.ph === 'q') {
-      if (G.mode === 'buzz') h += `<div class="buzz${act ? ' on' : ''}">${act ? `<div class="who"><b>${esc(G.players[act].name)}</b><button class="btn ok sm" data-j="1">${ico('check', 15)}Верно +${nums(v)}</button><button class="btn bad sm" data-j="0">${ico('x', 15)}Неверно${G.minus ? ' −' + nums(v) : ''}</button><button class="btn sm" data-j="2" title="Убрать без очков">Скрыть</button></div>${qq.length > 1 ? `<div class="ql">Следом нажали: ${qq.slice(1).map(id => esc(G.players[id].name)).join(', ')}</div>` : ''}` : `<span class="muted">${G.wr.length ? 'Ждём, нажмёт ли кто-то ещё…' : 'Ждём, кто первый нажмёт «Ответить!»'}</span>`}</div>`;
-      else h += `<div class="buzz"><span class="muted">Кто ответил? Начислите очки кнопками «+» / «−» у команд справа.</span></div>`;
-    }
-    if (G.ph === 'ans') h += `<div class="buzz">${G.by ? `<b>+${nums(G.gain)} · ${esc((G.players[G.by] || {}).name || '')}</b>` : '<span class="muted">Никто не ответил верно</span>'}</div>`;
-  }
-  if (G.ph === 'board' || G.ph === 'ans' || G.ph === 'lobby' || G.ph === 'cell') {
-    const n = R.vals.length;
-    h += `<h4 style="margin-top:${h ? 6 : 0}px">${ico('grid', 14)}${esc(R.n)}<span class="sp"></span>${G.rounds.length > 1 ? `<span class="seg" id="rSeg" style="padding:3px">${G.rounds.map((r, i) => `<button data-ri="${i}" class="${i === G.ri ? 'on' : ''}" style="padding:5px 10px;font-size:12px">${i + 1}</button>`).join('')}</span>` : ''}</h4>` +
-      `<div class="mb">${R.cats.map((c, ci) => `<div class="r" style="grid-template-columns:1.4fr repeat(${n},minmax(0,1fr))"><span class="cn">${esc(c.n || '—')}</span>${c.qs.map((x, qi) => !validQ(x) ? '<span></span>' : `<button data-pk="${ci}.${qi}" class="${G.pl[keyOf(G, ci, qi)] ? 'pl' : ''}${G.cur && G.cur.ci === ci && G.cur.qi === qi ? ' cur' : ''}">${esc(R.vals[qi])}</button>`).join('')}</div>`).join('')}</div>`;
-  }
+  /* карточка вопроса — всегда на месте, чтобы табло под ней не прыгало */
+  if (has) h += `<div class="qc"><div class="meta"><span class="chip a">${esc(R.cats[G.cur.ci].n)}</span><span class="chip">${esc(v)}</span>${mOk(q.qm) ? `<span class="chip">${ico(MK[q.qm.k][0], 12)}${MK[q.qm.k][1]}</span>` : ''}${mOk(q.am) ? `<span class="chip">ответ: ${MK[q.am.k][1]}</span>` : ''}</div><p class="qt" title="${esc(q.q)}">${esc(q.q || '(вопрос без текста)')}</p><div class="an"><small>Ответ</small><span>${esc(q.a || '—')}</span></div>`;
+  else h += `<div class="qc idle"><div class="meta"><span class="chip">${G.ph === 'lobby' ? 'Лобби' : G.ph === 'final' ? 'Финал' : 'Табло'}</span></div><p class="qt">${G.ph === 'lobby' ? 'Команды подключаются по QR-коду' : G.ph === 'final' ? 'Игра завершена' : 'Выберите вопрос на табло'}</p><div class="an"><small>Ответ</small><span>—</span></div>`;
+  let bz;
+  if (has && G.ph === 'q') bz = G.mode === 'buzz' ? `<div class="buzz${act ? ' on' : ''}">${act ? `<div class="who"><b>${esc(G.players[act].name)}</b><button class="btn ok sm" data-j="1">${ico('check', 15)}Верно +${nums(v)}</button><button class="btn bad sm" data-j="0">${ico('x', 15)}Неверно${G.minus ? ' −' + nums(v) : ''}</button><button class="btn sm" data-j="2" title="Убрать без очков">Скрыть</button></div>${qq.length > 1 ? `<div class="ql">Следом нажали: ${qq.slice(1).map(id => esc(G.players[id].name)).join(', ')}</div>` : ''}` : `<span class="muted">${G.wr.length ? 'Ждём, нажмёт ли кто-то ещё…' : 'Ждём, кто первый нажмёт «Ответить!»'}</span>`}</div>`
+    : `<div class="buzz"><span class="muted">Кто ответил? Начислите очки кнопками «+» / «−» у команд справа.</span></div>`;
+  else if (has && G.ph === 'ans') bz = `<div class="buzz">${G.by ? `<b>+${nums(G.gain)} · ${esc((G.players[G.by] || {}).name || '')}</b>` : '<span class="muted">Никто не ответил верно</span>'}</div>`;
+  else if (has) bz = `<div class="buzz"><span class="muted">${mOk(q.qm) && q.qm.k === 'audio' ? 'Нажмите «Включить музыку» — команды жмут «Ответить!»' : 'Нажмите «Показать вопрос»'}</span></div>`;
+  else bz = `<div class="buzz"><span class="muted">${Object.keys(G.players).length} ${plural(Object.keys(G.players).length, 'команда', 'команды', 'команд')} в игре</span></div>`;
+  h += bz + '</div>';
+  const n = R.vals.length;
+  h += `<h4>${ico('grid', 14)}${esc(R.n)}<span class="sp"></span>${G.rounds.length > 1 ? `<span class="seg" id="rSeg" style="padding:3px">${G.rounds.map((r, i) => `<button data-ri="${i}" class="${i === G.ri ? 'on' : ''}" style="padding:5px 10px;font-size:12px">${i + 1}</button>`).join('')}</span>` : ''}</h4>` +
+    `<div class="mb">${R.cats.map((c, ci) => `<div class="r" style="grid-template-columns:1.4fr repeat(${n},minmax(0,1fr))"><span class="cn">${esc(c.n || '—')}</span>${c.qs.map((x, qi) => !validQ(x) ? '<span></span>' : `<button data-pk="${ci}.${qi}" class="${G.pl[keyOf(G, ci, qi)] ? 'pl' : ''}${G.cur && G.cur.ci === ci && G.cur.qi === qi ? ' cur' : ''}">${esc(R.vals[qi])}</button>`).join('')}</div>`).join('')}</div>`;
   const hasM = !!(q && (G.ph === 'ans' ? mOk(q.am) && q.am.k !== 'image' : mOk(q.qm) && q.qm.k !== 'image'));
   const qMed = !!(q && mOk(q.qm) && q.qm.k !== 'image'), vid = qMed && q.qm.k === 'video';
+  /* главная (акцентная) кнопка: включить → пауза + показать ответ */
+  const PB = (c, i, t) => `<button data-c="${c}">${ico(i, 18)}${t}</button>`;
   let pb;
-  if (G.ph === 'cell' && q) pb = qMed ? `<button data-c="showQ" class="acc">${ico('play', 18)}${vid ? 'Включить видео' : 'Включить музыку'}</button>` : `<button data-c="showQ" class="acc">${ico('play', 18)}Показать вопрос</button>`;
-  else if ((G.ph === 'q' || G.ph === 'ans') && hasM) pb = `<button data-c="pause" class="acc">${ico(G.hp ? 'play' : 'pause', 18)}${G.hp ? 'Продолжить' : 'Пауза'}</button>`;
-  else pb = `<button class="acc" disabled>${ico('play', 18)}Включить музыку</button>`;
-  h += `<div class="ctlr">${pb}` +
+  if (G.ph === 'cell' && q) pb = PB('showQ', 'play', qMed ? (vid ? 'Включить видео' : 'Включить музыку') : 'Показать вопрос');
+  else if (G.ph === 'q') pb = hasM ? PB('pause', G.hp ? 'play' : 'pause', G.hp ? 'Продолжить' : 'Пауза') + PB('reveal', 'check', 'Показать ответ') : PB('reveal', 'check', 'Показать ответ');
+  else if (G.ph === 'ans') pb = (hasM ? PB('pause', G.hp ? 'play' : 'pause', G.hp ? 'Продолжить' : 'Пауза') : '') + PB('board', 'grid', 'К табло');
+  else pb = `<button disabled>${ico('play', 18)}Включить музыку</button>`;
+  h += `<div class="ctlr"><div class="accw">${pb}</div>` +
     `<button data-c="board"${G.ph === 'board' || G.ph === 'lobby' ? ' disabled' : ''}>${ico('grid', 18)}К табло</button>` +
-    `<button data-c="qrbig" class="${G.qrb ? 'on' : ''}">${ico('qr', 18)}QR-код</button>` +
-    `<button data-c="scores" class="${G.ov === 'scores' ? 'on' : ''}"${!MIX && (G.ph === 'lobby' || G.ph === 'final') ? ' disabled' : ''}>${ico('list', 18)}Рейтинг</button>` +
-    (G.ph === 'q' ? `<button data-c="reveal">${ico('check', 18)}Показать ответ</button>` : '') +
     `<button data-c="replay"${hasM && (G.ph === 'q' || G.ph === 'ans') ? '' : ' disabled'}>${ico('replay', 18)}Ещё раз</button>` +
     `<button data-c="snd" class="${G.snd ? '' : 'on'}">${ico(G.snd ? 'vol' : 'mute', 18)}${G.snd ? 'Звук вкл.' : 'Звук выкл.'}</button>` +
-    `<button data-c="qr" class="${G.qrz ? 'on' : ''}">${ico('pencil', 18)}Код на табло</button>` +
-    `<button data-c="final"${G.ph === 'final' ? ' disabled' : ''}>${ico('trophy', 18)}Победители</button></div>`;
-  return h;
+    `<button data-c="rnext"${G.rounds[G.ri + 1] && G.ph !== 'lobby' ? '' : ' disabled'}>${ico('next', 18)}След. раунд</button></div>`;
+  return h + scrPanel();
+}
+/* панель «Экран» — одинаковая во всех играх */
+function scrPanel() {
+  const ids = Object.keys(G.players), tOn = G.ov === 'teams', ti = Math.min(G.ti || 0, Math.max(0, ids.length - 1));
+  return `<div class="spn"><div class="spk2">${ico('monitor', 14)}Экран</div><div class="sgr">` +
+    `<button data-c="qrbig" class="${G.qrb ? 'on' : ''}">${ico('qr', 16)}QR-код</button>` +
+    `<button data-c="scores" class="${G.ov === 'scores' ? 'on' : ''}"${!MIX && (G.ph === 'lobby' || G.ph === 'final') ? ' disabled' : ''}>${ico('list', 16)}Рейтинг</button>` +
+    `<button data-c="qr" class="${G.qrz ? 'on' : ''}">${ico('pencil', 16)}Код на табло</button>` +
+    `<button data-c="teams" class="${tOn ? 'on' : ''}"${ids.length ? '' : ' disabled'}>${ico('users', 16)}Участники</button>` +
+    `<button data-c="final" class="${G.ph === 'final' ? 'on' : ''}"${G.ph === 'final' ? ' disabled' : ''}>${ico('trophy', 16)}Победители</button></div>` +
+    (tOn && ids.length ? `<div class="tpg"><button data-c="tprev"${ti ? '' : ' disabled'}>‹</button><div><small>Команда ${ti + 1} из ${ids.length}</small><b>${esc(G.players[ids[ti]].name)}</b></div><button data-c="tnext"${ti < ids.length - 1 ? '' : ' disabled'}>›</button></div>` : '') + '</div>';
 }
 function ctlQuizHtml() {
   const R = curR(G), q = curQQ(G), v = validIdx(R);

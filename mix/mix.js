@@ -160,7 +160,7 @@ function startShow() {
 function pub() { if (!S) return; ls('set', KEY_LIVE, S); renderLive(); push(); }
 function coreOf() {
   const r = S.rounds[S.ri] || null, rank = Object.keys(S.names).map(id => ({ id, n: S.names[id], s: S.tot[id] || 0 })).sort((a, b) => b.s - a.s);
-  return { id: S.id, ph: S.ph, title: S.title, code: S.code || '', ri: S.ri, n: S.rounds.length, rounds: S.rounds.map(x => ({ k: x.k, t: x.t })), rk: r ? r.k : '', rg: S.rg || '', play: r && r.k === 'sm' ? r.play : '', names: S.names, rank: rank.slice(0, 30), ov: S.ov || '' };
+  return { id: S.id, ph: S.ph, title: S.title, code: S.code || '', ri: S.ri, n: S.rounds.length, rounds: S.rounds.map(x => ({ k: x.k, t: x.t })), rk: r ? r.k : '', rg: S.rg || '', play: r && r.k === 'sm' ? r.play : '', names: S.names, rank: rank.slice(0, 30), ov: S.ov || '', ti: S.ti || 0 };
 }
 function push() { if (!S || !NET.ok || !S.net) return; const c = JSON.stringify(coreOf()); if (c === lastCore) return; lastCore = c; gref(S.id, 'core').set(JSON.parse(c)).catch(() => {}); gref(S.id, 'scr').set(JSON.parse(c)).catch(() => {}); }
 async function netStart() {
@@ -203,7 +203,8 @@ const A = {
   },
   /* переключение на любой раунд: текущий закрываем (счёт сохраняется), выбранный запускаем */
   go(i) { if (i === S.ri && (S.ph === 'round' || S.ph === 'starting')) return; if (S.ph === 'round' || S.ph === 'starting') A.finishRound(() => A.start(i)); else A.start(i); },
-  ov(k) { S.ov = S.ov === k ? '' : k; pub(); },
+  ov(k) { S.ov = S.ov === k ? '' : k; S.ti = 0; pub(); },
+  tstep(d) { const n = Object.keys(S.names).length; S.ti = Math.max(0, Math.min(n - 1, (S.ti || 0) + d)); pub(); },
   /* рейтинг с учётом очков идущего раунда */
   liveScore() {
     if (S.ov === 'score') { S.ov = ''; pub(); return; }
@@ -242,10 +243,11 @@ function renderLive(force) {
   }
   const run = S.ph === 'round' || S.ph === 'starting';
   $('ctl').innerHTML = `<div class="rtabs">${S.rounds.map((x, i) => `<button class="rt${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}">${gIco(x.k)}<span class="tx"><b>Раунд ${i + 1}</b><small>${esc(x.t)}</small></span>${i === S.ri && run ? '<span class="st live">идёт</span>' : S.done.indexOf(i) >= 0 ? '<span class="st">✓</span>' : ''}</button>`).join('')}</div>` +
-    `<div class="sctl"><div class="k" style="margin:12px 0 8px">Экран</div><div class="sg"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Рейтинг</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div></div>`;
+    `<div class="sctl"><div class="k" style="margin:12px 0 8px">Экран</div><div class="sg"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Рейтинг</button><button data-ov="teams" class="${S.ov === 'teams' ? 'on' : ''}"${Object.keys(S.names).length ? '' : ' disabled'}>Участники</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div>${S.ov === 'teams' && Object.keys(S.names).length ? (() => { const ids = Object.keys(S.names), i = Math.min(S.ti || 0, ids.length - 1); return `<div class="tpg"><button data-ts="-1"${i ? '' : ' disabled'}>‹</button><div><small>Команда ${i + 1} из ${ids.length}</small><b>${esc(S.names[ids[i]])}</b></div><button data-ts="1"${i < ids.length - 1 ? '' : ' disabled'}>›</button></div>`; })() : ''}</div>`;
   $('ctl').querySelectorAll('[data-go]').forEach(b => b.onclick = () => A.go(+b.dataset.go));
   $('ctl').querySelectorAll('[data-ov]').forEach(b => b.onclick = () => b.dataset.ov === 'score' ? A.liveScore() : A.ov(b.dataset.ov));
   $('bFinal').onclick = A.final;
+  $('ctl').querySelectorAll('[data-ts]').forEach(b => b.onclick = () => A.tstep(+b.dataset.ts));
   const rank = Object.keys(S.names).map(id => ({ id, n: S.names[id], s: S.tot[id] || 0 })).sort((a, b) => b.s - a.s);
   $('tt').innerHTML = rank.length ? rank.map((p, i) => `<div><em class="muted" style="font-style:normal;width:18px">${i + 1}</em><span>${esc(p.n)}</span><b>${nums(p.s)}</b></div>`).join('') : '<p class="muted" style="margin:0;font-size:14px">Команды появятся, когда войдут по QR</p>';
   $('cd').textContent = S.code ? `${SHORT} · ${fmtCode(S.code)}` : 'подключаемся…';
@@ -277,9 +279,10 @@ function viewScreen() {
   };
   const ovb = document.createElement('div'); ovb.className = 'movl'; document.body.appendChild(ovb); let ovk = '';
   function drawOv() {
-    const k = C && C.ov ? C.ov + JSON.stringify(C.rank) + C.code : ''; if (k === ovk) return; ovk = k;
+    const k = C && C.ov ? C.ov + JSON.stringify(C.rank) + C.code + (C.ov === 'teams' ? '|' + C.ti : '') : ''; if (k === ovk) return; ovk = k;
     ovb.classList.toggle('on', !!k); if (!k) { ovb.innerHTML = ''; return; }
     if (C.ov === 'qr') { ovb.innerHTML = `<div class="joinc big"><div class="qr" id="oqr"></div><div class="u">${esc(SHORT)}</div><small>код вечера</small><div class="cd">${fmtCode(C.code)}</div></div>`; qr($('oqr'), `${BASE}?view=play&g=${C.id}`, 600); }
+    else if (C.ov === 'teams') { const ids = Object.keys(C.names || {}), i = Math.min(C.ti || 0, ids.length - 1); ovb.innerHTML = ids.length ? `<div class="tintro"><div class="k">Команда ${i + 1} из ${ids.length}</div><div class="nm">${esc(C.names[ids[i]])}</div><div class="dots">${ids.slice(0, 20).map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}</div></div>` : ''; }
     else ovb.innerHTML = `<div class="mst" style="position:absolute"><div class="in"><div class="kk">Раунд ${Math.max(1, C.ri + 1)} из ${C.n}</div><h1 style="font-size:3em">Общий счёт</h1><div class="msc">${(C.rank || []).slice(0, 8).map((p, i) => `<div class="row${i === 0 && p.s > 0 ? ' t1' : ''}"><span class="p">${i + 1}</span><span class="n">${esc(p.n)}</span><span class="s">${nums(p.s)}</span></div>`).join('')}</div></div></div>`;
   }
   draw();
