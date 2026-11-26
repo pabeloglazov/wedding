@@ -1241,6 +1241,17 @@ function factTiles(q) {
     `<div class="tile ${CL[i]}" data-i="${i}"><div class="fill" data-f="${i}"></div>${faceHtml(o.img, o.t)}<span class="t">${esc(o.t)}</span><span class="cnt" data-c="${i}"></span></div>`).join('') + '</div>';
 }
 function heroCard() { return `<div class="hero" id="hero"><div class="hcard"><div class="hback"><span>?</span><em>Кто это?</em></div><div class="hfront"><div class="hph" id="hph"></div><div class="hnm"><small>Это</small><b id="hnm"></b></div></div></div></div>`; }
+/* вопрос и плитки всегда помещаются в свою колонку: если не влезают — уменьшаем шрифт колонки */
+function fitStage(box) {
+  const run = () => (box.querySelectorAll ? box.querySelectorAll('.qbody .qleft') : []).forEach(el => {
+    if (getComputedStyle(el).display === 'contents' || !el.clientHeight) return;
+    el.style.fontSize = ''; let k = 1;
+    while (el.scrollHeight > el.clientHeight + 2 && k > .5) { k -= .04; el.style.fontSize = k.toFixed(2) + 'em'; }
+  });
+  run(); requestAnimationFrame(run); setTimeout(run, 400);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(run);
+}
+window.addEventListener('resize', () => { clearTimeout(fitStage.t); fitStage.t = setTimeout(() => document.querySelectorAll('.stage').forEach(fitStage), 150); });
 function renderScreen(box, g, snd) {
   if (!box) return;
   tgTheme(box, g);
@@ -1340,6 +1351,7 @@ function buildScreen(box, g) {
   }
   if (g && (g.phase === 'lobby' || g.phase === 'final' || g.phase === 'intro')) h += BRAND();
   box.innerHTML = h;
+  fitStage(box);
   if (g && g.phase === 'lobby') {
     const jn = box.querySelector('.join');
     if (jn) jn.onclick = e => {
