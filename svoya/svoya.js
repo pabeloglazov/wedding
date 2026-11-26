@@ -1236,7 +1236,7 @@ function viewPlay() {
     let h = '';
     if (!J) {
       if (C.full) h = `<div class="mid"><h2>Мест нет</h2><p>В этой игре уже максимум команд</p></div>`;
-      else h = `<div class="mid"><div style="opacity:.9">${MARK(40)}</div><h2>${esc(C.title)}</h2><p>Придумайте название команды</p><input class="pin" id="nIn" maxlength="24" placeholder="Название команды" value="${esc(ls('get', 'pbs_name') || '')}"><button class="pbtn" id="nGo"${joining ? ' disabled' : ''}>${joining ? 'Входим…' : 'Войти в игру'}</button><p class="note">Приложение не нужно — всё работает в браузере</p></div>`;
+      else h = `<div class="mid"><div style="opacity:.9">${MARK(40)}</div><h2>${esc(C.title)}</h2><p>Придумайте название команды</p><input class="pin" id="nIn" maxlength="24" placeholder="Название команды" value="${esc(ls('get', 'pbs_name') || '')}"><button class="pbtn" id="nGo"${joining ? ' disabled' : ''}>${joining ? 'Входим…' : 'Войти в игру'}</button></div>`;
     } else if (!inGame) h = C.full ? `<div class="mid"><h2>Мест нет</h2><p>В этой игре уже максимум команд</p></div>` : `<div class="mid"><div class="spin"></div><p>Ведущий добавляет команду…</p></div>`;
     else if (C.ph === 'lobby') h = `<div class="mid"><h2>Команда в игре!</h2><p>Смотрите на экран — скоро начинаем</p></div>`;
     else if (C.ph === 'board') h = `<div class="mid"><p class="k" style="color:#fff;opacity:.7">${esc(C.rn)}</p><h2>Ведущий выбирает вопрос</h2><p>${C.rk && C.rk[me] ? `Вы на ${C.rk[me]} месте из ${C.n}` : ''}</p></div>`;

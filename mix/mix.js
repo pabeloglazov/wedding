@@ -323,7 +323,7 @@ function viewPlay() {
     else k = C.ph + ':' + JSON.stringify(C.rank);
     if (k === cur) return; cur = k;
     if (!name) {
-      app.innerHTML = `<div class="pv"><div class="mid"><div style="opacity:.9">${window.PB_BRAND ? PB_BRAND.mark(40) : ''}</div><h2>${esc(C.title)}</h2><p>Придумайте название команды — оно будет во всех раундах вечера</p><input class="pin" id="nIn" maxlength="24" placeholder="Название команды" value="${esc(ls('get', 'pbm_name') || '')}"><button class="pbtn" id="nGo">Войти в игру</button><p style="font-size:13px;opacity:.6">Приложение не нужно — всё работает в браузере</p></div></div>`;
+      app.innerHTML = `<div class="pv"><div class="mid"><div style="opacity:.9">${window.PB_BRAND ? PB_BRAND.mark(40) : ''}</div><h2>${esc(C.title)}</h2><p>Придумайте название команды — оно будет во всех раундах вечера</p><input class="pin" id="nIn" maxlength="24" placeholder="Название команды" value="${esc(ls('get', 'pbm_name') || '')}"><button class="pbtn" id="nGo">Войти в игру</button></div></div>`;
       const go = () => { const v = $('nIn').value.trim(); if (!v || joining) return; joining = true; ls('set', 'pbm_name', v); gref(GID, 'join/' + me).set({ name: v.slice(0, 24), table: 0, t: TS() }).then(() => { joining = false; }, () => { joining = false; }); };
       $('nGo').onclick = go; $('nIn').onkeydown = e => { if (e.key === 'Enter') go(); };
       return;

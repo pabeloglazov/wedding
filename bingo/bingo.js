@@ -584,7 +584,7 @@ function buildPhone(box, S, cl) {
     if (S.phase === 'final') h = wait('<div class="kk">' + esc(S.couple) + '</div>', 'Игра завершена', 'Спасибо, что были с нами!');
     else h = `<div class="pv"><div class="pbrand">${MARK(40)}</div><div class="kk">${esc(S.couple || GNAME)}</div><h2>${esc(S.title)}</h2><p class="sub">Как вас зовут? Имя увидят другие гости — по нему вас и будут отмечать.</p>` +
       `<input class="pin" id="pName" maxlength="24" autocomplete="off" placeholder="Имя и фамилия" value="${esc(cl.lastName || '')}">` +
-      `<button class="pbtn acc" id="pJoin"${cl.joining ? ' disabled' : ''}>${cl.joining ? 'Входим…' : 'Получить карточку'}</button><p class="note">Приложение не нужно — всё работает в браузере</p><p class="note w" id="pErr"></p></div>`;
+      `<button class="pbtn acc" id="pJoin"${cl.joining ? ' disabled' : ''}>${cl.joining ? 'Входим…' : 'Получить карточку'}</button><p class="note w" id="pErr"></p></div>`;
   } else {
     h = `<div class="pv bph"><div class="me"><span class="mn">${av(S.me.name)}${esc(S.me.name)}</span><span id="pSt"></span></div>` +
       `<div class="phd" id="pHd"></div><div class="grid g${S.size}" id="pGrid"></div><div class="pfoot" id="pFoot"></div></div>`;

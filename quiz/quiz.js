@@ -409,10 +409,96 @@ const CPI = {
   pult: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>',
   rst: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>'
 };
+/* пульт ведущего — как в «Своей игре»: игровые кнопки + панель «Экран» (одинаковая во всех играх) */
+const XI = {
+  qr: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-7"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>', pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+  trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-8 9"/>',
+  monitor: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  next: '<path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/>', play: '<path d="M7 4v16l13-8z"/>',
+  mus: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', musoff: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/><path d="M3 3l18 18"/>'
+};
+const xi = (k, n = 18) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${XI[k]}</svg>`;
+function hostPanelHtml() {
+  const nl = nextLabel(G), ids = Object.keys(G.players), nT = ids.length, ti = Math.min(G.ti || 0, Math.max(0, nT - 1)), sure = Date.now() - rstSure < 3000;
+  const nextDis = G.phase === 'final' || (G.phase === 'lobby' && !isStage(G) && !nT);
+  const b = (c, i, t, dis, cls) => `<button data-cp="${c}"${cls ? ` class="${cls}"` : ''}${dis ? ' disabled' : ''}>${i}${t}</button>`;
+  return `<div class="ctlr"><div class="accw"><button data-cp="next"${nextDis ? ' disabled' : ''}>${xi('play')}${esc(nl[0])}</button></div>` +
+    b('skip', CPI.skip, 'Стоп таймер', !(G.phase === 'question' && !isStage(G))) +
+    b('replay', CPI.rep, 'Ещё раз', !hasMedia()) +
+    b('snd', G.s.sound !== false ? CPI.son : CPI.soff, G.s.sound !== false ? 'Звук вкл.' : 'Звук выкл.', false, G.s.sound !== false ? '' : 'on') +
+    b('restart', CPI.rst, sure ? 'Точно?' : 'Заново', false, sure ? 'warn' : '') + `</div>` +
+    `<div class="spn"><div class="spk2">${xi('monitor', 14)}Экран</div><div class="sgr">` +
+    b('qr', xi('qr', 16), 'QR-код', !G.code, G.qrz ? 'on' : '') +
+    b('scores', xi('list', 16), 'Рейтинг', !nT || G.phase === 'final', G.ov === 'scores' ? 'on' : '') +
+    b('cdz', xi('pencil', 16), 'Код на табло', !G.code, G.cdz ? 'on' : '') +
+    b('teams', xi('users', 16), 'Участники', !nT, G.ov === 'teams' ? 'on' : '') +
+    b('final', xi('trophy', 16), 'Победители', G.phase === 'final' || !nT, G.phase === 'final' ? 'on' : '') +
+    b('logo', xi('image', 16), G.lgo ? 'Лого' : 'Лого скрыто', false, G.lgo ? 'on' : '') + `</div>` +
+    (G.ov === 'teams' && nT ? `<div class="tpg"><button data-cp="tprev"${ti ? '' : ' disabled'}>‹</button><div><small>${G.s.play === 'teams' ? 'Команда' : 'Участник'} ${ti + 1} из ${nT}</small><b>${esc(G.players[ids[ti]].name)}</b></div><button data-cp="tnext"${ti < nT - 1 ? '' : ' disabled'}>›</button></div>` : '') + `</div>`;
+}
+function hostCmd(a) {
+  if (!G) return;
+  if (a === 'next') { G.ov = ''; next(); } else if (a === 'qr') { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'qr' }, location.origin); return; } toggleQr(); }
+  else if (a === 'snd') toggleSound(); else if (a === 'replay') replayMedia(); else if (a === 'skip') skipTimer();
+  else if (a === 'scores') { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'score' }, location.origin); return; } G.ov = G.ov === 'scores' ? '' : 'scores'; publish(); }
+  else if (a === 'cdz') { G.cdz = G.cdz ? 0 : 1; publish(); }
+  else if (a === 'teams') { G.ov = G.ov === 'teams' ? '' : 'teams'; G.ti = 0; publish(); }
+  else if (a === 'tprev') { if (G.ti > 0) { G.ti--; publish(); } }
+  else if (a === 'tnext') { if ((G.ti || 0) < Object.keys(G.players).length - 1) { G.ti = (G.ti || 0) + 1; publish(); } }
+  else if (a === 'final') { if (G.phase === 'final') return; clearBots(); G.ov = ''; G.phase = 'final'; G.final = true; G.fts = now(); publish(); if (!isStage(G)) saveResults(); }
+  else if (a === 'logo') { G.lgo = G.lgo ? 0 : 1; publish(); if (G.lgo) toast('Лого на экране — его можно перетащить и изменить размер'); }
+  else if (a === 'restart') { if (Date.now() - rstSure > 3000) { rstSure = Date.now(); render(); setTimeout(() => { if (G) render(); }, 3100); return; } rstSure = 0; clearBots(); newGame(); }
+}
+/* слой поверх экрана: код, рейтинг, участники, лого, кнопка фоновой музыки (только у ведущего) */
+function xLayer(box, g) {
+  let L = box.querySelector('.xly'); if (!L) { L = document.createElement('div'); L.className = 'xly'; L.innerHTML = '<div class="xcode"></div><div class="xov"></div><div class="xlogo">' + (window.PB_BRAND ? `${PB_BRAND.mark(30)}<img src="${PB_BRAND.base}wordmark-white.png" alt="Beloglazov Event">` : '<b>Beloglazov Event</b>') + '</div>'; box.appendChild(L); }
+  const host = typeof G !== 'undefined' && G && g && G.id === g.id && box.id === 'stg';
+  const cd = L.querySelector('.xcode'), ck = g && g.cdz && g.code ? `${esc(SHORT.replace(/^https?:\/\//, ''))} · код <b>${fmtCode(g.code)}</b>` : '';
+  if (cd._k !== ck) { cd._k = ck; cd.innerHTML = ck; cd.classList.toggle('on', !!ck); }
+  const ov = L.querySelector('.xov'); let ok = '';
+  if (g && g.ov === 'scores' && g.phase !== 'final') ok = 'sc' + JSON.stringify((g.s.play === 'tables' ? tableRank(g) : ranked(g)).slice(0, 10).map(p => [p.name, p.score]));
+  else if (g && g.ov === 'teams' && g.players && Object.keys(g.players).length) { const ids = Object.keys(g.players), i = Math.min(g.ti || 0, ids.length - 1); ok = 'tm' + i + '|' + ids.length + '|' + g.players[ids[i]].name; }
+  if (ov._k !== ok) {
+    ov._k = ok; ov.classList.toggle('on', !!ok);
+    if (ok.startsWith('sc')) { const l = JSON.parse(ok.slice(2)); ov.innerHTML = `<div class="xsc"><h2>Рейтинг</h2>${l.map((p, i) => `<div class="r${i === 0 && p[1] > 0 ? ' t1' : ''}" style="animation-delay:${i * 60}ms"><span class="p">${i + 1}</span><span class="n">${esc(p[0])}</span><span class="s">${p[1]}</span></div>`).join('') || '<p>Пока нет очков</p>'}</div>`; }
+    else if (ok.startsWith('tm')) { const [a, n, nm] = ok.slice(2).split('|'); ov.innerHTML = `<div class="tintro"><div class="k">${g.s.play === 'teams' ? 'Команда' : 'Участник'} ${+a + 1} из ${n}</div><div class="nm">${esc(nm)}</div><div class="dots">${Array.from({ length: Math.min(+n, 20) }, (_, j) => `<i class="${j === +a ? 'on' : ''}"></i>`).join('')}</div></div>`; }
+    else ov.innerHTML = '';
+  }
+  const lg = L.querySelector('.xlogo');
+  lg.classList.toggle('off', !g || !g.lgo);
+  if (!lg._drag) { const p = g && g.lgp; lg.classList.toggle('free', !!p); lg.style.left = p ? p.x + '%' : ''; lg.style.top = p ? p.y + '%' : ''; lg.style.fontSize = g && g.lgs && g.lgs !== 1 ? `calc(1.5625cqw * ${g.lgs})` : ''; }
+  if (host) {
+    if (!lg._dg) xLogoDrag(box, lg);
+    let mb = L.querySelector('.xbgm'); if (!mb) { mb = document.createElement('button'); mb.className = 'xbgm'; mb.onclick = e => { e.stopPropagation(); toggleBgm(); }; L.appendChild(mb); }
+    const on = G.s.bgm !== false, mk = on ? 'on' : 'off'; if (mb._k !== mk) { mb._k = mk; mb.innerHTML = xi(on ? 'mus' : 'musoff', 18); mb.title = on ? 'Фоновая музыка во время вопросов — выключить' : 'Фоновая музыка выключена — включить'; mb.classList.toggle('mute', !on); }
+  }
+}
+function xLogoDrag(root, br) {
+  br._dg = 1; br.classList.add('drg'); br.title = 'Перетащите лого. Уголок — размер. Двойной клик — на место';
+  const hd = document.createElement('i'); hd.className = 'rsz'; br.appendChild(hd);
+  hd.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation(); hd.setPointerCapture(e.pointerId); br._drag = 1;
+    const w0 = br.getBoundingClientRect().width, x0 = e.clientX, s0 = G.lgs || 1;
+    const mv = ev => { br._s = Math.round(Math.max(.4, Math.min(3, s0 * (w0 + ev.clientX - x0) / w0)) * 100) / 100; br.style.fontSize = `calc(1.5625cqw * ${br._s})`; };
+    const up = () => { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up); br._drag = 0; if (br._s) { G.lgs = br._s; br._s = 0; publish(); } };
+    hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up);
+  });
+  br.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation(); br.setPointerCapture(e.pointerId); br._drag = 1; br.classList.add('free');
+    const r = root.getBoundingClientRect(), b0 = br.getBoundingClientRect(), dx = e.clientX - b0.left, dy = e.clientY - b0.top;
+    const mv = ev => { const x = Math.max(0, Math.min(r.width - b0.width, ev.clientX - r.left - dx)), y = Math.max(0, Math.min(r.height - b0.height, ev.clientY - r.top - dy)); br._p = { x: Math.round(x / r.width * 1000) / 10, y: Math.round(y / r.height * 1000) / 10 }; br.style.left = br._p.x + '%'; br.style.top = br._p.y + '%'; };
+    const up = () => { br.removeEventListener('pointermove', mv); br.removeEventListener('pointerup', up); br._drag = 0; if (br._p) { G.lgp = br._p; br._p = null; publish(); } };
+    br.addEventListener('pointermove', mv); br.addEventListener('pointerup', up);
+  });
+  br.addEventListener('dblclick', e => { e.stopPropagation(); G.lgp = null; G.lgs = 1; publish(); toast('Лого вернулось на место'); });
+}
 function cpanHtml(o) {
   const t = (a, on, ic, name, st, dis) => `<button class="ct${on ? ' on' : ''}" data-cp="${a}"${dis ? ' disabled' : ''}>${ic}<span><b>${name}</b><i>${st}</i></span></button>`;
   const s = (a, ic, name, dis, warn) => `<button class="cs${warn ? ' warn' : ''}" data-cp="${a}"${dis ? ' disabled' : ''}>${ic}<span>${name}</span></button>`;
-  const small = [s('skip', CPI.skip, 'Стоп таймер', !o.timer), s('bgm', CPI.mus, o.bgm ? 'Фон. музыка' : 'Музыка выкл.', !o.snd)];
+  const small = [s('skip', CPI.skip, 'Стоп таймер', !o.timer)];
   if (o.host) small.push(s('pult', CPI.pult, 'Пульт', !o.net), s('restart', CPI.rst, o.sure ? 'Точно?' : 'Заново', false, o.sure));
   return `<div class="cpan"><div class="cph"><span>Управление экраном</span>${o.code ? `<span>Код <b>${esc(fmtCode(o.code))}</b></span>` : ''}</div>` +
     `<div class="cpt">${t('qr', o.qr, CPI.qr, 'QR-код', o.qr ? 'на экране' : 'скрыт', !o.code)}${t('replay', false, CPI.rep, 'Ещё раз', o.media ? 'музыка' : 'нет музыки', !o.media)}` +
@@ -1412,6 +1498,7 @@ function updScreen(box, g, snd) {
   if (snd && g && g.s && g.s.bgm !== false) BGM.prep();
   if (bgmFor(g, snd)) { if (!BGM.on) BGM.start(g.t0 - now() - 400); } else BGM.stop();
   if (!g || !box) return;
+  try { xLayer(box, g); } catch (e) { console.warn('xLayer', e); }
   syncQz(box, g);
   { const st0 = box._st || (box._st = {}), sv = !!snd; if (st0.snd === undefined) st0.snd = sv; else if (st0.snd !== sv) { st0.snd = sv; setMediaMute(box.querySelector('#mdw'), sv); } }
   const st = box._st || {};
@@ -1557,7 +1644,7 @@ function buildPhone(box, g, cl) {
       else h = `<div class="pv jn"><div class="pbrand">${MARK(40)}</div><div class="kk">${esc(g.couple)}</div><h2>${esc(g.title)}</h2><p class="sub">${teams ? 'Придумайте название команды' : 'Как вас зовут?'}</p>` +
         `<input class="pin" id="pName" maxlength="24" autocomplete="off" placeholder="${teams ? 'Название команды' : 'Ваше имя'}" value="${esc(cl.lastName || '')}">` +
         (tables ? `<div class="lblc">Ваш стол</div><div class="tbls" id="pTbl">${Array.from({ length: g.s.tables || 10 }, (_, i) => `<button data-t="${i + 1}" class="${cl.table === i + 1 ? 'on' : ''}">${i + 1}</button>`).join('')}</div>` : '') +
-        `<button class="pbtn acc" id="pJoin"${cl.joining ? ' disabled' : ''}>${cl.joining ? 'Входим…' : 'Войти в игру'}</button><p class="note">Приложение не нужно — всё работает в браузере</p><p class="note w" id="pErr"></p></div>`;
+        `<button class="pbtn acc" id="pJoin"${cl.joining ? ' disabled' : ''}>${cl.joining ? 'Входим…' : 'Войти в игру'}</button><p class="note w" id="pErr"></p></div>`;
     } else if (g.phase === 'lobby') h = `<div class="pv">${head(g, me)}<div class="wait"><div class="big">✓</div><h2>${teams ? 'Команда в игре' : 'Вы в игре'}</h2><p class="sub">Смотрите на экран — скоро первый вопрос</p></div></div>`;
     else if (g.phase === 'intro') {
       const i = g._intro || (() => { const E = entities(g), e = E[g.ii]; return e ? { pid: e.pid, table: e.table, name: e.name } : {}; })();
@@ -2511,8 +2598,8 @@ function renderLive() {
       `<div class="tabs" id="tabs"><button data-t="ctl">Пульт</button><button data-t="scr">Экран</button><button data-t="ph">Я — гость</button></div>` +
       `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><div class="kbd dsk-only">Пробел или → — дальше · R — звук ещё раз · Q — QR</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
       `<div class="stat"><div><b id="sP">0</b><span id="sPl">гостей</span></div><div><b id="sO">–</b><span>на связи</span></div><div><b id="sA">–</b><span>ответили</span></div></div>` +
-      `<div class="netline" id="netl"></div><div id="demoL"></div><div class="cur" id="cur"></div><div id="cpan"></div><div class="links" id="cplx"><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button></div><div class="plist" id="plist"></div></div>` +
-      `<div class="pane" data-p="scr"><h4>Экран для проектора <button class="btn ghost sm" id="bScrMenu">Открыть ↗</button></h4><div class="stage" id="stg"></div></div>` +
+      `<div class="netline" id="netl"></div><div id="demoL"></div><div class="cur" id="cur"></div><div id="cpan"></div><div class="links" id="cplx"><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button></div></div>` +
+      `<div class="pane" data-p="scr"><h4>Экран для проектора <button class="btn ghost sm" id="bScrMenu">Открыть ↗</button></h4><div class="stage" id="stg"></div><div class="tpane" id="tpane"><h4 class="tph"><span id="tpT">Команды</span><span class="sp"></span><span class="muted" id="tpO"></span></h4><div class="plist" id="plist"></div></div></div>` +
       `<div class="pane ph" data-p="ph"><h4>Телефон гостя · играйте сами <button class="btn ghost sm" id="bOpenPh2">↗</button></h4><div class="phwrap"><div class="phone"><div class="scr" id="ph"></div></div></div></div></div>` +
       `<div class="mnext"><button class="btn gold next" id="bNextM" style="display:block"></button></div>`;
     const openLocal = () => { SND.unlock(); window.open(BASE + '?view=screen', 'pbq_screen', 'width=1280,height=760'); };
@@ -2523,9 +2610,7 @@ function renderLive() {
     $('bNext').onclick = next; $('bNextM').onclick = next;
     $('bIntro').onclick = startIntro;
     $('cpan').onclick = e => {
-      const b = e.target.closest('[data-cp]'); if (!b || b.disabled) return; const a = b.dataset.cp;
-      if (a === 'qr') toggleQr(); else if (a === 'snd') toggleSound(); else if (a === 'bgm') toggleBgm(); else if (a === 'replay') replayMedia(); else if (a === 'skip') skipTimer(); else if (a === 'pult') remoteMenu();
-      else if (a === 'restart') { if (Date.now() - rstSure > 3000) { rstSure = Date.now(); render(); setTimeout(() => { if (G) render(); }, 3100); return; } rstSure = 0; clearBots(); newGame(); }
+      const b = e.target.closest('[data-cp]'); if (!b || b.disabled) return; hostCmd(b.dataset.cp);
     };
     document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; paintTabs(); });
     paintTabs();
@@ -2535,15 +2620,16 @@ function renderLive() {
   const nl = nextLabel(G);
     [$('bNext'), $('bNextM')].forEach(b => { b.innerHTML = esc(nl[0]) + (nl[1] ? `<small>${esc(nl[1])}</small>` : ''); b.disabled = G.phase === 'final' || (G.phase === 'lobby' && !isStage(G) && !Object.keys(G.players).length); });
   const stg = isStage(G);
-  document.querySelectorAll('.live .stat, #plist, #tabs [data-t="ph"], .live>[data-p="ph"]').forEach(x => { x.style.display = stg ? 'none' : ''; });
+  document.querySelectorAll('.live .stat, #tpane, #tabs [data-t="ph"], .live>[data-p="ph"]').forEach(x => { x.style.display = stg ? 'none' : ''; });
+  { const n0 = Object.keys(G.players).length; $('tpT').textContent = (G.s.play === 'teams' ? 'Команды' : 'Гости') + (n0 ? ' · ' + n0 : ''); }
   if (stg && tab === 'ph') { tab = 'ctl'; paintTabs(); }
   const canIntro = G.phase === 'lobby' && entities(G).length > 0;
-  $('bIntro').style.display = canIntro ? '' : 'none';
+  $('bIntro').style.display = 'none'; $('bNext').style.display = 'none';
   $('bIntro').textContent = '🎤 Представить ' + (G.s.play === 'teams' ? 'команды' : 'столы') + ' по очереди';
   $('bCpl').style.display = G.net && G.qs.some(q => q.type === 'couple') ? '' : 'none';
   $('bRemote').style.display = G.net ? '' : 'none';
   $('cplx').style.display = $('bCpl').style.display;
-  $('cpan').innerHTML = cpanHtml({ host: true, qr: !!G.qrz, snd: G.s.sound !== false, bgm: G.s.bgm !== false, code: G.code || '', media: hasMedia(), timer: G.phase === 'question' && !isStage(G), net: !!G.net, sure: Date.now() - rstSure < 3000 });
+  $('cpan').innerHTML = hostPanelHtml();
   const n = Object.keys(G.players).length, A = G.qi >= 0 ? (G.ans[G.qi] || {}) : {}, a = Object.keys(A).length;
   $('sP').textContent = n; $('sPl').textContent = G.s.play === 'teams' ? plural(n, 'команда', 'команды', 'команд') : plural(n, 'гость', 'гостя', 'гостей');
   $('sA').textContent = G.phase === 'question' || G.phase === 'reveal' ? a + '/' + n : '–';

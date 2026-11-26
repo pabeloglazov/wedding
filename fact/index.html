@@ -679,6 +679,53 @@ body.solo-play #ph>.pv{flex:1}
 .lt .fph.has{border-style:solid}
 .lt .fcin{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
 .lt .fcin textarea{resize:vertical;font-family:inherit}
+
+/* пульт как в «Своей игре» */
+#cpan .ctlr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#cpan .ctlr>button,#cpan .sgr button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#171716;color:var(--ink);border-radius:14px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:700;font-size:12px;padding:6px}
+#cpan .ctlr>button svg{width:18px;height:18px}
+#cpan .ctlr>button.on{background:var(--gold);color:var(--gink);border-color:transparent}
+#cpan .ctlr>button.warn{background:var(--bad);color:#fff;border-color:transparent}
+#cpan button[disabled]{opacity:.35;cursor:default}
+#cpan .accw{grid-column:span 2;display:flex;border-radius:14px;overflow:hidden;background:var(--gold);min-height:58px}
+#cpan .accw button{flex:1;border:0;background:transparent;color:var(--gink);font:inherit;font-weight:800;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:6px;line-height:1.15;text-align:center}
+#cpan .accw button[disabled]{opacity:.55}
+#cpan .spn{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+#cpan .spk2{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+#cpan .sgr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#cpan .sgr button.on{background:var(--gold);color:var(--gink);border-color:transparent}
+#cpan .tpg{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:center;margin-top:10px;background:#171716;border:1px solid var(--line);border-radius:12px;padding:6px}
+#cpan .tpg button{height:44px;border-radius:10px;border:0;background:#2a2a28;color:#fff;font-size:24px;font-weight:800;cursor:pointer}
+#cpan .tpg div{text-align:center;min-width:0}#cpan .tpg small{display:block;font-size:11px;color:var(--muted);font-weight:700}#cpan .tpg b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cpan{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px}
+/* слой поверх экрана */
+.stage .xly{position:absolute;inset:0;z-index:30;pointer-events:none}
+.stage .xcode{position:absolute;left:50%;top:2.4cqw;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;border-radius:99px;padding:.6cqw 1.6cqw;font-size:1.5cqw;font-weight:700;opacity:0;transition:opacity .3s;white-space:nowrap}
+.stage .xcode.on{opacity:1}.stage .xcode b{font-family:var(--hf);letter-spacing:.06em;margin-left:.3em}
+.stage .xov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(8,7,10,.86);backdrop-filter:blur(8px)}
+.stage .xov.on{display:flex}
+.stage .xsc{width:60%;font-size:1.6cqw}.stage .xsc h2{font-family:var(--hf);font-size:3em;margin:0 0 .5em;text-align:center;text-transform:uppercase}
+.stage .xsc .r{display:flex;align-items:center;gap:1em;padding:.5em 1em;border-radius:.6em;background:rgba(255,255,255,.07);margin-bottom:.4em;font-weight:700;font-size:1.2em;animation:svIn .4s both}
+.stage .xsc .r.t1{background:var(--gold);color:var(--gink)}.stage .xsc .p{width:1.6em;opacity:.7}.stage .xsc .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stage .xsc .s{font-variant-numeric:tabular-nums}
+.stage .tintro{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 6%;font-size:1.5625cqw}
+.stage .tintro .k{font-size:1.5em;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+.stage .tintro .nm{font-family:var(--hf);font-size:6em;font-weight:800;line-height:1.05;margin:.25em 0 .4em;overflow-wrap:anywhere;color:var(--gold);animation:tiN .7s cubic-bezier(.2,1.4,.4,1) .1s both}
+.stage .tintro .dots{display:flex;gap:.5em}.stage .tintro .dots i{width:.7em;height:.7em;border-radius:50%;background:rgba(255,255,255,.25)}.stage .tintro .dots i.on{background:#fff}
+@keyframes tiN{from{opacity:0;transform:scale(.6);filter:blur(12px)}to{opacity:1;transform:none;filter:none}}
+.stage .xlogo{position:absolute;right:3.2cqw;bottom:2.6cqw;font-size:1.5625cqw;display:flex;align-items:center;gap:.6em;opacity:.75;transition:opacity .3s;color:#fff}
+.stage .xlogo.free{right:auto;bottom:auto}.stage .xlogo.off{opacity:0}
+.stage .xlogo img{height:1.05em;width:auto;display:block}.stage .xlogo svg{width:1.9em;height:1.9em}
+.stage .xlogo .rsz{display:none}
+.stage .xlogo.drg{pointer-events:auto;cursor:grab;touch-action:none;outline:1px dashed transparent;outline-offset:.4em;border-radius:.4em}
+.stage .xlogo.drg:hover{outline-color:rgba(255,255,255,.45)}.stage .xlogo.drg.off:hover{opacity:.35}
+.stage .xlogo.drg .rsz{display:block;position:absolute;right:-.7em;bottom:-.7em;width:1em;height:1em;min-width:12px;min-height:12px;border-radius:3px;background:#fff;box-shadow:0 0 0 2px var(--gold);cursor:nwse-resize;opacity:0;transition:opacity .2s}
+.stage .xlogo.drg:hover .rsz{opacity:1}
+.stage .xbgm{position:absolute;left:.5cqw;top:.5cqw;pointer-events:auto;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;opacity:.45;display:grid;place-items:center;cursor:pointer;transition:opacity .2s}
+.stage .xbgm:hover{opacity:.95}.stage .xbgm.mute{opacity:.7;background:rgba(200,40,63,.55)}
+.stage .xbgm svg{width:15px;height:15px}
+.tpane{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px}
+.tpane .tph{margin:0 0 10px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800;display:flex;align-items:center;gap:10px}.tpane .tph .sp{flex:1}
+.tpane .plist{margin:0;max-height:none;background:none;border:0;padding:0;border-radius:0}
 </style>
 </head>
 <body>
@@ -686,6 +733,6 @@ body.solo-play #ph>.pv{flex:1}
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
 <script>window.PB_GAME = 'fact';</script>
-<script src="../quiz/quiz.js?v=66"></script>
+<script src="../quiz/quiz.js?v=68"></script>
 </body>
 </html>
