@@ -1004,17 +1004,16 @@ function numReveal(q, all) {
   if (sr) { lo = sr[0]; hi = sr[1]; }
   else { const vs = all.map(x => x.v).concat([lo0, hi0]); lo = Math.min.apply(null, vs); hi = Math.max.apply(null, vs); const pad = Math.max((hi - lo) * .12, 1); lo -= pad; hi += pad; }
   const pc = v => Math.max(0, Math.min(100, (v - lo) / ((hi - lo) || 1) * 100));
-  const rows = [[], [], []], best = numErr(q, all[0].v);
-  const mk = all.slice().sort((a, b) => a.v - b.v).map(x => {
-    const xp = pc(x.v); let r = rows.findIndex(rw => !rw.length || xp - rw[rw.length - 1] > 19); if (r < 0) r = 2; rows[r].push(xp);
-    return { x, xp, r, top: numErr(q, x.v) === best, out: x.v < lo || x.v > hi };
-  });
+  const best = numErr(q, all[0].v), win = all.filter(x => numErr(q, x.v) === best), gx = pc((lo0 + hi0) / 2);
   const u = q.unit ? ` <small>${esc(q.unit)}</small>` : '';
+  const dots = all.map((x, i) => { const top = numErr(q, x.v) === best, xp = pc(x.v); return `<i class="ndot${top ? ' top' : ''}" style="left:${xp}%;--d:${(.3 + i * .15).toFixed(2)}s"></i>` +
+    (top ? `<b class="nlink" style="left:${Math.min(xp, gx)}%;width:${Math.abs(xp - gx)}%"></b>` : ''); }).join('');
   return `<div class="nrv"><div class="nhead"><span>${hasRng(q) ? 'Засчитываем от и до' : 'Правильный ответ'}</span><b>${esc(numTxt(q.num, hasRng(q) ? q.num2 : null))}${u}</b></div>` +
-    `<div class="ntrack" style="--th:${rows[2].length ? 9.6 : rows[1].length ? 7 : 4.4}em"><div class="nbar"></div>` +
-    (hasRng(q) ? `<div class="nband" style="left:${pc(lo0)}%;width:${Math.max(.8, pc(hi0) - pc(lo0))}%"></div>` : `<div class="npin" style="left:${pc(lo0)}%"><span>${esc(nums(lo0))}</span></div>`) +
-    mk.map((m, i) => `<div class="nmk r${m.r}${m.top ? ' top' : ''}" style="left:${m.xp}%;--d:${(.35 + i * .22).toFixed(2)}s"><i></i><b>${esc(m.x.name)}<em>${m.out && m.x.v < lo ? '← ' : ''}${esc(nums(m.x.v))}${m.out && m.x.v > hi ? ' →' : ''}</em>${m.x.gain > 0 ? `<u>+${nums(m.x.gain)}</u>` : ''}</b></div>`).join('') +
-    `<span class="nend l">${esc(nums(+lo.toFixed(2)))}</span><span class="nend r">${esc(nums(+hi.toFixed(2)))}</span></div></div>`;
+    `<div class="ntrack"><div class="nbar"></div>` +
+    (hasRng(q) ? `<div class="nband" style="left:${pc(lo0)}%;width:${Math.max(.8, pc(hi0) - pc(lo0))}%"></div>` : '') + dots +
+    `<i class="ngood" style="left:${gx}%"></i>` +
+    `<span class="nend l">${esc(nums(+lo.toFixed(2)))}</span><span class="nend r">${esc(nums(+hi.toFixed(2)))}</span></div>` +
+    `<div class="nwin">Ближе всех — ${win.map(x => `<b>${esc(x.name)}</b> · ${esc(nums(x.v))}${x.gain > 0 ? ` <u>+${nums(x.gain)}</u>` : ''}`).join(', ')}</div></div>`;
 }
 /* ================= канал между вкладками одного устройства ================= */
 let ch = null; const handlers = [];
