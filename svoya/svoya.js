@@ -557,7 +557,7 @@ function drawStage(root, S, snd) {
   if (S.ph === 'q' && S.cur && S.cur.mus) {
     const c = S.cur;
     if (!same) {
-      inn.innerHTML = `<div class="splash mus"><div class="cat">${esc(c.cat)}</div><div class="val">${esc(c.v)}</div><div class="eqw"><div class="eq wide">${'<i></i>'.repeat(18)}</div></div></div><div class="qm aud hid" id="qm"></div><div class="qfoot" id="qf"></div>`;
+      inn.innerHTML = `<div class="splash mus"><div class="cat">${esc(c.cat)}</div><div class="val">${esc(c.v)}</div></div><div class="qm aud hid" id="qm"></div><div class="qfoot" id="qf"></div>`;
       const m = inn.querySelector('#qm'); mountMedia(m, c.qm, mute, S.id); m._mr = S.mr; m._snd = mute; m._pz = false;
     }
     const m = inn.querySelector('#qm'), sp = inn.querySelector('.splash');
