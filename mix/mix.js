@@ -173,6 +173,8 @@ async function netStart() {
     const m = (await gref(gid, 'meta').once('value')).val();
     if (!m || m.host !== NET.uid) await gref(gid, 'meta').set({ host: NET.uid, t: TS() });
     S.net = 1; offs.forEach(f => f()); offs = [];
+    /* превью экрана грузим только после входа ведущего, иначе вторая вкладка-iframe перехватывает анонимный вход */
+    { const fr = document.querySelector('.stg16 iframe[data-src]'); if (fr && !fr.getAttribute('src')) fr.src = fr.dataset.src; }
     const jr = gref(gid, 'join'), orf = gref(gid, 'on');
     const onJ = x => { if (!S) return; const v = x.val() || {}; const nm = String(v.name || '').trim().slice(0, 24) || 'Команда'; if (S.names[x.key] !== nm) { S.names[x.key] = nm; pub(); } };
     jr.on('child_added', onJ); jr.on('child_changed', onJ); orf.on('value', x => { ONLINE = x.val() || {}; renderLive(); });
@@ -240,7 +242,7 @@ function renderLive(force) {
     $('app').innerHTML = `<div class="top mtop"><div class="in"><a class="brand" href="../">${BRAND('')}</a><div class="rpills" id="ctl"></div><span class="sp"></span><span class="cdm" id="cdm"></span><button class="btn ghost sm" id="bScr">${ico('monitor', 15)}Экран</button><button class="btn ghost sm" id="bPh">${ico('phone', 15)}Телефон</button><button class="btn ghost sm" id="bEnd">Завершить вечер</button></div></div>` +
       (inRound ? `<iframe class="frame full" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1' + (S.rg ? '&rg=' + encodeURIComponent(S.rg) : ''))}" allow="autoplay; fullscreen"></iframe>` :
         `<div class="live2">${S.ph === 'round' && r && r.k === 'sm' ? `<div class="hold"><h2>Секретная миссия</h2><p>Гости играют по своим телефонам — экран показывает QR на игру. Панель ведущего — в отдельной вкладке.</p><a class="btn gold" href="${esc(r.adm || '../host/')}" target="_blank" rel="noopener">${ico('ext', 15)}Открыть панель миссии</a></div>` :
-        `<div class="lgrid"><div><div class="pane" id="scp"></div></div><div><div class="stg16"><iframe src="${BASE}?view=screen&g=${encodeURIComponent(S.id)}&pv=1" title="Экран"></iframe><span class="stl">${S.ph === 'lobby' ? 'Команды подключаются — нажмите раунд вверху, он сразу запустится' : S.ph === 'between' ? 'Раунд завершён — нажмите следующий раунд вверху' : 'Финал вечера'}</span></div>` +
+        `<div class="lgrid"><div><div class="pane" id="scp"></div></div><div><div class="stg16"><iframe ${S.net ? 'src' : 'data-src'}="${BASE}?view=screen&g=${encodeURIComponent(S.id)}&pv=1" title="Экран"></iframe><span class="stl">${S.ph === 'lobby' ? 'Команды подключаются — нажмите раунд вверху, он сразу запустится' : S.ph === 'between' ? 'Раунд завершён — нажмите следующий раунд вверху' : 'Финал вечера'}</span></div>` +
         `<div class="pane" style="margin-top:14px"><h4>Общий счёт<span class="sp"></span><span class="muted" id="onl" style="letter-spacing:0;text-transform:none;font-size:12px"></span></h4><div class="tt" id="tt"></div><div class="codebox"><div><div class="k">Вход для команд</div><b id="cd"></b></div><span style="flex:1"></span><button class="btn ghost sm" id="bPh2">${ico('phone', 14)}Открыть телефон</button></div></div></div></div>`}</div>`);
     { const b2 = $('bPh2'); if (b2) b2.onclick = () => window.open(`${BASE}?view=play&g=${S.id}`, '_blank'); }
     $('bScr').onclick = () => { if (!S.code) { toast('Подключаемся…'); return; } window.open(`${BASE}?view=screen&g=${S.id}`, 'pbm_screen'); };
