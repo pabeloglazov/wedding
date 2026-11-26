@@ -1165,7 +1165,8 @@ function viewPlay() {
 /* ================= запуск ================= */
 function bootHost() {
   const live = ls('get', KEY_LIVE);
-  const OPEN = P.get('open'); if (OPEN || P.get('new')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  const OPEN = P.get('open'), DEMO = !!P.get('demo'); if (OPEN || P.get('new') || DEMO) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (DEMO) { CFG = normCfg(sampleCfg()); newGame(); ['Индейки', 'Пироги'].forEach(n => { const id = 'm' + uid(8); G.players[id] = { id, name: n, score: 0, man: 1 }; }); publish(); accLoad().then(() => { if (G) renderLive(); }); renderTop(); return; }
   if (P.get('new')) { CFG = normCfg(sampleCfg()); ls('set', KEY_CFG, CFG); }
   if (live && live.id && !OPEN && !P.get('new')) { G = live; G.netOn = false; renderLive(true); startNet(); }
   else renderEditor();
