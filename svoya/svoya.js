@@ -169,7 +169,7 @@ function sampleCfg() {
           YQ(Snd, 'Windows XP — звук запуска', '7nQ2oiVqKHw', 0, 5, 0, 5),
           YQ(Snd, 'Super Mario Bros. — главная тема', 'uhscMsBhNhw', 0, 12, 12, 40),
           YQ(Snd, 'Pac-Man — музыка в начале игры', 'rnf0q1zOTXs', 0, 6, 0, 6),
-          YQ('Кто это сказал и откуда?', 'Артас, Warcraft III — «Проклятье, Утер!»', 'cBHoaTo0V8A', 0, 6, 0, 6)] },
+          YQ('Кто это сказал и откуда?', 'Артас, Warcraft III — «Проклятье, Утер!»', 'p4tWub3ZoEg', 52, 59, 52, 62)] },
         { n: 'Саундтреки фильмов', qs: [
           YQ(F, 'Гарри Поттер — «Hedwig’s Theme»', 'wtHra9tFISY', 0, 15, 15, 45),
           YQ(F, 'Пираты Карибского моря — «He’s a Pirate»', 'dFBBKfw59kA', 0, 15, 15, 45),
