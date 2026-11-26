@@ -149,8 +149,8 @@ textarea.inp{resize:vertical;min-height:84px;line-height:1.4}
 .stage{position:relative;width:100%;aspect-ratio:16/9;container-type:inline-size;overflow:hidden;color:#fff;
   --bgk:color-mix(in srgb,var(--acc) 14%,#06050f);
   background:radial-gradient(120% 95% at 0% 100%,color-mix(in srgb,var(--acc) 62%,transparent) 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,color-mix(in srgb,var(--acc) 34%,transparent) 0%,transparent 60%),radial-gradient(60% 60% at 75% 90%,color-mix(in srgb,var(--acc) 22%,#ff3d8b 10%) 0%,transparent 70%),var(--bgk)}
-.stage .in{position:absolute;inset:0;font-size:1.5625cqw;display:flex;flex-direction:column;padding:4.4em 2.6em 2.2em}
-.stage .brandm{position:absolute;left:2.6em;top:1.4em;transition:opacity .3s;font-size:1.5625cqw;display:flex;align-items:center;gap:.6em;opacity:.9;pointer-events:none}
+.stage .in{position:absolute;inset:0;font-size:1.5625cqw;display:flex;flex-direction:column;padding:2.2em 2.6em 2.2em}
+.stage .brandm{position:absolute;right:2.6em;top:2.45em;transition:opacity .3s;font-size:1.5625cqw;display:flex;align-items:center;gap:.6em;opacity:.9;pointer-events:none}
 .stage .brandm img{height:1.05em;width:auto;display:block}
 .stage .brandm svg{width:1.9em;height:1.9em}
 /* табло */
@@ -489,7 +489,7 @@ body.sorting,body.sorting *{cursor:grabbing!important;-webkit-user-select:none;u
 .qm.hid{position:absolute!important;width:1px!important;height:1px!important;opacity:0;overflow:hidden;pointer-events:none}
 
 .stage .brandm.off{opacity:0}
-.stage .codem{position:absolute;left:2.6em;top:1.1em;font-size:1.5625cqw;font-weight:800;font-size:1.65cqw;border-radius:99px;padding:.3em .9em;background:#fff;color:#14112b;opacity:0;transform:translateY(-.4em);transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap}
+.stage .codem{position:absolute;right:2.6em;top:2.1em;font-size:1.5625cqw;font-weight:800;font-size:1.65cqw;border-radius:99px;padding:.3em .9em;background:#fff;color:#14112b;opacity:0;transform:translateY(-.4em);transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap}
 .stage .codem b{font-family:var(--hf);letter-spacing:.05em}
 .stage .codem.on{opacity:1;transform:none}
 .stage .qrov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,5,15,.72);backdrop-filter:blur(6px);font-size:1.5625cqw;z-index:5}
@@ -522,6 +522,6 @@ button.kc:hover .kb{background:var(--acc);border-color:transparent;color:#fff}
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="svoya.js?v=11"></script>
+<script src="svoya.js?v=12"></script>
 </body>
 </html>
