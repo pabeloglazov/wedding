@@ -992,7 +992,7 @@ function tplThanksgiving() {
     B('Что по-английски говорит индейка?', 'Gobble gobble'),
     B('Как называется пятница после Дня благодарения?', 'Black Friday', { rb: 1 })
   ];
-  return { id: 'tg' + new Date().getFullYear() + 'quiz', title: 'Большой квиз Дня благодарения', couple: '', mode: 'pub', theme: 'tg', teams: ['Семья 1', 'Семья 2', 'Семья 3'],
+  return { id: 'tg' + new Date().getFullYear() + 'quiz', title: 'Большой квиз Дня благодарения', couple: '', mode: 'pub', theme: 'tg', teams: [],
     s: Object.assign({}, MODES.pub.s, { play: 'teams', tables: 3, time: 30, speed: false, change: false, lastX2: false, sound: true, every: 99 }), bots: false,
     accent: '#ffc145', photo: '', wifi: { ssid: '', pass: '' }, form: '', facts: [], qs, updated: Date.now() };
 }
@@ -1508,7 +1508,6 @@ function buildPhone(box, g, cl) {
       if (g.phase === 'final') h = wait('<div class="kk">' + esc(g.couple) + '</div>', 'Игра завершена', 'Спасибо, что были с нами!');
       else h = `<div class="pv jn"><div class="pbrand">${MARK(40)}</div><div class="kk">${esc(g.couple)}</div><h2>${esc(g.title)}</h2><p class="sub">${teams ? 'Придумайте название команды' : 'Как вас зовут?'}</p>` +
         `<input class="pin" id="pName" maxlength="24" autocomplete="off" placeholder="${teams ? 'Название команды' : 'Ваше имя'}" value="${esc(cl.lastName || '')}">` +
-        (teams && g.tn && g.tn.length ? `<div class="tnc">${g.tn.map(t => `<button type="button" onclick="var i=document.getElementById('pName');i.value=this.textContent;i.focus()">${esc(t)}</button>`).join('')}</div>` : '') +
         (tables ? `<div class="lblc">Ваш стол</div><div class="tbls" id="pTbl">${Array.from({ length: g.s.tables || 10 }, (_, i) => `<button data-t="${i + 1}" class="${cl.table === i + 1 ? 'on' : ''}">${i + 1}</button>`).join('')}</div>` : '') +
         `<button class="pbtn acc" id="pJoin"${cl.joining ? ' disabled' : ''}>${cl.joining ? 'Входим…' : 'Войти в игру'}</button><p class="note">Приложение не нужно — всё работает в браузере</p><p class="note w" id="pErr"></p></div>`;
     } else if (g.phase === 'lobby') h = `<div class="pv">${head(g, me)}<div class="wait"><div class="big">✓</div><h2>${teams ? 'Команда в игре' : 'Вы в игре'}</h2><p class="sub">Смотрите на экран — скоро первый вопрос</p></div></div>`;
