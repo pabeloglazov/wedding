@@ -344,6 +344,7 @@ const A = {
     G.cur = { ci, qi }; G.ph = 'cell'; G.wr = []; G.by = null; G.gain = 0; G.ov = ''; publish();
   },
   showQ() { if (G.ph !== 'cell') return; G.ph = 'q'; G.bz++; G.t0 = now(); publish(); },
+  skip() { if (G.ph !== 'q') return; const id = queue(G)[0]; if (!id) return; G.wr.push(id); publish(); },
   judge(ok) {
     if (G.ph !== 'q') return; const qq = queue(G), id = qq[0]; if (!id) return; const v = curV(G), p = G.players[id];
     if (ok) { p.score += v; G.by = id; G.gain = v; G.ph = 'ans'; G.pl[keyOf(G, G.cur.ci, G.cur.qi)] = { by: id }; }
@@ -1014,7 +1015,7 @@ function ctlHtml() {
   if (G.cur && q && (G.ph === 'cell' || G.ph === 'q' || G.ph === 'ans')) {
     h += `<div class="qc"><div class="meta"><span class="chip a">${esc(R.cats[G.cur.ci].n)}</span><span class="chip">${esc(v)}</span>${mOk(q.qm) ? `<span class="chip">${ico(MK[q.qm.k][0], 12)}${MK[q.qm.k][1]}</span>` : ''}${mOk(q.am) ? `<span class="chip">ответ: ${MK[q.am.k][1]}</span>` : ''}</div><p class="qt">${esc(q.q || '(вопрос без текста)')}</p><div class="an"><small>Ответ</small>${esc(q.a || '—')}</div>`;
     if (G.ph === 'q') {
-      if (G.mode === 'buzz') h += `<div class="buzz${act ? ' on' : ''}">${act ? `<div class="who"><b>${esc(G.players[act].name)}</b><button class="btn ok sm" data-j="1">${ico('check', 15)}Верно +${nums(v)}</button><button class="btn bad sm" data-j="0">${ico('x', 15)}Неверно${G.minus ? ' −' + nums(v) : ''}</button></div>${qq.length > 1 ? `<div class="ql">Следом нажали: ${qq.slice(1).map(id => esc(G.players[id].name)).join(', ')}</div>` : ''}` : `<span class="muted">${G.wr.length ? 'Ждём, нажмёт ли кто-то ещё…' : 'Ждём, кто первый нажмёт «Ответить!»'}</span>`}</div>`;
+      if (G.mode === 'buzz') h += `<div class="buzz${act ? ' on' : ''}">${act ? `<div class="who"><b>${esc(G.players[act].name)}</b><button class="btn ok sm" data-j="1">${ico('check', 15)}Верно +${nums(v)}</button><button class="btn bad sm" data-j="0">${ico('x', 15)}Неверно${G.minus ? ' −' + nums(v) : ''}</button><button class="btn sm" data-j="2" title="Убрать без очков">Скрыть</button></div>${qq.length > 1 ? `<div class="ql">Следом нажали: ${qq.slice(1).map(id => esc(G.players[id].name)).join(', ')}</div>` : ''}` : `<span class="muted">${G.wr.length ? 'Ждём, нажмёт ли кто-то ещё…' : 'Ждём, кто первый нажмёт «Ответить!»'}</span>`}</div>`;
       else h += `<div class="buzz"><span class="muted">Кто ответил? Начислите очки кнопками «+» / «−» у команд справа.</span></div>`;
     }
     if (G.ph === 'ans') h += `<div class="buzz">${G.by ? `<b>+${nums(G.gain)} · ${esc((G.players[G.by] || {}).name || '')}</b>` : '<span class="muted">Никто не ответил верно</span>'}</div>`;
@@ -1062,7 +1063,7 @@ function ctlQuizHtml() {
 }
 function bindCtl() {
   const c = $('ctl');
-  c.querySelectorAll('[data-j]').forEach(b => b.onclick = () => A.judge(b.dataset.j === '1'));
+  c.querySelectorAll('[data-j]').forEach(b => b.onclick = () => b.dataset.j === '2' ? A.skip() : A.judge(b.dataset.j === '1'));
   c.querySelectorAll('[data-pk]').forEach(b => b.onclick = () => { const [ci, qi] = b.dataset.pk.split('.').map(Number); A.pick(ci, qi); });
   c.querySelectorAll('[data-ri]').forEach(b => b.onclick = () => A.round(+b.dataset.ri));
   c.querySelectorAll('[data-qs]').forEach(b => b.onclick = () => A.qStart(+b.dataset.qs));
