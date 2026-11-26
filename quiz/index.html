@@ -830,13 +830,18 @@ body.solo-play.th-tg .pbtn.acc{background:#ff7a1a;color:#fff}
 .pv .numin.sl input[type=range]::-moz-range-track{height:12px;border-radius:12px;background:linear-gradient(90deg,#ff7a1a,#ffc145)}
 .pv .numin.sl input[type=range]::-moz-range-thumb{width:40px;height:40px;border-radius:50%;background:#fff6e8;border:0;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 0 6px rgba(255,193,69,.3)}
 
-.ctl .rpl{width:100%;justify-content:center;margin-top:10px;padding:14px;font-size:16px;font-weight:800;border-color:rgba(255,193,69,.45);color:var(--gold)}
+
+.cpan .cpt{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 60px}
+.cpan .ct.ci{padding:0;justify-content:center}
+.cpan .cpt .ct{padding:0 10px;gap:8px}.cpan .cpt .ct b,.cpan .cpt .ct i{white-space:nowrap}
+.cpan .ct[disabled]{opacity:.4}
+.cpan .cps.c1{grid-template-columns:1fr}.cpan .cps.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="quiz.js?v=56"></script>
+<script src="quiz.js?v=57"></script>
 </body>
 </html>

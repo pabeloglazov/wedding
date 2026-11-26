@@ -408,10 +408,11 @@ const CPI = {
 function cpanHtml(o) {
   const t = (a, on, ic, name, st, dis) => `<button class="ct${on ? ' on' : ''}" data-cp="${a}"${dis ? ' disabled' : ''}>${ic}<span><b>${name}</b><i>${st}</i></span></button>`;
   const s = (a, ic, name, dis, warn) => `<button class="cs${warn ? ' warn' : ''}" data-cp="${a}"${dis ? ' disabled' : ''}>${ic}<span>${name}</span></button>`;
-  const small = [s('replay', CPI.rep, 'Ещё раз', !o.media), s('skip', CPI.skip, 'Стоп таймер', !o.timer)];
+  const small = [s('skip', CPI.skip, 'Стоп таймер', !o.timer)];
   if (o.host) small.push(s('pult', CPI.pult, 'Пульт', !o.net), s('restart', CPI.rst, o.sure ? 'Точно?' : 'Заново', false, o.sure));
   return `<div class="cpan"><div class="cph"><span>Управление экраном</span>${o.code ? `<span>Код <b>${esc(fmtCode(o.code))}</b></span>` : ''}</div>` +
-    `<div class="cpt">${t('qr', o.qr, CPI.qr, 'QR-код', o.qr ? 'на экране' : 'скрыт', !o.code)}${t('snd', !o.snd, o.snd ? CPI.son : CPI.soff, 'Звук', o.snd ? 'включён' : 'выключен')}</div>` +
+    `<div class="cpt">${t('qr', o.qr, CPI.qr, 'QR-код', o.qr ? 'на экране' : 'скрыт', !o.code)}${t('replay', false, CPI.rep, 'Ещё раз', o.media ? 'музыка' : 'нет музыки', !o.media)}` +
+    `<button class="ct ci${o.snd ? '' : ' on'}" data-cp="snd" title="${o.snd ? 'Звук включён — выключить' : 'Звук выключен — включить'}" aria-label="Звук">${o.snd ? CPI.son : CPI.soff}</button></div>` +
     `<div class="cps c${small.length}">${small.join('')}</div></div>`;
 }
 
@@ -2467,7 +2468,7 @@ function renderLive() {
     $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('<span id="lTitle"></span>')}</a><span class="sp"></span>` +
       `<button class="btn ghost sm dsk ib" id="bOpenScr">${ico('monitor', 16)}<span>Экран</span></button><button class="btn ghost sm dsk ib" id="bRemote">${ico('phone', 16)}<span>Пульт на телефоне</span></button><button class="btn ghost sm ib" id="bEdit">${ico('pencil', 16)}<span>Редактор</span></button></div></div>` +
       `<div class="tabs" id="tabs"><button data-t="ctl">Пульт</button><button data-t="scr">Экран</button><button data-t="ph">Я — гость</button></div>` +
-      `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><button class="btn ghost ib rpl" id="bReplay" style="display:none">${ico('replay', 18)}<span>Проиграть ещё раз</span></button><div class="kbd dsk-only">Пробел или → — дальше · R — звук ещё раз · Q — QR</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
+      `<div class="live"><div class="ctl" data-p="ctl"><button class="btn gold next" id="bNext"></button><div class="kbd dsk-only">Пробел или → — дальше · R — звук ещё раз · Q — QR</div><button class="btn ghost" id="bIntro" style="display:none"></button>` +
       `<div class="stat"><div><b id="sP">0</b><span id="sPl">гостей</span></div><div><b id="sO">–</b><span>на связи</span></div><div><b id="sA">–</b><span>ответили</span></div></div>` +
       `<div class="netline" id="netl"></div><div id="demoL"></div><div class="cur" id="cur"></div><div id="cpan"></div><div class="links" id="cplx"><button class="btn ghost sm" id="bCpl">💍 Телефоны пары</button></div><div class="plist" id="plist"></div></div>` +
       `<div class="pane" data-p="scr"><h4>Экран для проектора <button class="btn ghost sm" id="bScrMenu">Открыть ↗</button></h4><div class="stage" id="stg"></div></div>` +
@@ -2478,7 +2479,7 @@ function renderLive() {
     $('bOpenPh2').onclick = () => window.open(playLink(G), '_blank');
     $('bRemote').onclick = remoteMenu; $('bCpl').onclick = coupleMenu;
     $('bEdit').onclick = () => { if (G.phase !== 'final' && G.phase !== 'lobby' && !confirmTwice($('bEdit'), 'Завершить игру?')) return; clearBots(); endNet(); G = null; liveBuilt = false; ls('del', KEY_LIVE); send({ type: 'reset' }); renderEditor(); window.scrollTo(0, 0); };
-    $('bNext').onclick = next; $('bNextM').onclick = next; $('bReplay').onclick = replayMedia;
+    $('bNext').onclick = next; $('bNextM').onclick = next;
     $('bIntro').onclick = startIntro;
     $('cpan').onclick = e => {
       const b = e.target.closest('[data-cp]'); if (!b || b.disabled) return; const a = b.dataset.cp;
@@ -2491,8 +2492,7 @@ function renderLive() {
   }
   $('lTitle').textContent = G.title;
   const nl = nextLabel(G);
-  $('bReplay').style.display = hasMedia() ? '' : 'none';
-  [$('bNext'), $('bNextM')].forEach(b => { b.innerHTML = esc(nl[0]) + (nl[1] ? `<small>${esc(nl[1])}</small>` : ''); b.disabled = G.phase === 'final' || (G.phase === 'lobby' && !isStage(G) && !Object.keys(G.players).length); });
+    [$('bNext'), $('bNextM')].forEach(b => { b.innerHTML = esc(nl[0]) + (nl[1] ? `<small>${esc(nl[1])}</small>` : ''); b.disabled = G.phase === 'final' || (G.phase === 'lobby' && !isStage(G) && !Object.keys(G.players).length); });
   const stg = isStage(G);
   document.querySelectorAll('.live .stat, #plist, #tabs [data-t="ph"], .live>[data-p="ph"]').forEach(x => { x.style.display = stg ? 'none' : ''; });
   if (stg && tab === 'ph') { tab = 'ctl'; paintTabs(); }
