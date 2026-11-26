@@ -482,7 +482,7 @@ function scrOf(g) {
     cur: g.cur && q ? { ci: g.cur.ci, qi: g.cur.qi, cat: R.cats[g.cur.ci].n, v: curV(g), q: q.q, mus: mOk(q.qm) && q.qm.k === 'audio' ? 1 : 0, qm: mOk(q.qm) ? q.qm : null, am: g.ph === 'ans' && mOk(q.am) ? q.am : null, a: g.ph === 'ans' ? q.a : '' } : null,
     qz: board ? null : qqPub(g),
     act: nm(qq[0]), hp: g.hp ? 1 : 0, qn: qq.slice(1, 4).map(nm), by: g.by ? nm(g.by) : '', gain: g.gain || 0, wr: g.wr.length, mode: g.mode,
-    tm: g.ov === 'teams' && Object.keys(g.players).length ? (() => { const ids = Object.keys(g.players), i = Math.min(g.ti || 0, ids.length - 1); return { i, n: ids.length, nm: g.players[ids[i]].name }; })() : null, lgh: g.lgh ? 1 : 0, lgp: g.lgp || null, ov: g.ov || '', mr: g.mr || 0, players: ranked(g).map(p => ({ n: p.name, s: p.score }))
+    tm: g.ov === 'teams' && Object.keys(g.players).length ? (() => { const ids = Object.keys(g.players), i = Math.min(g.ti || 0, ids.length - 1); return { i, n: ids.length, nm: g.players[ids[i]].name }; })() : null, lgh: g.lgh ? 1 : 0, lgp: g.lgp || null, lgs: g.lgs || 1, ov: g.ov || '', mr: g.mr || 0, players: ranked(g).map(p => ({ n: p.name, s: p.score }))
   };
 }
 function coreOf(g) {
@@ -571,7 +571,7 @@ function stageChrome(root, S) {
   const cm = root.querySelector('.codem'), qo = root.querySelector('.qrov'), br = root.querySelector('.brandm'); if (!cm) return;
   const showCode = !!(S && S.qrz && S.code && S.ph !== 'lobby'), showQr = !!(S && S.qrb && S.ph !== 'lobby');
   cm.classList.toggle('on', showCode); br.classList.toggle('off', (showCode && !(S && S.lgp)) || !!(S && S.lgh));
-  if (!br._drag) { const p = S && S.lgp; br.classList.toggle('free', !!p); br.style.left = p ? p.x + '%' : ''; br.style.top = p ? p.y + '%' : ''; }
+  if (!br._drag) { const p = S && S.lgp; br.classList.toggle('free', !!p); br.style.left = p ? p.x + '%' : ''; br.style.top = p ? p.y + '%' : ''; br.style.fontSize = S && S.lgs && S.lgs !== 1 ? `calc(1.5625cqw * ${S.lgs})` : ''; }
   const ch = showCode ? `${esc(SHORT)} · код <b>${fmtCode(S.code)}</b>` : ''; if (cm._h !== ch) { cm._h = ch; cm.innerHTML = ch; }
   qo.classList.toggle('on', showQr);
   const qk = showQr ? S.id + S.code : ''; if (qo._k !== qk) { qo._k = qk; qo.innerHTML = showQr ? `<div class="joinc"><div class="qr"></div><div class="u">${esc(SHORT)}</div><small>код игры</small><div class="cd">${S.code ? fmtCode(S.code) : '······'}</div></div>` : ''; if (showQr) qr(qo.querySelector('.qr'), `${location.origin}${location.pathname}?view=play&g=${S.id}`, 600); }
@@ -579,6 +579,14 @@ function stageChrome(root, S) {
 /* лого на экране: перетаскивание мышью в превью ведущего, двойной клик — на место */
 function logoDrag(root) {
   const br = root && root.querySelector('.brandm'); if (!br || br._dg) return; br._dg = 1; br.classList.add('drg'); br.title = 'Перетащите лого куда нужно. Двойной клик — вернуть на место';
+  const hd = document.createElement('i'); hd.className = 'rsz'; hd.title = 'Потяните, чтобы изменить размер'; br.appendChild(hd);
+  hd.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation(); hd.setPointerCapture(e.pointerId); br._drag = 1;
+    const w0 = br.getBoundingClientRect().width, x0 = e.clientX, s0 = G.lgs || 1;
+    const mv = ev => { br._s = Math.round(Math.max(.4, Math.min(3, s0 * (w0 + ev.clientX - x0) / w0)) * 100) / 100; br.style.fontSize = `calc(1.5625cqw * ${br._s})`; };
+    const up = () => { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up); br._drag = 0; if (br._s) { G.lgs = br._s; br._s = 0; publish(); } };
+    hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up);
+  });
   br.addEventListener('pointerdown', e => {
     e.preventDefault(); br.setPointerCapture(e.pointerId); br._drag = 1; br.classList.add('free');
     const r = root.getBoundingClientRect(), b0 = br.getBoundingClientRect(), dx = e.clientX - b0.left, dy = e.clientY - b0.top;
@@ -586,7 +594,7 @@ function logoDrag(root) {
     const up = () => { br.removeEventListener('pointermove', mv); br.removeEventListener('pointerup', up); br._drag = 0; if (br._p) { G.lgp = br._p; br._p = null; publish(); } };
     br.addEventListener('pointermove', mv); br.addEventListener('pointerup', up);
   });
-  br.addEventListener('dblclick', () => { G.lgp = null; publish(); toast('Лого вернулось на место'); });
+  br.addEventListener('dblclick', () => { G.lgp = null; G.lgs = 1; publish(); toast('Лого вернулось на место и к обычному размеру'); });
 }
 function drawStage(root, S, snd) {
   if (!root) return; if (snd && S && S.mode === 'buzz') SFX.prep();

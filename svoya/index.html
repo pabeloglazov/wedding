@@ -153,7 +153,7 @@ textarea.inp{resize:vertical;min-height:84px;line-height:1.4}
   --bgk:color-mix(in srgb,var(--acc) 14%,#06050f);
   background:radial-gradient(120% 95% at 0% 100%,color-mix(in srgb,var(--acc) 62%,transparent) 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,color-mix(in srgb,var(--acc) 34%,transparent) 0%,transparent 60%),radial-gradient(60% 60% at 75% 90%,color-mix(in srgb,var(--acc) 22%,#ff3d8b 10%) 0%,transparent 70%),var(--bgk)}
 .stage .in{position:absolute;inset:0;font-size:1.5625cqw;display:flex;flex-direction:column;padding:2.2em 2.6em 2.2em}
-.stage .brandm{position:absolute;right:2.6em;top:2.45em;transition:opacity .3s;font-size:1.5625cqw;display:flex;align-items:center;gap:.6em;opacity:.9;pointer-events:none}
+.stage .brandm{position:absolute;right:4.06cqw;top:3.83cqw;transition:opacity .3s;font-size:1.5625cqw;display:flex;align-items:center;gap:.6em;opacity:.9;pointer-events:none}
 .stage .brandm img{height:1.05em;width:auto;display:block}
 .stage .brandm svg{width:1.9em;height:1.9em}
 /* табло */
@@ -582,12 +582,15 @@ button.kc:hover .kb{background:var(--acc);border-color:transparent;color:#fff}
 .tm.ans{box-shadow:inset 0 0 0 1.5px var(--acc);background:color-mix(in srgb,var(--acc) 16%,#171716)}
 .tm .s{cursor:text;border-radius:8px;padding:4px 6px}.tm .s:hover{background:rgba(255,255,255,.08)}
 .tm .sci{width:84px;text-align:right;font:inherit;font-weight:800;background:#0f0f0e;color:var(--ink);border:1px solid var(--acc);border-radius:8px;padding:4px 6px;outline:0}
+.stage .brandm .rsz{display:none}
+.stage .brandm.drg .rsz{display:block;position:absolute;right:-.7em;bottom:-.7em;width:1em;height:1em;min-width:12px;min-height:12px;border-radius:3px;background:#fff;box-shadow:0 0 0 2px var(--acc);cursor:nwse-resize;opacity:0;transition:opacity .2s}
+.stage .brandm.drg:hover .rsz{opacity:1}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="svoya.js?v=37"></script>
+<script src="svoya.js?v=38"></script>
 </body>
 </html>
