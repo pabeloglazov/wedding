@@ -1013,7 +1013,7 @@ function numReveal(q, all) {
     (hasRng(q) ? `<div class="nband" style="left:${pc(lo0)}%;width:${Math.max(.8, pc(hi0) - pc(lo0))}%"></div>` : '') + dots +
     `<i class="ngood" style="left:${gx}%"></i>` +
     `<span class="nend l">${esc(nums(+lo.toFixed(2)))}</span><span class="nend r">${esc(nums(+hi.toFixed(2)))}</span></div>` +
-    `<div class="nwin">Ближе всех — ${win.map(x => `<b>${esc(x.name)}</b> · ${esc(nums(x.v))}${x.gain > 0 ? ` <u>+${nums(x.gain)}</u>` : ''}`).join(', ')}</div></div>`;
+    `<div class="nwinw">${win.map((x, k) => `<div class="nwin" style="--k:${k * .15}s"><span class="nwi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span><span class="nwt"><small>${win.length > 1 ? 'Ближе всех · ничья' : 'Ближе всех'}</small><b>${esc(x.name)}</b></span><em>${esc(nums(x.v))}${q.unit ? ' ' + esc(q.unit) : ''}</em>${x.gain > 0 ? `<u>+${nums(x.gain)}</u>` : ''}</div>`).join('')}</div></div>`;
 }
 /* ================= канал между вкладками одного устройства ================= */
 let ch = null; const handlers = [];
@@ -1263,7 +1263,15 @@ function buildScreen(box, g) {
     const [gn, bn] = coupleNames(g.couple);
     const badge = (qPts(q) ? `<span class="x2 pts${q.bonus ? ' bonus' : ''}">${ptsTxt(q)}</span>` : mult(g, g.qi) > 1 ? '<span class="x2">×2 очки</span>' : '') + (q.rn ? `<span class="ctype">${esc(q.rn)}</span>` : '') + (q.type === 'open' ? '<span class="ctype">🗣 Блиц — отвечайте вслух</span>' : q.type === 'photo' ? '<span class="ctype">📷 Фото-вопрос</span>' : q.type === 'couple' ? '<span class="ctype">💍 Угадайте ответ пары</span>' : q.type === 'number' ? '<span class="ctype">🔢 Ответ — число</span>' : '');
     const stg = isStage(g);
-    const head = `<div class="qtop2"><span class="n">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}</span>${q.fact ? '<span class="ctype">💡 Кто это?</span>' : badge}${stg ? '' : ringSvg}</div>`;
+    const tgI = { number: '<path d="M5 9h14M5 15h14M10 4 8 20M16 4l-2 16"/>', photo: ICS.camera, open: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/>', music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', choice: '<path d="M4 6h16M4 12h16M4 18h10"/>' };
+    const tgK = q.type === 'open' ? 'open' : q.type === 'photo' ? 'photo' : q.type === 'number' ? 'number' : mdOk(q.qm) ? 'music' : 'choice';
+    const tgT = { open: 'Блиц · вслух', photo: 'Фото', number: 'Число', music: 'Мелодия', choice: 'Вопрос' }[tgK];
+    const head = g.theme === 'tg' ? `<div class="qtop2 tgh"><span class="qn"><b>${g.qi + 1}</b>/${g.qs.length}</span>` +
+      (q.rn ? `<span class="chip rd">${esc(String(q.rn).replace(/^[^0-9A-Za-zА-Яа-яЁё]+\s*/, ''))}</span>` : '') +
+      `<span class="chip ty"><svg width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${tgI[tgK]}</svg>${tgT}</span>` +
+      (qPts(q) ? `<span class="chip pt${q.bonus ? ' bonus' : ''}"><b>+${qPts(q)}</b>${q.bonus ? 'бонус' : q.type === 'number' ? 'ближе всех' : ''}</span>` : '') +
+      `${stg ? '' : ringSvg}</div>` :
+      `<div class="qtop2"><span class="n">${q.fact ? 'Факт' : 'Вопрос'} ${g.qi + 1} из ${g.qs.length}</span>${q.fact ? '<span class="ctype">💡 Кто это?</span>' : badge}${stg ? '' : ringSvg}</div>`;
     const cst = q.type === 'couple' ? `<div class="cst" id="cst"><span data-r="groom">${esc(gn)} …</span><span data-r="bride">${esc(bn)} …</span></div><div class="cres" id="cres" style="display:none"></div>` : '';
     let body;
     if (q.fact && stg) body = `<div class="qbody fq stg"><div class="qleft"><div class="qtext">${esc(q.text)}</div></div>${heroCard()}</div>`;
