@@ -1287,7 +1287,7 @@ function renderScreen(box, g, snd) {
     buildScreen(box, g);
     if (g && (g.phase === 'question' || g.phase === 'reveal')) { const q = g.qs[g.qi], mw = box.querySelector('#mdw'); if (mw) { const ans = g.phase === 'reveal' && mdOk(q.am); if (ans || mdOk(q.qm)) { mw.dataset.s = ans ? 'a' : 'q'; mountMedia(mw, ans ? q.am : q.qm, !!snd); } } }
     if (snd && g) {
-      if (g.phase === 'question') { setTimeout(() => SND.play('start'), Math.max(0, g.t0 - now() - 400)); }
+      if (g.phase === 'question') { if (!bgmFor(g, snd)) setTimeout(() => SND.play('start'), Math.max(0, g.t0 - now() - 400)); }
       else if (g.phase === 'reveal') { st.rev = true; SND.play('reveal'); }
       else if (g.phase === 'board') SND.play('board');
       else if (g.phase === 'intro') SND.play('intro');
@@ -1410,7 +1410,7 @@ function syncQz(box, g) {
 }
 function updScreen(box, g, snd) {
   if (snd && g && g.s && g.s.bgm !== false) BGM.prep();
-  if (bgmFor(g, snd)) { if (!BGM.on) BGM.start(g.t0 - now()); } else BGM.stop();
+  if (bgmFor(g, snd)) { if (!BGM.on) BGM.start(g.t0 - now() - 400); } else BGM.stop();
   if (!g || !box) return;
   syncQz(box, g);
   { const st0 = box._st || (box._st = {}), sv = !!snd; if (st0.snd === undefined) st0.snd = sv; else if (st0.snd !== sv) { st0.snd = sv; setMediaMute(box.querySelector('#mdw'), sv); } }
