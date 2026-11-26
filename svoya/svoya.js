@@ -690,7 +690,7 @@ function renderEditor() {
   $('fRn').onchange = () => drawStage($('prev'), prevS(), false);
   $('rTabs').onclick = e => {
     const x = e.target.closest('[data-rdel]');
-    if (x) { const t = x.closest('.rtab'); if (!t.classList.contains('sure')) { document.querySelectorAll('.rtab.sure').forEach(z => z.classList.remove('sure')); t.classList.add('sure'); x.innerHTML = 'Удалить?'; clearTimeout(t._t); t._t = setTimeout(() => { if (t.isConnected) { t.classList.remove('sure'); x.innerHTML = ico('x', 14); } }, 3000); return; } CFG.rounds.splice(+x.dataset.rdel, 1); SEL = { r: Math.min(SEL.r, CFG.rounds.length - 1), c: -1, q: -1 }; sv(); renderEditor(); toast('Раунд удалён'); return; }
+    if (x) { const t = x.closest('.rtab'); if (!t.classList.contains('sure')) { document.querySelectorAll('.rtab.sure').forEach(z => { z.classList.remove('sure'); const xx = z.querySelector('.rx'); if (xx) xx.innerHTML = ico('x', 14); }); t.classList.add('sure'); x.innerHTML = 'Точно удалить?'; clearTimeout(t._t); t._t = setTimeout(() => { if (t.isConnected) { t.classList.remove('sure'); x.innerHTML = ico('x', 14); } }, 3000); return; } CFG.rounds.splice(+x.dataset.rdel, 1); SEL = { r: Math.min(SEL.r, CFG.rounds.length - 1), c: -1, q: -1 }; sv(); renderEditor(); toast('Раунд удалён'); return; }
     const b = e.target.closest('[data-r]'); if (!b) return;
     if (b.dataset.r === 'add' && !b._own) { addRoundPick(b); return; }
     if (b.dataset.r === 'add') { b._own = 0; const i = CFG.rounds.length, m = i + 1; CFG.rounds.push(normRound({ n: 'Раунд ' + m, vals: R.vals.map((v, j) => (j + 1) * 100 * m), cats: R.cats.map(() => ({ n: '', qs: [] })) }, i)); SEL = { r: i, c: -1, q: -1 }; sv(); renderEditor(); return; }
