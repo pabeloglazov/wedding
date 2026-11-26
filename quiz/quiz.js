@@ -1261,16 +1261,18 @@ window.addEventListener('resize', () => { clearTimeout(fitStage.t); fitStage.t =
 /* фоновая музыка во время вопроса: «Game Show Quest» (WadermanMusic, YouTube), скрытый плеер, громкость ниже эффектов */
 const BGM = {
   id: 'tXJsKdX_Pj0', vol: 35, f: null, at: 0, on: false, tm: 0,
-  prep() { if (this.f) return; const f = document.createElement('iframe'); f.allow = 'autoplay'; f.src = `https://www.youtube.com/embed/${this.id}?enablejsapi=1&controls=0&playsinline=1&loop=1&playlist=${this.id}&origin=${encodeURIComponent(location.origin)}`; f.style.cssText = 'position:fixed;left:-10px;top:-10px;width:2px;height:2px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(f); this.f = f; this.at = Date.now(); },
+  prep() { if (this.f) return; const f = document.createElement('iframe'); f.allow = 'autoplay'; f.src = `https://www.youtube.com/embed/${this.id}?enablejsapi=1&controls=0&playsinline=1&loop=1&playlist=${this.id}&origin=${encodeURIComponent(location.origin)}`; f.style.cssText = 'position:fixed;left:-10px;top:-10px;width:2px;height:2px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(f); this.f = f; this.at = Date.now();
+    /* прогрев: беззвучно запускаем и ставим на паузу в начале — потом старт мгновенный */
+    f.addEventListener('load', () => setTimeout(() => { if (this.on) return; this.c('mute'); this.c('playVideo'); setTimeout(() => { if (this.on) return; this.c('pauseVideo'); this.c('seekTo', [0, true]); this.c('unMute'); this.c('setVolume', [this.vol]); this.ready = 1; }, 900); }, 400)); },
   c(func, args) { try { this.f.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), '*'); } catch (e) {} },
   start(delay) {
     this.prep(); clearTimeout(this.tm); this.on = true;
-    const go = () => { if (!this.on) return; if (Date.now() - this.at < 2500) { this.tm = setTimeout(go, 300); return; } this.c('unMute'); this.c('setVolume', [this.vol]); this.c('seekTo', [0, true]); this.c('playVideo'); };
+    const go = () => { if (!this.on) return; if (!this.ready && Date.now() - this.at < 2500) { this.tm = setTimeout(go, 100); return; } this.c('unMute'); this.c('setVolume', [this.vol]); this.c('playVideo'); };
     this.tm = setTimeout(go, Math.max(0, delay || 0));
   },
   stop() {
     if (!this.on) return; this.on = false; clearTimeout(this.tm); if (!this.f) return;
-    let v = this.vol; const step = () => { if (this.on) return; v -= 7; if (v > 0) { this.c('setVolume', [v]); this.tm = setTimeout(step, 70); } else { this.c('pauseVideo'); this.c('setVolume', [this.vol]); } }; step();
+    let v = this.vol; const step = () => { if (this.on) return; v -= 7; if (v > 0) { this.c('setVolume', [v]); this.tm = setTimeout(step, 70); } else { this.c('pauseVideo'); this.c('seekTo', [0, true]); this.c('setVolume', [this.vol]); } }; step();
   }
 };
 const bgmFor = (g, snd) => !!(snd && g && g.phase === 'question' && g.s && g.s.bgm !== false && !isStage(g) && g.qs[g.qi] && !(mdOk(g.qs[g.qi].qm) && g.qs[g.qi].qm.k !== 'image'));
@@ -1408,7 +1410,7 @@ function syncQz(box, g) {
 }
 function updScreen(box, g, snd) {
   if (snd && g && g.s && g.s.bgm !== false) BGM.prep();
-  if (bgmFor(g, snd)) { if (!BGM.on) BGM.start(g.t0 - now() + 600); } else BGM.stop();
+  if (bgmFor(g, snd)) { if (!BGM.on) BGM.start(g.t0 - now()); } else BGM.stop();
   if (!g || !box) return;
   syncQz(box, g);
   { const st0 = box._st || (box._st = {}), sv = !!snd; if (st0.snd === undefined) st0.snd = sv; else if (st0.snd !== sv) { st0.snd = sv; setMediaMute(box.querySelector('#mdw'), sv); } }
