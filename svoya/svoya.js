@@ -1068,7 +1068,7 @@ function bindCtl() {
   c.querySelectorAll('[data-ri]').forEach(b => b.onclick = () => A.round(+b.dataset.ri));
   c.querySelectorAll('[data-qs]').forEach(b => b.onclick = () => A.qStart(+b.dataset.qs));
   c.querySelectorAll('[data-acc]').forEach(b => b.onclick = () => A.accept(b.dataset.acc));
-  c.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const k = b.dataset.c; if (k === 'final' && !confirm2(b, 'Точно? Нажмите ещё раз')) return; A[k](); });
+  c.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const k = b.dataset.c; A[k](); });
 }
 function teamsHostHtml() {
   const l = ranked(G), v = curV(G), canPm = (!!G.cur && G.ph !== 'board') || G.ph === 'qq' || G.ph === 'qr';
@@ -1113,7 +1113,7 @@ function viewScreen() {
   netReady.then(ok => {
     if (!ok) { box.querySelector('.in').innerHTML = '<div class="splash"><div class="cat">Нет связи — проверьте интернет</div></div>'; return; }
     const on = gref(GID, 'on/' + NET.uid), pr = () => { if (NET.connected) { on.onDisconnect().remove(); on.set('scr').catch(() => {}); } }; NET.subs.push(pr); pr();
-    gref(GID, 'scr').on('value', x => { S = fixS(x.val()); bg(); drawStage(box, S, unlocked && !!(S && S.snd)); });
+    gref(GID, 'scr').on('value', x => { const had = S; S = fixS(x.val()); if (!S && had) { box.querySelector('.in').innerHTML = '<div class="splash"><div class="cat big">Игра завершена</div><div class="rk2">Спасибо, что играли!</div></div>'; box._k = 'end'; return; } bg(); drawStage(box, S, unlocked && !!(S && S.snd)); });
   });
 }
 
@@ -1179,7 +1179,7 @@ function viewPlay() {
     me = NET.uid;
     const on = gref(GID, 'on/' + me); presence = () => { if (NET.connected && J) { on.onDisconnect().remove(); on.set(true).catch(() => {}); } }; NET.subs.push(presence);
     gref(GID, 'meta').once('value').then(x => { if (!x.exists()) app.innerHTML = '<div class="pv"><div class="mid"><h2>Игра не найдена</h2><p>Попросите у ведущего новый QR-код</p></div></div>'; });
-    gref(GID, 'core').on('value', x => { C = x.val(); if (C && C.bz !== lastBz) { lastBz = C.bz; pressing = false; } if (C && C.act === me && lastAct !== me && navigator.vibrate) navigator.vibrate([60, 40, 60]); lastAct = C ? C.act : ''; draw(); });
+    gref(GID, 'core').on('value', x => { if (!x.val() && C) { C = null; app._h = ''; app.innerHTML = '<div class="pv"><div class="mid"><h2>Игра завершена</h2><p>Спасибо, что играли!</p></div></div>'; return; } C = x.val(); if (C && C.bz !== lastBz) { lastBz = C.bz; pressing = false; } if (C && C.act === me && lastAct !== me && navigator.vibrate) navigator.vibrate([60, 40, 60]); lastAct = C ? C.act : ''; draw(); });
     gref(GID, 'join/' + me).on('value', x => { J = x.val(); if (J) presence(); else if (MIXNM && !joining && !draw._aj) { draw._aj = 1; joining = true; gref(GID, 'join/' + me).set({ name: MIXNM, table: 0, t: TS() }).then(() => { joining = false; presence(); }, () => { joining = false; }); } app._h = ''; draw(); });
     gref(GID, 'ans/' + me).on('value', x => { MY = x.val(); app._h = ''; draw(); });
   });

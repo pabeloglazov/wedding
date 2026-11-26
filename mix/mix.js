@@ -273,7 +273,7 @@ function viewScreen() {
   }
   draw();
   if (!GID) return;
-  netReady.then(ok => { if (!ok) return; const on = gref(GID, 'on/' + NET.uid), pr = () => { if (NET.connected) { on.onDisconnect().remove(); on.set('scr').catch(() => {}); } }; NET.subs.push(pr); pr(); gref(GID, 'scr').on('value', x => { C = x.val(); draw(); }); });
+  netReady.then(ok => { if (!ok) return; const on = gref(GID, 'on/' + NET.uid), pr = () => { if (NET.connected) { on.onDisconnect().remove(); on.set('scr').catch(() => {}); } }; NET.subs.push(pr); pr(); gref(GID, 'scr').on('value', x => { const had = C; C = x.val(); if (!C && had) { sf.innerHTML = '<div class="mst"><div class="in"><h1>Спасибо, что играли!</h1></div></div>'; cur = 'end'; return; } draw(); }); });
 }
 
 /* ================= телефон ================= */
@@ -313,7 +313,7 @@ function viewPlay() {
     me = NET.uid;
     const on = gref(GID, 'on/' + me), pr = () => { if (NET.connected && J) { on.onDisconnect().remove(); on.set(true).catch(() => {}); } }; NET.subs.push(pr);
     gref(GID, 'meta').once('value').then(x => { if (!x.exists()) app.innerHTML = '<div class="pv"><div class="mid"><h2>Вечер не найден</h2><p>Попросите у ведущего новый QR-код</p></div></div>'; });
-    gref(GID, 'core').on('value', x => { C = x.val(); draw(); });
+    gref(GID, 'core').on('value', x => { if (!x.val() && C) { C = null; cur = 'end'; app.innerHTML = '<div class="pv"><div class="mid"><h2>Вечер завершён</h2><p>Спасибо, что играли!</p></div></div>'; return; } C = x.val(); draw(); });
     gref(GID, 'join/' + me).on('value', x => { J = x.val(); if (J) pr(); cur = ''; draw(); });
   });
 }
