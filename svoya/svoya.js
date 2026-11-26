@@ -415,6 +415,7 @@ const A = {
   teams() { G.ov = G.ov === 'teams' ? '' : 'teams'; G.ti = 0; publish(); },
   tprev() { if (G.ti > 0) { G.ti--; publish(); } },
   tnext() { if ((G.ti || 0) < Object.keys(G.players).length - 1) { G.ti = (G.ti || 0) + 1; publish(); } },
+  logo() { G.lgh = G.lgh ? 0 : 1; publish(); },
   pause() { if (G.ph !== 'q' && G.ph !== 'ans') return; G.hp = G.hp ? 0 : 1; publish(); },
   rnext() { A.round(G.ri + 1); },
   final() { G.ph = 'final'; G.ov = ''; G.cur = null; publish(); },
@@ -473,7 +474,7 @@ function scrOf(g) {
     cur: g.cur && q ? { ci: g.cur.ci, qi: g.cur.qi, cat: R.cats[g.cur.ci].n, v: curV(g), q: q.q, mus: mOk(q.qm) && q.qm.k === 'audio' ? 1 : 0, qm: mOk(q.qm) ? q.qm : null, am: g.ph === 'ans' && mOk(q.am) ? q.am : null, a: g.ph === 'ans' ? q.a : '' } : null,
     qz: board ? null : qqPub(g),
     act: nm(qq[0]), hp: g.hp ? 1 : 0, qn: qq.slice(1, 4).map(nm), by: g.by ? nm(g.by) : '', gain: g.gain || 0, wr: g.wr.length, mode: g.mode,
-    tm: g.ov === 'teams' && Object.keys(g.players).length ? (() => { const ids = Object.keys(g.players), i = Math.min(g.ti || 0, ids.length - 1); return { i, n: ids.length, nm: g.players[ids[i]].name }; })() : null, ov: g.ov || '', mr: g.mr || 0, players: ranked(g).map(p => ({ n: p.name, s: p.score }))
+    tm: g.ov === 'teams' && Object.keys(g.players).length ? (() => { const ids = Object.keys(g.players), i = Math.min(g.ti || 0, ids.length - 1); return { i, n: ids.length, nm: g.players[ids[i]].name }; })() : null, lgh: g.lgh ? 1 : 0, lgp: g.lgp || null, ov: g.ov || '', mr: g.mr || 0, players: ranked(g).map(p => ({ n: p.name, s: p.score }))
   };
 }
 function coreOf(g) {
@@ -561,10 +562,23 @@ function fitText(el, box, min = .45) {
 function stageChrome(root, S) {
   const cm = root.querySelector('.codem'), qo = root.querySelector('.qrov'), br = root.querySelector('.brandm'); if (!cm) return;
   const showCode = !!(S && S.qrz && S.code && S.ph !== 'lobby'), showQr = !!(S && S.qrb && S.ph !== 'lobby');
-  cm.classList.toggle('on', showCode); br.classList.toggle('off', showCode);
+  cm.classList.toggle('on', showCode); br.classList.toggle('off', (showCode && !(S && S.lgp)) || !!(S && S.lgh));
+  if (!br._drag) { const p = S && S.lgp; br.classList.toggle('free', !!p); br.style.left = p ? p.x + '%' : ''; br.style.top = p ? p.y + '%' : ''; }
   const ch = showCode ? `${esc(SHORT)} · код <b>${fmtCode(S.code)}</b>` : ''; if (cm._h !== ch) { cm._h = ch; cm.innerHTML = ch; }
   qo.classList.toggle('on', showQr);
   const qk = showQr ? S.id + S.code : ''; if (qo._k !== qk) { qo._k = qk; qo.innerHTML = showQr ? `<div class="joinc"><div class="qr"></div><div class="u">${esc(SHORT)}</div><small>код игры</small><div class="cd">${S.code ? fmtCode(S.code) : '······'}</div></div>` : ''; if (showQr) qr(qo.querySelector('.qr'), `${location.origin}${location.pathname}?view=play&g=${S.id}`, 600); }
+}
+/* лого на экране: перетаскивание мышью в превью ведущего, двойной клик — на место */
+function logoDrag(root) {
+  const br = root && root.querySelector('.brandm'); if (!br || br._dg) return; br._dg = 1; br.classList.add('drg'); br.title = 'Перетащите лого куда нужно. Двойной клик — вернуть на место';
+  br.addEventListener('pointerdown', e => {
+    e.preventDefault(); br.setPointerCapture(e.pointerId); br._drag = 1; br.classList.add('free');
+    const r = root.getBoundingClientRect(), b0 = br.getBoundingClientRect(), dx = e.clientX - b0.left, dy = e.clientY - b0.top;
+    const mv = ev => { const x = Math.max(0, Math.min(r.width - b0.width, ev.clientX - r.left - dx)), y = Math.max(0, Math.min(r.height - b0.height, ev.clientY - r.top - dy)); br._p = { x: Math.round(x / r.width * 1000) / 10, y: Math.round(y / r.height * 1000) / 10 }; br.style.left = br._p.x + '%'; br.style.top = br._p.y + '%'; };
+    const up = () => { br.removeEventListener('pointermove', mv); br.removeEventListener('pointerup', up); br._drag = 0; if (br._p) { G.lgp = br._p; br._p = null; publish(); } };
+    br.addEventListener('pointermove', mv); br.addEventListener('pointerup', up);
+  });
+  br.addEventListener('dblclick', () => { G.lgp = null; publish(); toast('Лого вернулось на место'); });
 }
 function drawStage(root, S, snd) {
   if (!root) return;
@@ -1033,7 +1047,7 @@ function renderLive(force) {
   $('tl').innerHTML = teamsHostHtml(); bindTeams();
   $('cd').textContent = G.code ? `${SHORT} · ${fmtCode(G.code)}` : 'подключаемся…';
   const on = onlineN(); $('onl').textContent = G.netOn ? `на связи: ${on}` : '';
-  drawStage($('stg'), scrOf(G), soundHere());
+  drawStage($('stg'), scrOf(G), soundHere()); logoDrag($('stg'));
 }
 function nextAct() {
   if (!G) return ['', null];
@@ -1091,7 +1105,8 @@ function scrPanel() {
     `<button data-c="scores" class="${G.ov === 'scores' ? 'on' : ''}"${!MIX && (G.ph === 'lobby' || G.ph === 'final') ? ' disabled' : ''}>${ico('list', 16)}Рейтинг</button>` +
     `<button data-c="qr" class="${G.qrz ? 'on' : ''}">${ico('pencil', 16)}Код на табло</button>` +
     `<button data-c="teams" class="${tOn ? 'on' : ''}"${ids.length ? '' : ' disabled'}>${ico('users', 16)}Участники</button>` +
-    `<button data-c="final" class="${G.ph === 'final' ? 'on' : ''}"${G.ph === 'final' ? ' disabled' : ''}>${ico('trophy', 16)}Победители</button></div>` +
+    `<button data-c="final" class="${G.ph === 'final' ? 'on' : ''}"${G.ph === 'final' ? ' disabled' : ''}>${ico('trophy', 16)}Победители</button>` +
+    `<button data-c="logo" class="${G.lgh ? '' : 'on'}" title="Показать / скрыть лого. Перетащить — прямо на экране слева">${ico('image', 16)}${G.lgh ? 'Лого скрыто' : 'Лого'}</button></div>` +
     (tOn && ids.length ? `<div class="tpg"><button data-c="tprev"${ti ? '' : ' disabled'}>‹</button><div><small>Команда ${ti + 1} из ${ids.length}</small><b>${esc(G.players[ids[ti]].name)}</b></div><button data-c="tnext"${ti < ids.length - 1 ? '' : ' disabled'}>›</button></div>` : '') + '</div>';
 }
 function ctlQuizHtml() {

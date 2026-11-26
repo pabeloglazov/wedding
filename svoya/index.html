@@ -548,7 +548,7 @@ button.kc:hover .kb{background:var(--acc);border-color:transparent;color:#fff}
 @keyframes vthump{0%{transform:scale(1)}12%{transform:scale(1.035)}100%{transform:scale(1)}}
 .spn{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)}
 .spk2{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut,#9a978f);margin-bottom:10px}
-.sgr{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.sgr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .sgr button{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.12);background:#171716;border-radius:12px;padding:10px 4px;font-weight:700;font-size:12px;color:var(--ink);line-height:1.15;text-align:center}
 .sgr button.on{background:var(--acc);border-color:transparent;color:#fff}.sgr button[disabled]{opacity:.35}
 .tpg{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:center;margin-top:10px;background:#171716;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:6px}
@@ -565,12 +565,21 @@ button.kc:hover .kb{background:var(--acc);border-color:transparent;color:#fff}
 .ctlr .accw button+button{border-left:1px solid rgba(255,255,255,.28)!important}
 .ctlr .accw button:hover:not([disabled]){background:rgba(255,255,255,.12)}
 .ctlr .accw:has(button[disabled]){opacity:.5}.ctlr .accw button[disabled]{opacity:1}
+.stage .brandm.free{right:auto}
+.stage .brandm.drg{pointer-events:auto;cursor:grab;touch-action:none;border-radius:.6em;outline:1px dashed transparent;outline-offset:.4em}
+.stage .brandm.drg:hover{outline-color:rgba(255,255,255,.45)}.stage .brandm.drg:active{cursor:grabbing}
+.stage .brandm.drg.off:hover{opacity:.35}
+.pane h4 .btn,.codebox .btn{border-radius:12px;height:38px;padding:0 14px;font-size:13px;min-width:150px}
+.pane h4 #onl{white-space:nowrap}
+.codebox{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.codebox .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:5px}
+#tl>.muted{padding:4px 0;line-height:1.4}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="svoya.js?v=29"></script>
+<script src="svoya.js?v=30"></script>
 </body>
 </html>
