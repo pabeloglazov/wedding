@@ -116,14 +116,6 @@ function sampleCfg() {
         { n: 'Еда и напитки', qs: S5([['Из какого фрукта делают гуакамоле?', 'Авокадо'], ['Какая страна — родина пиццы?', 'Италия'], ['Как называется японский суп на основе соевой пасты?', 'Мисо-суп'], ['Из какого растения делают текилу?', 'Голубая агава'], ['Какой сыр кладут в классический греческий салат?', 'Фета']]) },
         { n: 'Наука', qs: S5([['Какая планета ближе всего к Солнцу?', 'Меркурий'], ['Какая химическая формула у воды?', 'H₂O'], ['Сколько костей в скелете взрослого человека?', '206'], ['Кто создал теорию относительности?', 'Альберт Эйнштейн'], ['Какой газ составляет большую часть воздуха на Земле?', 'Азот']]) }
       ]
-    }, {
-      t: 'quiz', n: 'Квиз-разминка', time: 30, fast: 0, change: 1, qs: [
-        { type: 'abcd', q: 'Сколько континентов на Земле (по самой распространённой версии)?', opts: ['5', '6', '7', '8'], ok: 2, pts: 100 },
-        { type: 'abcd', q: 'Какой цвет получится, если смешать синий и жёлтый?', opts: ['Зелёный', 'Фиолетовый', 'Оранжевый', 'Коричневый'], ok: 0, pts: 100 },
-        { type: 'num', q: 'В каком году человек впервые полетел в космос?', num: 1961, unit: 'год', pts: 200 },
-        { type: 'open', q: 'Как называется самая большая планета Солнечной системы?', acc: 'Юпитер', pts: 200 },
-        { type: 'abcd', q: 'Сколько игроков одной команды на поле в футболе?', opts: ['9', '10', '11', '12'], ok: 2, pts: 100 }
-      ]
     }]
   };
 }
@@ -183,7 +175,7 @@ function normCfg(c) {
   if (!c || !Array.isArray(c.rounds)) c = sampleCfg();
   c.id = c.id || uid(10); c.title = String(c.title || 'Своя игра'); c.acc = /^#[0-9a-f]{6}$/i.test(c.acc || '') ? c.acc : DEF_ACC;
   c.minus = c.minus !== false; c.mode = c.mode === 'voice' ? 'voice' : 'buzz';
-  c.rounds = c.rounds.slice(0, 10).map(normRound); if (!c.rounds.length) c.rounds = [normRound(null, 0)];
+  c.rounds = c.rounds.filter(r => r && r.t !== 'quiz').slice(0, 10).map(normRound); if (!c.rounds.length) c.rounds = [normRound(null, 0)];
   return c;
 }
 function ytId(s) {
@@ -660,13 +652,13 @@ function renderEditor() {
   const R = CFG.rounds[SEL.r];
   const n = cellsOf(CFG), QZ = R.t === 'quiz', cats = QZ ? 0 : R.cats.length, N = QZ ? 0 : R.vals.length;
   const cols = `grid-template-columns:repeat(${N},minmax(0,1fr)) 52px`;
-  $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('Квиз-шоу · редактор')}</a><span class="sp"></span><span class="muted" style="font-size:12px" id="syncSt"></span><div class="acc" id="acc"></div></div></div>` +
-    `<div class="wrap wide"><div class="hero"><div class="k">Новая игра</div><h1>Квиз-шоу</h1><p>Соберите игру из раундов: «Квиз» — вопросы по очереди с таймером и вариантами на телефонах, «Своя игра» — табло «категории × стоимость» и кнопка «Ответить!». Счёт команд общий на всю игру.</p></div></div>` +
+  $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('Своя игра · редактор')}</a><span class="sp"></span><span class="muted" style="font-size:12px" id="syncSt"></span><div class="acc" id="acc"></div></div></div>` +
+    `<div class="wrap wide"><div class="hero"><div class="k">Редактор</div><h1>Своя игра</h1><p>Табло «категории × стоимость» на проекторе. Ведущий открывает клетку, команды жмут «Ответить!» на телефонах — кто первый, тот отвечает. Верно — плюс очки, неверно — минус.</p></div></div>` +
     (!unlocked() ? `<div class="notice">${ico('lock')}<span><b>Демо:</b> всё работает, до ${DEMO_MAX} команд. Свой цвет оформления — на тарифе «Продвинутый».</span><span class="sp"></span>${ACC.token ? '' : '<button class="btn ghost sm" id="nLogin">Войти</button>'}</div>` : '') +
     `<div class="card"><div class="fld"><label for="fTitle">Название игры</label><input class="inp" id="fTitle" maxlength="60" value="${esc(CFG.title)}"></div></div>` +
-    `<div class="card"><h3>${ico('grid', 16)}Раунды</h3>` +
-    `<div class="tabs" id="rTabs">${CFG.rounds.map((r, i) => `<div class="rtab${i === SEL.r ? ' on' : ''}"><button class="rn" data-r="${i}">${ico(RT[r.t][0], 14)}${esc(r.n || 'Раунд ' + (i + 1))}</button>${CFG.rounds.length > 1 ? `<button class="rx" data-rdel="${i}" title="Удалить раунд" aria-label="Удалить раунд">${ico('x', 14)}</button>` : ''}</div>`).join('')}${CFG.rounds.length < 6 ? `<button class="tadd" data-r="add">${ico('plus', 14)}Раунд</button>` : ''}</div>` +
-    `<div class="rhd"><div class="fld" style="flex:1;max-width:420px"><label for="fRn">Название раунда</label><input class="inp" id="fRn" maxlength="40" value="${esc(R.n)}"></div><span class="rtype">${ico(RT[R.t][0], 15)}${rLabel(R)}</span></div>` +
+    `<div class="card"><h3>${ico('grid', 16)}Табло</h3>` +
+    `<div class="tabs" id="rTabs">${CFG.rounds.map((r, i) => `<div class="rtab${i === SEL.r ? ' on' : ''}"><button class="rn" data-r="${i}">${esc(r.n || 'Раунд ' + (i + 1))}</button>${CFG.rounds.length > 1 ? `<button class="rx" data-rdel="${i}" title="Удалить раунд" aria-label="Удалить раунд">${ico('x', 14)}</button>` : ''}</div>`).join('')}${CFG.rounds.length < 6 ? `<button class="tadd" data-r="add">${ico('plus', 14)}Раунд</button>` : ''}</div>` +
+    `<div class="rhd"><div class="fld" style="flex:1;max-width:420px"><label for="fRn">Название раунда</label><input class="inp" id="fRn" maxlength="40" value="${esc(R.n)}"></div></div>` +
     (QZ ? quizEdHtml(R) : (
     `<div class="evl">Стоимость вопросов</div><div class="evals" style="${cols}">${R.vals.map((v, i) => `<div class="vh"><input class="inp" data-val="${i}" inputmode="numeric" value="${v}" aria-label="Стоимость ${i + 1}">${N > 1 ? `<button class="vx" data-vdel="${i}" title="Убрать столбец" aria-label="Убрать столбец">${ico('x', 12)}</button>` : ''}</div>`).join('')}<span></span></div>` +
     `<div class="ecats" id="eCats">${R.cats.map((c, ci) => `<div class="ecat" data-ci="${ci}"><div class="ech"><span class="grip cg" title="Перетащить категорию">${ico('grip', 16)}</span><label class="cbox"><small>Категория ${ci + 1}</small><input data-cn="${ci}" maxlength="40" placeholder="Название категории" value="${esc(c.n)}"></label>` +
@@ -692,7 +684,7 @@ function renderEditor() {
     const x = e.target.closest('[data-rdel]');
     if (x) { const t = x.closest('.rtab'); if (!t.classList.contains('sure')) { document.querySelectorAll('.rtab.sure').forEach(z => z.classList.remove('sure')); t.classList.add('sure'); x.innerHTML = 'Удалить?'; clearTimeout(t._t); t._t = setTimeout(() => { if (t.isConnected) { t.classList.remove('sure'); x.innerHTML = ico('x', 14); } }, 3000); return; } CFG.rounds.splice(+x.dataset.rdel, 1); SEL = { r: Math.min(SEL.r, CFG.rounds.length - 1), c: -1, q: -1 }; sv(); renderEditor(); toast('Раунд удалён'); return; }
     const b = e.target.closest('[data-r]'); if (!b) return;
-    if (b.dataset.r === 'add') { addRoundModal(); return; }
+    if (b.dataset.r === 'add') { const i = CFG.rounds.length, m = i + 1; CFG.rounds.push(normRound({ n: 'Раунд ' + m, vals: R.vals.map((v, j) => (j + 1) * 100 * m), cats: R.cats.map(() => ({ n: '', qs: [] })) }, i)); SEL = { r: i, c: -1, q: -1 }; sv(); renderEditor(); return; }
     SEL = { r: +b.dataset.r, c: -1, q: -1 };
     renderEditor();
   };
