@@ -1025,7 +1025,7 @@ function ctlHtml() {
   }
   const hasM = !!(q && (G.ph === 'ans' ? mOk(q.am) && q.am.k !== 'image' : mOk(q.qm) && q.qm.k !== 'image'));
   h += `<div class="ctlr"><button data-c="scores" class="${G.ov === 'scores' ? 'on' : ''}"${G.ph === 'lobby' || G.ph === 'final' ? ' disabled' : ''}>${ico('list', 18)}Счёт на экран</button>` +
-    `<button data-c="replay"${hasM && (G.ph === 'q' || G.ph === 'ans') ? '' : ' disabled'}>${ico('replay', 18)}Ещё раз</button>` +
+    (G.ph === 'cell' && q && mOk(q.qm) && q.qm.k !== 'image' ? `<button data-c="showQ" class="acc">${ico('play', 18)}Включить музыку</button>` : `<button data-c="replay"${hasM && (G.ph === 'q' || G.ph === 'ans') ? '' : ' disabled'}>${ico('replay', 18)}Ещё раз</button>`) +
     `<button data-c="snd" class="${G.snd ? '' : 'on'}">${ico(G.snd ? 'vol' : 'mute', 18)}${G.snd ? 'Звук вкл.' : 'Звук выкл.'}</button>` +
     `<button data-c="qr" class="${G.qrz ? 'on' : ''}">${ico('pencil', 18)}Код на табло</button><button data-c="qrbig" class="${G.qrb ? 'on' : ''}">${ico('qr', 18)}QR на экран</button>` +
     `<button data-c="final"${G.ph === 'final' ? ' disabled' : ''}>${ico('trophy', 18)}Победители</button>` +
