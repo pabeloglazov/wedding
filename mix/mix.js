@@ -335,10 +335,20 @@ function viewPlay() {
 }
 
 /* ================= запуск ================= */
+const TAB = Math.random().toString(36).slice(2);
+setInterval(() => { if (VIEW === 'host' && S && S.id) try { localStorage.setItem('pbm_hb', JSON.stringify({ id: S.id, tab: TAB, t: Date.now() })); } catch (e) {} }, 1500);
 function bootHost() {
   const live = ls('get', KEY_LIVE), FROM = P.get('from'), OPEN = P.get('open'), PICK = P.get('pick');
   if (FROM || OPEN || P.get('new')) try { history.replaceState(null, '', location.pathname); } catch (e) {}
-  if (live && live.id && !FROM && !OPEN) { S = live; built = false; renderLive(true); netStart(); accLoad(); return; }
+  if (live && live.id && !FROM && !OPEN) {
+    /* вечер уже ведётся в другой вкладке — не запускаем второй пульт (иначе раунд перезапустится и телефоны уйдут в новую игру) */
+    let hb = null; try { hb = JSON.parse(localStorage.getItem('pbm_hb') || 'null'); } catch (e) {}
+    if (hb && hb.id === live.id && hb.tab !== TAB && Date.now() - hb.t < 4000) {
+      $('app').innerHTML = `<div class="hold" style="max-width:560px;margin:80px auto"><h2>Вечер уже открыт</h2><p>Пульт этого вечера работает в другой вкладке. Перейдите в неё — второй пульт запускать нельзя, иначе раунд начнётся заново.</p><button class="btn gold" id="bTake">Всё равно открыть здесь</button></div>`;
+      $('bTake').onclick = () => { localStorage.removeItem('pbm_hb'); location.reload(); }; return;
+    }
+    S = live; built = false; renderLive(true); netStart(); accLoad(); return;
+  }
   if (P.get('new') || FROM) CFG = normCfg({});
   if (FROM) { const [k, id] = FROM.split(':'); if (GM[k] && id) CFG.rounds.push({ k, id, t: '' }); }
   renderEditor();
