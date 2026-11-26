@@ -107,21 +107,55 @@ const KEY_CFG = 'pbs_cfg_v1', KEY_LIVE = 'pbs_live_v1' + (MIX ? '_mix' : ''), KE
 const blankM = () => ({ k: '', src: '', t0: 0, t1: 0, loop: 0 });
 const blankQ = () => ({ q: '', a: '', qm: blankM(), am: blankM() });
 const S5 = (arr) => arr.map(([q, a]) => Object.assign(blankQ(), { q, a }));
+/* пример: музыкальная «Своя игра» — 2 раунда × 4 категории × 5 вопросов */
+function YQ(q, a, id, t0, t1, a0, a1) { const u = 'https://youtu.be/' + id; return { q, a, qm: { k: 'audio', src: u, t0, t1 }, am: { k: 'audio', src: u, t0: a0, t1: a1 } }; }
 function sampleCfg() {
+  const S = 'Угадайте песню', Z = 'Откуда эта заставка?', Snd = 'Что это за звук?';
   return {
-    id: uid(10), title: 'Своя игра', acc: DEF_ACC, minus: true, mode: 'buzz', updated: Date.now(),
+    id: uid(10), title: 'Музыкальная своя игра', acc: DEF_ACC, minus: true, mode: 'buzz', updated: Date.now(),
     rounds: [{
-      n: 'Раунд 1', vals: [100, 200, 300, 400, 500], cats: [
-        { n: 'Кино', qs: S5([['Как зовут мальчика-волшебника со шрамом в виде молнии?', 'Гарри Поттер'], ['Какой фильм 1997 года о гибели огромного лайнера получил 11 «Оскаров»?', '«Титаник»'], ['Как зовут зелёного огра из мультфильма DreamWorks?', 'Шрек'], ['Кто сыграл капитана Джека Воробья в «Пиратах Карибского моря»?', 'Джонни Депп'], ['Закончите фразу Терминатора: «I’ll be…»', '…back']]) },
-        { n: 'Музыка', qs: S5([['Сколько струн у классической гитары?', '6'], ['Какая группа записала «Bohemian Rhapsody»?', 'Queen'], ['Кто написал музыку к балету «Лебединое озеро»?', 'Пётр Чайковский'], ['Из какого города группа The Beatles?', 'Ливерпуль'], ['Сколько клавиш у стандартного фортепиано?', '88']]) },
-        { n: 'География', qs: S5([['На каком материке находится Египет?', 'Африка'], ['Какой город — столица Австралии?', 'Канберра'], ['Какое озеро — самое глубокое в мире?', 'Байкал'], ['В какой стране находится город Марракеш?', 'Марокко'], ['Как называется самая высокая гора Африки?', 'Килиманджаро']]) },
-        { n: 'Еда и напитки', qs: S5([['Из какого фрукта делают гуакамоле?', 'Авокадо'], ['Какая страна — родина пиццы?', 'Италия'], ['Как называется японский суп на основе соевой пасты?', 'Мисо-суп'], ['Из какого растения делают текилу?', 'Голубая агава'], ['Какой сыр кладут в классический греческий салат?', 'Фета']]) },
-        { n: 'Наука', qs: S5([['Какая планета ближе всего к Солнцу?', 'Меркурий'], ['Какая химическая формула у воды?', 'H₂O'], ['Сколько костей в скелете взрослого человека?', '206'], ['Кто создал теорию относительности?', 'Альберт Эйнштейн'], ['Какой газ составляет большую часть воздуха на Земле?', 'Азот']]) }
+      n: 'Раунд 1 · Угадай мелодию', vals: [100, 200, 300, 400, 500], cats: [
+        { n: 'Русские хиты', qs: [{ q: 'Угадайте песню', a: 'Иванушки International — «Тучи»', qm: { k: 'audio', src: 'https://youtu.be/X5Z9-4JV99c', t0: 18, t1: 33 }, am: { k: 'audio', src: 'https://youtu.be/X5Z9-4JV99c', t0: 49, t1: 75 } }, { q: 'Угадайте песню', a: 'Звери — «Районы-кварталы»', qm: { k: 'audio', src: 'https://youtu.be/is5iND3XNH0', t0: 46, t1: 61 }, am: { k: 'audio', src: 'https://youtu.be/is5iND3XNH0', t0: 62, t1: 88 } }, { q: 'Угадайте песню', a: 'Алла Пугачёва — «Миллион алых роз»', qm: { k: 'audio', src: 'https://youtu.be/At3Qo9n4_Uc', t0: 13, t1: 28 }, am: { k: 'audio', src: 'https://youtu.be/At3Qo9n4_Uc', t0: 61, t1: 86 } }, { q: 'Угадайте песню', a: 'Любэ — «Конь»', qm: { k: 'audio', src: 'https://youtu.be/LQDayLAfAHs', t0: 36, t1: 48 }, am: { k: 'audio', src: 'https://youtu.be/LQDayLAfAHs', t0: 48, t1: 73 } }, { q: 'Угадайте песню', a: 'Земляне — «Трава у дома»', qm: { k: 'audio', src: 'https://youtu.be/iPIiMvyO-SQ', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/iPIiMvyO-SQ', t0: 69, t1: 95 } }] },
+        { n: 'Зарубежные хиты', qs: [{ q: 'Угадайте песню', a: 'Michael Jackson — Billie Jean', qm: { k: 'audio', src: 'https://youtu.be/Zi_XLOBDo_Y', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/Zi_XLOBDo_Y', t0: 85, t1: 110 } }, { q: 'Угадайте песню', a: 'Pharrell Williams — Happy', qm: { k: 'audio', src: 'https://youtu.be/ZbZSe6N_BXs', t0: 33, t1: 48 }, am: { k: 'audio', src: 'https://youtu.be/ZbZSe6N_BXs', t0: 31, t1: 57 } }, { q: 'Угадайте песню', a: 'Taylor Swift — Shake It Off', qm: { k: 'audio', src: 'https://youtu.be/nfWlot6h_JM', t0: 42, t1: 57 }, am: { k: 'audio', src: 'https://youtu.be/nfWlot6h_JM', t0: 47, t1: 73 } }, { q: 'Угадайте песню', a: 'Earth, Wind & Fire — September', qm: { k: 'audio', src: 'https://youtu.be/Gs069dndIYk', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/Gs069dndIYk', t0: 49, t1: 75 } }, { q: 'Угадайте песню', a: 'Mark Ronson ft. Bruno Mars — Uptown Funk', qm: { k: 'audio', src: 'https://youtu.be/OPf0YbXqDm0', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/OPf0YbXqDm0', t0: 64, t1: 90 } }] },
+        { n: 'Песни из мультфильмов', qs: [
+          YQ(S, 'Крокодил Гена — «Голубой вагон»', 'q1Y6bI-TyWU', 0, 15, 20, 50),
+          YQ(S, 'Крокодил Гена — «Пусть бегут неуклюже»', 'EbAPd1491X8', 0, 15, 20, 50),
+          YQ(S, 'Катерок — «Чунга-Чанга»', 'tSq9jJwi7rM', 0, 15, 20, 50),
+          YQ(S, 'Крошка Енот — «Улыбка»', 'Qtv5worqJcQ', 0, 15, 20, 50),
+          YQ(S, 'Бременские музыканты — «Ничего на свете лучше нету»', 'x2VGBNjxDgk', 0, 15, 20, 50)] },
+        { n: 'Саундтреки фильмов', qs: [
+          YQ('Из какого фильма эта музыка?', 'Гарри Поттер — «Hedwig’s Theme»', 'wtHra9tFISY', 0, 15, 15, 45),
+          YQ('Из какого фильма эта музыка?', 'Пираты Карибского моря — «He’s a Pirate»', 'dFBBKfw59kA', 0, 15, 15, 45),
+          YQ('Из какого фильма эта музыка?', 'Звёздные войны — «Main Theme»', '_D0ZQPqeJkk', 0, 15, 15, 45),
+          YQ('Из какого фильма эта музыка?', 'Миссия невыполнима — «Main Theme»', 'JduAzxXBwuY', 0, 15, 15, 45),
+          YQ('Из какого фильма эта песня?', 'Титаник — «My Heart Will Go On»', '9bFHsd3o1w0', 5, 20, 185, 215)] }
       ]
     }, {
-      n: 'Раунд 2 · Угадай мелодию', vals: [200, 400, 600, 800, 1000], cats: [
-        { n: 'Русские хиты', qs: [{ q: 'Угадайте песню', a: 'Иванушки International — «Тучи»', qm: { k: 'audio', src: 'https://youtu.be/X5Z9-4JV99c', t0: 18, t1: 33 }, am: { k: 'audio', src: 'https://youtu.be/X5Z9-4JV99c', t0: 49, t1: 75 } }, { q: 'Угадайте песню', a: 'Звери — «Районы-кварталы»', qm: { k: 'audio', src: 'https://youtu.be/is5iND3XNH0', t0: 46, t1: 61 }, am: { k: 'audio', src: 'https://youtu.be/is5iND3XNH0', t0: 62, t1: 88 } }, { q: 'Угадайте песню', a: 'Алла Пугачёва — «Миллион алых роз»', qm: { k: 'audio', src: 'https://youtu.be/At3Qo9n4_Uc', t0: 13, t1: 28 }, am: { k: 'audio', src: 'https://youtu.be/At3Qo9n4_Uc', t0: 61, t1: 86 } }, { q: 'Угадайте песню', a: 'Любэ — «Конь»', qm: { k: 'audio', src: 'https://youtu.be/LQDayLAfAHs', t0: 36, t1: 48 }, am: { k: 'audio', src: 'https://youtu.be/LQDayLAfAHs', t0: 48, t1: 73 } }, { q: 'Угадайте песню', a: 'Земляне — «Трава у дома»', qm: { k: 'audio', src: 'https://youtu.be/iPIiMvyO-SQ', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/iPIiMvyO-SQ', t0: 69, t1: 95 } }] },
-        { n: 'Зарубежные хиты', qs: [{ q: 'Угадайте песню', a: 'Michael Jackson — Billie Jean', qm: { k: 'audio', src: 'https://youtu.be/Zi_XLOBDo_Y', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/Zi_XLOBDo_Y', t0: 85, t1: 110 } }, { q: 'Угадайте песню', a: 'Pharrell Williams — Happy', qm: { k: 'audio', src: 'https://youtu.be/ZbZSe6N_BXs', t0: 33, t1: 48 }, am: { k: 'audio', src: 'https://youtu.be/ZbZSe6N_BXs', t0: 31, t1: 57 } }, { q: 'Угадайте песню', a: 'Taylor Swift — Shake It Off', qm: { k: 'audio', src: 'https://youtu.be/nfWlot6h_JM', t0: 42, t1: 57 }, am: { k: 'audio', src: 'https://youtu.be/nfWlot6h_JM', t0: 47, t1: 73 } }, { q: 'Угадайте песню', a: 'Earth, Wind & Fire — September', qm: { k: 'audio', src: 'https://youtu.be/Gs069dndIYk', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/Gs069dndIYk', t0: 49, t1: 75 } }, { q: 'Угадайте песню', a: 'Mark Ronson ft. Bruno Mars — Uptown Funk', qm: { k: 'audio', src: 'https://youtu.be/OPf0YbXqDm0', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/OPf0YbXqDm0', t0: 64, t1: 90 } }] }
+      n: 'Раунд 2 · Мультики и заставки', vals: [200, 400, 600, 800, 1000], cats: [
+        { n: 'Заставки мультиков', qs: [
+          YQ('Какой это мультфильм?', 'Ну, погоди! — заставка', '3Jxh1IRc-AU', 0, 12, 0, 30),
+          YQ('Какой это мультфильм?', 'Том и Джерри — заставка', '3cu0KOzunpI', 0, 12, 0, 27),
+          YQ('Какой это мультфильм?', 'Смешарики — заставка', 'bMY2MZAOs50', 0, 10, 0, 21),
+          YQ('Какой это мультфильм?', 'Барбоскины — заставка', '0VVGXjZPgXo', 0, 8, 0, 15),
+          YQ('Какой это мультфильм?', 'Фиксики — «Кто такие фиксики»', '9MH5RgPdmRE', 0, 12, 0, 35)] },
+        { n: 'Песни Disney', qs: [
+          YQ(S, 'Холодное сердце — «Let It Go»', 'YVVTZgwYwVo', 0, 15, 60, 90),
+          YQ(S, 'Король Лев — «Hakuna Matata»', 'kaOIxll4LCA', 0, 15, 30, 60),
+          YQ(S, 'Русалочка — «Under the Sea»', 'GC_mV1IpjWA', 0, 15, 40, 70),
+          YQ(S, 'Моана — «How Far I’ll Go»', 'cPAbx5kgCJo', 0, 15, 50, 80),
+          YQ(S, 'Тайна Коко — «Remember Me»', 'E7VPdpEV1m0', 0, 15, 30, 60)] },
+        { n: 'Заставки ТВ и сериалов', qs: [
+          YQ(Z, 'Поле чудес — заставка', 'U251PjyCMHM', 0, 12, 0, 28),
+          YQ(Z, 'Друзья — «I’ll Be There For You»', 'S8PNXgLhkT0', 0, 15, 20, 50),
+          YQ(Z, 'Симпсоны — заставка', 'aPzS3QYb868', 0, 15, 15, 45),
+          YQ(Z, 'Что? Где? Когда? — заставка', 'LRgPNjrCW3s', 0, 15, 15, 45),
+          YQ(Z, 'Игра престолов — заставка', 's7L2PVdrb_8', 0, 15, 15, 45)] },
+        { n: 'Звуки игр и гаджетов', qs: [
+          YQ(Snd, 'Nokia — классический рингтон', 'pe1ZXh5_wk4', 0, 5, 0, 5),
+          YQ(Snd, 'Windows XP — звук запуска', '7nQ2oiVqKHw', 0, 5, 0, 5),
+          YQ(Snd, 'Super Mario Bros. — главная тема', 'uhscMsBhNhw', 0, 12, 12, 40),
+          YQ(Snd, 'Тетрис — «Коробейники»', 'NmCCQxVBfyM', 0, 12, 12, 40),
+          YQ(Snd, 'Pac-Man — музыка в начале игры', 'rnf0q1zOTXs', 0, 6, 0, 6)] }
       ]
     }]
   };
@@ -670,7 +704,7 @@ function renderEditor() {
   const n = cellsOf(CFG), QZ = R.t === 'quiz', cats = QZ ? 0 : R.cats.length, N = QZ ? 0 : R.vals.length;
   const cols = `grid-template-columns:repeat(${N},minmax(0,1fr)) 52px`;
   $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('Своя игра · редактор')}</a><span class="sp"></span><span class="muted" style="font-size:12px" id="syncSt"></span><div class="acc" id="acc"></div></div></div>` +
-    `<div class="wrap wide"><div class="hero"><div class="k">Редактор</div><h1>Своя игра</h1><p>Табло «категории × стоимость» на проекторе. Ведущий открывает клетку, команды жмут «Ответить!» на телефонах — кто первый, тот отвечает. Верно — плюс очки, неверно — минус.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:-6px"><button class="btn ghost sm" id="bSample">Открыть пример игры</button><button class="btn ghost sm" id="bBlank">Новая пустая игра</button></div></div>` +
+    `<div class="wrap wide"><div class="hero"><div class="k">Редактор</div><h1>Своя игра</h1><p>Табло «категории × стоимость» на проекторе. Ведущий открывает клетку, команды жмут «Ответить!» на телефонах — кто первый, тот отвечает. Верно — плюс очки, неверно — минус.</p><div class="hbtns"><button class="btn ghost sm" id="bSample">Открыть пример игры</button><button class="btn ghost sm" id="bBlank">Новая пустая игра</button></div></div>` +
     (!unlocked() ? `<div class="notice">${ico('lock')}<span><b>Демо:</b> всё работает, до ${DEMO_MAX} команд. Свой цвет оформления — на тарифе «Продвинутый».</span><span class="sp"></span>${ACC.token ? '' : '<button class="btn ghost sm" id="nLogin">Войти</button>'}</div>` : '') +
     `<div class="card"><div class="fld"><label for="fTitle">Название игры</label><input class="inp" id="fTitle" maxlength="60" value="${esc(CFG.title)}"></div></div>` +
     `<div class="card"><h3>${ico('grid', 16)}Табло</h3>` +
