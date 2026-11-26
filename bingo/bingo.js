@@ -10,7 +10,7 @@ const P = new URLSearchParams(location.search);
 const VIEW = P.get('view') || 'host';
 const GID = (P.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
 const MIX = P.get('mix') === '1' && window.parent !== window, MIXNM = (P.get('nm') || '').trim().slice(0, 24);
-if (MIX) { document.documentElement.classList.add('in-mix'); const st = document.createElement('style'); st.textContent = '.in-mix .top{display:none!important}.in-mix .live{padding-top:14px}.in-mix body{background:#131312}'; document.head.appendChild(st); }
+if (MIX) { document.documentElement.classList.add('in-mix'); const st = document.createElement('style'); st.textContent = '.in-mix .top{display:none!important}.in-mix .live{padding-top:14px}.in-mix body{background:#131312}.in-mix .stage .join,.in-mix .stage .jcode,.in-mix .stage #lcode{visibility:hidden}'; document.head.appendChild(st); }
 const PF_API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
 const DEMO_MAX = 3, DEMO_MIN = 60;
 const GNAME = 'Человеческое бинго';
