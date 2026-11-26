@@ -307,13 +307,22 @@ function ytCmd(f, func) { try { f.contentWindow.postMessage(JSON.stringify({ eve
 function pauseMedia(box) { if (!box) return; box.querySelectorAll('iframe').forEach(f => ytCmd(f, 'pauseVideo')); box.querySelectorAll('audio,video').forEach(el => el.pause()); }
 function playMedia(box) { if (!box) return; box.querySelectorAll('iframe').forEach(f => ytCmd(f, 'playVideo')); box.querySelectorAll('audio,video').forEach(el => el.play().catch(() => {})); }
 /* звуки: кнопка на телефоне и сигнал на экране — синтез, без файлов */
+const BZ = { id: 'fq3jfvf4KUo', t0: 28.4, len: 2200, f: null, at: 0, tm: 0 };
 const SFX = (() => {
   let ac = null; const ctx = () => { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {} return ac; };
   const tone = (f0, f1, dur, type, vol, delay = 0) => { const a = ctx(); if (!a) return; const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02); };
   return {
     unlock: ctx,
     press() { tone(220, 880, .12, 'square', .18); tone(660, 1320, .16, 'triangle', .22, .1); tone(990, 1980, .22, 'sine', .18, .2); },
-    buzz() { tone(140, 120, .5, 'sawtooth', .22); tone(280, 240, .5, 'square', .08); tone(880, 1760, .25, 'sine', .2, .05); }
+    synthBuzz() { tone(140, 120, .5, 'sawtooth', .22); tone(280, 240, .5, 'square', .08); tone(880, 1760, .25, 'sine', .2, .05); },
+    /* сигнал «кто-то нажал»: финал «Countdown Clock» с YouTube (заранее загружен скрытым плеером), запасной — синтез */
+    prep() { if (BZ.f) return; const f = document.createElement('iframe'); f.allow = 'autoplay'; f.src = `https://www.youtube.com/embed/${BZ.id}?enablejsapi=1&controls=0&playsinline=1&start=${Math.floor(BZ.t0)}&origin=${encodeURIComponent(location.origin)}`; f.style.cssText = 'position:fixed;left:-10px;top:-10px;width:2px;height:2px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(f); BZ.f = f; BZ.at = Date.now(); },
+    buzz() {
+      const f = BZ.f; if (!f || Date.now() - BZ.at < 2500) { this.synthBuzz(); this.prep(); return; }
+      const c = (func, args) => { try { f.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), '*'); } catch (e) {} };
+      c('unMute'); c('setVolume', [100]); c('seekTo', [BZ.t0, true]); c('playVideo');
+      clearTimeout(BZ.tm); BZ.tm = setTimeout(() => c('pauseVideo'), BZ.len);
+    }
   };
 })();
 function setMute(box, snd) {
@@ -581,7 +590,7 @@ function logoDrag(root) {
   br.addEventListener('dblclick', () => { G.lgp = null; publish(); toast('Лого вернулось на место'); });
 }
 function drawStage(root, S, snd) {
-  if (!root) return;
+  if (!root) return; if (snd && S && S.mode === 'buzz') SFX.prep();
   root.style.setProperty('--acc', S && S.acc ? S.acc : DEF_ACC);
   let inn = root.querySelector('.in'); if (!inn) { root.innerHTML = `<div class="in"></div><div class="codem"></div><div class="qrov"></div><div class="brandm">${window.PB_BRAND ? `${PB_BRAND.mark(30)}<img src="${PB_BRAND.base}wordmark-white.png" alt="Beloglazov Event">` : '<b>Beloglazov Event</b>'}</div>`; inn = root.querySelector('.in'); }
   if (!S) { root._k = ''; inn.innerHTML = '<div class="splash"><div class="cat" style="opacity:.6">Ждём игру…</div></div>'; return; }
