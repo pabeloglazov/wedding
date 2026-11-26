@@ -7,6 +7,7 @@
 const P = new URLSearchParams(location.search);
 const VIEW = P.get('view') || 'host';
 const GID = (P.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
+const MIX = P.get('mix') === '1' && window.parent !== window, MIXNM = (P.get('nm') || '').trim().slice(0, 24);
 const PF_API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
 const DEMO_MAX = 3;
 const $ = id => document.getElementById(id);
@@ -101,7 +102,7 @@ function goLogin() { try { localStorage.setItem('pb_next', 'svoya'); } catch (e)
 /* ================= модель игры ================= */
 const PAL = [['#6d4dff', 'Фиолетовый'], ['#2f6bff', 'Синий'], ['#e0457b', 'Малиновый'], ['#12a37f', 'Изумрудный'], ['#ff7a1a', 'Оранжевый'], ['#c99a12', 'Золотой']];
 const DEF_ACC = PAL[0][0];
-const KEY_CFG = 'pbs_cfg_v1', KEY_LIVE = 'pbs_live_v1', KEY_LAST = 'pbs_last';
+const KEY_CFG = 'pbs_cfg_v1', KEY_LIVE = 'pbs_live_v1' + (MIX ? '_mix' : ''), KEY_LAST = MIX ? 'pbs_last_mix' : 'pbs_last';
 const blankM = () => ({ k: '', src: '', t0: 0, t1: 0, loop: 0 });
 const blankQ = () => ({ q: '', a: '', qm: blankM(), am: blankM() });
 const S5 = (arr) => arr.map(([q, a]) => Object.assign(blankQ(), { q, a }));
@@ -532,7 +533,7 @@ function drawStage(root, S, snd) {
   const mute = !!snd;
   if (ov) { inn.innerHTML = scoresHtml(S, 'Счёт'); return; }
   if (S.ph === 'lobby') {
-    if (same) { const t = inn.querySelector('.teams'); if (t) t.innerHTML = teamsHtml(S); return; }
+    if (same) { const t = inn.querySelector('.teams'); if (t) t.innerHTML = teamsHtml(S); const cd = inn.querySelector('.joinc .cd'); if (cd) cd.textContent = S.code ? fmtCode(S.code) : '······'; return; }
     inn.innerHTML = `<div class="lob"><div><div class="kk">Подключайтесь по QR-коду</div><h1>${esc(S.title)}</h1><div class="teams">${teamsHtml(S)}</div></div>` +
       `<div class="joinc"><div class="qr" id="sqr"></div><div class="u">${esc(SHORT.replace(/^https?:\/\//, ''))}</div><small>код игры</small><div class="cd">${S.code ? fmtCode(S.code) : '······'}</div></div></div>`;
     qr(inn.querySelector('#sqr'), `${location.origin}${location.pathname}?view=play&g=${S.id}`, 600);
@@ -1075,7 +1076,7 @@ function viewScreen() {
   const box = $('stg'); let S = null, unlocked = false;
   const ov = document.createElement('div'); ov.className = 'sndov'; ov.innerHTML = '<div>Нажмите, чтобы включить звук<small>и открыть на весь экран</small></div>';
   ov.onclick = () => { unlocked = true; SFX.unlock(); ov.remove(); const d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen || function () {}).call(d); box._k = ''; drawStage(box, S, !!(S && S.snd)); };
-  document.body.appendChild(ov);
+  if (MIX) { unlocked = true; SFX.unlock(); } else document.body.appendChild(ov);
   const bg = () => { document.body.style.background = S && S.acc ? `color-mix(in srgb, ${S.acc} 14%, #06050f)` : '#06050f'; };
   drawStage(box, null);
   if (!GID) { box.querySelector('.in').innerHTML = '<div class="splash"><div class="cat">Откройте экран из пульта ведущего</div></div>'; return; }
@@ -1149,13 +1150,26 @@ function viewPlay() {
     const on = gref(GID, 'on/' + me); presence = () => { if (NET.connected && J) { on.onDisconnect().remove(); on.set(true).catch(() => {}); } }; NET.subs.push(presence);
     gref(GID, 'meta').once('value').then(x => { if (!x.exists()) app.innerHTML = '<div class="pv"><div class="mid"><h2>Игра не найдена</h2><p>Попросите у ведущего новый QR-код</p></div></div>'; });
     gref(GID, 'core').on('value', x => { C = x.val(); if (C && C.bz !== lastBz) { lastBz = C.bz; pressing = false; } if (C && C.act === me && lastAct !== me && navigator.vibrate) navigator.vibrate([60, 40, 60]); lastAct = C ? C.act : ''; draw(); });
-    gref(GID, 'join/' + me).on('value', x => { J = x.val(); if (J) presence(); app._h = ''; draw(); });
+    gref(GID, 'join/' + me).on('value', x => { J = x.val(); if (J) presence(); else if (MIXNM && !joining && !draw._aj) { draw._aj = 1; joining = true; gref(GID, 'join/' + me).set({ name: MIXNM, table: 0, t: TS() }).then(() => { joining = false; presence(); }, () => { joining = false; }); } app._h = ''; draw(); });
     gref(GID, 'ans/' + me).on('value', x => { MY = x.val(); app._h = ''; draw(); });
   });
 }
 
 /* ================= запуск ================= */
 function bootHost() {
+  if (MIX) {
+    ls('del', KEY_LIVE); const OPEN = P.get('open');
+    let posted = '';
+    setInterval(() => { if (G && G.code && posted !== G.id + G.code) { posted = G.id + G.code; window.parent.postMessage({ pbmix: 'started', k: 'svoya', gid: G.id, code: G.code }, location.origin); } }, 500);
+    window.addEventListener('message', e => { if (e.origin !== location.origin || !e.data || e.data.pbmix !== 'req' || !G) return; window.parent.postMessage({ pbmix: 'res', k: 'svoya', gid: G.id, players: Object.values(G.players).map(p => ({ id: p.id, name: p.name, score: p.score || 0 })) }, location.origin); });
+    $('app').innerHTML = '<div class="wrap"><p class="muted">Загружаем раунд…</p></div>';
+    accLoad().then(() => netReady).then(ok => {
+      const k = wsKey();
+      if (!ok || !k || !OPEN) { window.parent.postMessage({ pbmix: 'err', msg: 'Не получилось открыть игру' }, location.origin); return; }
+      ref(`ws/${k}/sq/${OPEN}`).once('value').then(x => { if (!x.val()) throw 0; CFG = normCfg(x.val()); newGame(); }).catch(() => window.parent.postMessage({ pbmix: 'err', msg: 'Не получилось открыть игру' }, location.origin));
+    });
+    return;
+  }
   const live = ls('get', KEY_LIVE);
   const OPEN = P.get('open'), DEMO = !!P.get('demo'); if (OPEN || P.get('new') || DEMO) try { history.replaceState(null, '', location.pathname); } catch (e) {}
   if (DEMO) { CFG = normCfg(sampleCfg()); newGame(); ['Индейки', 'Пироги'].forEach(n => { const id = 'm' + uid(8); G.players[id] = { id, name: n, score: 0, man: 1 }; }); publish(); accLoad().then(() => { if (G) renderLive(); }); renderTop(); return; }
