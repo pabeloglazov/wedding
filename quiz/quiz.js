@@ -1055,14 +1055,18 @@ async function startNet() {
 async function ensureCode() {
   if (!G || !G.net) return; const gid = G.id;
   try {
-    await gref(gid, 'meta').set({ host: NET.uid, t: TS() });
+    const m = (await gref(gid, 'meta').once('value')).val();
+    if (!m || m.host !== NET.uid) await gref(gid, 'meta').set({ host: NET.uid, t: TS() }).catch(e => console.warn('quiz meta', e));
     if (!G || G.id !== gid) return;
     ref('rkeys/' + gid + '/' + G.rkey).set(true).catch(() => {});
     gref(gid, 'q').set(pubQs(G));
     lastCore = ''; lastPk = ''; netPush(true);
     if (G.code) {
-      const r = await ref('codes/' + G.code).transaction(cur => !cur || cur.g === gid ? { g: gid, t: Date.now() } : undefined);
-      if (r.committed) { ls('set', 'pbq_last', { gid, code: G.code }); return; }
+      const c = (await ref('codes/' + G.code).once('value').catch(() => null));
+      const cv = c && c.val();
+      if (cv && cv.g === gid) { ls('set', 'pbq_last', { gid, code: G.code }); return; }
+      const r = cv ? null : await ref('codes/' + G.code).transaction(cur => !cur ? { g: gid, t: Date.now() } : undefined).catch(() => null);
+      if (r && r.committed) { ls('set', 'pbq_last', { gid, code: G.code }); return; }
     }
     const code = await allocCode(gid);
     if (G && G.id === gid && code) { G.code = code; ls('set', 'pbq_last', { gid, code }); publish(); }
