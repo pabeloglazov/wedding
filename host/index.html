@@ -19,7 +19,7 @@
   --bg:#0e0e0d;--surface:#161615;--card:#1b1b1a;--raise:#232322;
   --ink:#f2efe9;--muted:#9d9b96;--faint:#6a6864;--line:rgba(242,239,233,.09);--line2:rgba(242,239,233,.18);
   --ok:#7fc79a;--warn:#e5b45c;--bad:#e07a5f;
-  --t-quiz:#c27078;--t-fact:#d9a441;--t-bingo:#6f9fc6;--t-sm:#a7ae86;
+  --t-quiz:#c27078;--t-fact:#d9a441;--t-bingo:#6f9fc6;--t-svoya:#6d4dff;--t-sm:#a7ae86;
   --hf:Archivo,Manrope,system-ui,sans-serif;--bf:Manrope,system-ui,-apple-system,sans-serif;
   color-scheme:dark
 }
@@ -158,7 +158,7 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
   var FB = { apiKey: 'AIzaSyADi9iG0ZtHg9zGBomUKpTpgaANStenR3Y', authDomain: 'beloglazov-games.firebaseapp.com', databaseURL: 'https://beloglazov-games-default-rtdb.firebaseio.com', projectId: 'beloglazov-games' };
   var I = {
     ru: { brand: 'Белоглазов', h: 'Мои игры', newG: '+ Новая игра', newT: 'Новая игра', search: 'Поиск по названию или паре', all: 'Все', past: 'Проведённые',
-      quiz: 'Квиз', fact: 'Интересный факт', bingo: 'Человеческое бинго', bingoS: 'Бинго', sm: 'Секретная миссия',
+      quiz: 'Квиз', fact: 'Интересный факт', bingo: 'Человеческое бинго', bingoS: 'Бинго', svoya: 'Своя игра', svoyaD: 'Табло категорий, кнопка «Ответить!» на телефонах', sm: 'Секретная миссия',
       quizD: 'Вопросы о паре, ответы с телефонов', factD: 'Факты о гостях от пары', bingoD: 'Карточки примет, знакомство в зале', smD: 'Тайные задания для welcome-зоны',
       smLock: 'Новые миссии — по подписке', open: 'Открыть', dup: 'Дублировать', del: 'Удалить', sure: 'Точно удалить?', copy: ' (копия)', admin: 'Панель ведущего', guests: 'Ссылка для гостей',
       copied: 'Ссылка скопирована', duped: 'Копия создана', deleted: 'Игра удалена', active: 'Активна', until: 'до', empty: 'Игр пока нет — создайте первую.', none: 'Ничего не нашли по «{q}»',
@@ -167,7 +167,7 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
       name: 'Имя', mail: 'Почта для входа', plan: 'Тариф', lang: 'Язык', noPlan: 'Без тарифа', sub: 'Подписка', event: 'Одно мероприятие', left: 'Осталось {n}', subOff: 'подписка неактивна', tariff: 'Тариф',
       creating: 'Создаём…', err: 'Ошибка: ', noSync: 'Не получилось загрузить игры из аккаунта — обновите страницу', edited: 'изменён', created: 'создана', d1: 'день', d2: 'дня', d5: 'дней', today: 'меньше дня' },
     en: { brand: 'Beloglazov', h: 'My games', newG: '+ New game', newT: 'New game', search: 'Search by title or couple', all: 'All', past: 'Past',
-      quiz: 'Quiz', fact: 'Interesting Fact', bingo: 'Human Bingo', bingoS: 'Bingo', sm: 'Secret Mission',
+      quiz: 'Quiz', fact: 'Interesting Fact', bingo: 'Human Bingo', bingoS: 'Bingo', svoya: 'Jeopardy', svoyaD: 'Category board, buzzer on phones', sm: 'Secret Mission',
       quizD: 'Questions about the couple, answers from phones', factD: 'Facts about guests from the couple', bingoD: 'Trait cards, guests mingle', smD: 'Secret tasks for the welcome area',
       smLock: 'New missions need a subscription', open: 'Open', dup: 'Duplicate', del: 'Delete', sure: 'Delete for good?', copy: ' (copy)', admin: 'Host panel', guests: 'Guest link',
       copied: 'Link copied', duped: 'Copy created', deleted: 'Game deleted', active: 'Active', until: 'until', empty: 'No games yet — create your first one.', none: 'Nothing found for “{q}”',
@@ -176,9 +176,9 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
       name: 'Name', mail: 'Sign-in email', plan: 'Plan', lang: 'Language', noPlan: 'No plan', sub: 'Subscription', event: 'One event', left: '{n} left', subOff: 'subscription inactive', tariff: 'Plan',
       creating: 'Creating…', err: 'Error: ', noSync: 'Couldn’t load your games — refresh the page', edited: 'edited', created: 'created', d1: 'day', d2: 'days', d5: 'days', today: 'under a day' }
   };
-  var TYPES = { quiz: { c: 'var(--t-quiz)', p: 'q', l: 'list', href: '../quiz/' }, fact: { c: 'var(--t-fact)', p: 'fq', l: 'flist', href: '../fact/' }, bingo: { c: 'var(--t-bingo)', p: 'bq', l: 'blist', href: '../bingo/' }, sm: { c: 'var(--t-sm)' } };
+  var TYPES = { quiz: { c: 'var(--t-quiz)', p: 'q', l: 'list', href: '../quiz/' }, fact: { c: 'var(--t-fact)', p: 'fq', l: 'flist', href: '../fact/' }, bingo: { c: 'var(--t-bingo)', p: 'bq', l: 'blist', href: '../bingo/' }, svoya: { c: 'var(--t-svoya)', p: 'sq', l: 'slist', href: '../svoya/' }, sm: { c: 'var(--t-sm)' } };
   var L = (function () { try { var s = localStorage.getItem('pb_lang'); if (s === 'ru' || s === 'en') return s; } catch (e) {} return /^(ru|uk|be|kk)/i.test(navigator.language || 'ru') ? 'ru' : 'en'; })();
-  var TK = 'pb_host_token', token = null, ev = null, acc = null, lists = { quiz: null, fact: null, bingo: null }, db = null, wsk = '';
+  var TK = 'pb_host_token', token = null, ev = null, acc = null, lists = { quiz: null, fact: null, bingo: null, svoya: null }, db = null, wsk = '';
   var S = { type: 'all', q: '', menu: null, sure: null };
   function T(k) { return I[L][k] || k; }
   function $(id) { return document.getElementById(id); }
@@ -241,13 +241,13 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
       box.querySelector('[data-x="out"]').onclick = function () { close(); logout(); };
     });
   }
-  function logout() { store('del'); token = null; ev = acc = null; lists = { quiz: null, fact: null, bingo: null }; login(); }
+  function logout() { store('del'); token = null; ev = acc = null; lists = { quiz: null, fact: null, bingo: null, svoya: null }; login(); }
   function setLang(l) { L = l; try { localStorage.setItem('pb_lang', L); } catch (e) {} paintStatic(); if (token) { paintAcct(); render(); } else login(); }
 
   /* ---------- список игр ---------- */
   function items() {
     var out = [];
-    ['quiz', 'fact', 'bingo'].forEach(function (k) {
+    ['quiz', 'fact', 'bingo', 'svoya'].forEach(function (k) {
       var m = lists[k]; if (!m) return;
       Object.keys(m).forEach(function (id) { var x = m[id] || {}; out.push({ k: k, id: id, title: x.title || T(k), sub: x.couple || '', t: x.updated || 0, href: TYPES[k].href + '?open=' + encodeURIComponent(id) }); });
     });
@@ -266,7 +266,7 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
   }
   function render() {
     var busy = !ev || (!lists.err && (!lists.quiz || !lists.fact || !lists.bingo));
-    var types = [['all', T('all'), '']].concat(['quiz', 'fact', 'bingo', 'sm'].map(function (k) { return [k, k === 'bingo' ? T('bingoS') : T(k), TYPES[k].c]; }));
+    var types = [['all', T('all'), '']].concat(['quiz', 'fact', 'bingo', 'svoya', 'sm'].map(function (k) { return [k, k === 'bingo' ? T('bingoS') : T(k), TYPES[k].c]; }));
     var all = items(), q = S.q.toLowerCase();
     var vis = all.filter(function (g) { return (S.type === 'all' || g.k === S.type) && (!q || (g.title + ' ' + g.sub).toLowerCase().indexOf(q) >= 0); }).sort(function (a, b) { return (a.old ? 1 : 0) - (b.old ? 1 : 0) || b.t - a.t; });
     var up = vis.filter(function (g) { return !g.old; }), old = vis.filter(function (g) { return g.old; });
@@ -309,7 +309,7 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
   }
   function newDlg() {
     var canSm = ev && ev.plan === 'pro' && ev.active;
-    dlg('<h3>' + esc(T('newT')) + '</h3>' + ['quiz', 'fact', 'bingo'].map(function (k) { return '<a class="opt" href="' + TYPES[k].href + '?new=1"><i style="background:' + TYPES[k].c + '"></i><span>' + esc(T(k)) + '<small>' + esc(T(k + 'D')) + '</small></span></a>'; }).join('') +
+    dlg('<h3>' + esc(T('newT')) + '</h3>' + ['quiz', 'fact', 'bingo', 'svoya'].map(function (k) { return '<a class="opt" href="' + TYPES[k].href + '?new=1"><i style="background:' + TYPES[k].c + '"></i><span>' + esc(T(k)) + '<small>' + esc(T(k + 'D')) + '</small></span></a>'; }).join('') +
       '<button class="opt' + (canSm ? '' : ' lock') + '" data-x="sm"><i style="background:' + TYPES.sm.c + '"></i><span>' + esc(T('sm')) + '<small>' + esc(canSm ? T('smD') : T('smLock')) + '</small></span></button>', function (box, close) {
       box.querySelector('[data-x="sm"]').onclick = function () {
         if (!canSm) { location.href = '../#pricing'; return; }
@@ -363,7 +363,7 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
       acc = r[0]; db = r[1]; if (token) paintAcct();
       wsk = acc && /^[0-9a-f]{64}$/.test(acc.ws || '') ? acc.ws : '';
       if (!wsk || !db) { lists.err = 1; if (token) { render(); if (acc && !db) toast(T('noSync')); } return; }
-      ['quiz', 'fact', 'bingo'].forEach(function (k) {
+      ['quiz', 'fact', 'bingo', 'svoya'].forEach(function (k) {
         db.ref('ws/' + wsk + '/' + TYPES[k].l).on('value', function (s) { lists[k] = s.val() || {}; if (token) render(); }, function () { lists[k] = {}; if (token) render(); });
       });
     });
@@ -372,7 +372,7 @@ h1{font-family:var(--hf);font-stretch:125%;font-weight:600;text-transform:upperc
   var q = new URLSearchParams(location.search), t = q.get('t');
   if (t) { store('set', t); try { history.replaceState(null, '', location.pathname); } catch (e) {} }
   token = store('get');
-  try { var nx = token && localStorage.getItem('pb_next'); if (nx === 'quiz' || nx === 'fact' || nx === 'bingo') { localStorage.removeItem('pb_next'); location.replace('../' + nx + '/'); return; } } catch (e) {}
+  try { var nx = token && localStorage.getItem('pb_next'); if (nx === 'quiz' || nx === 'fact' || nx === 'bingo' || nx === 'svoya') { localStorage.removeItem('pb_next'); location.replace('../' + nx + '/'); return; } } catch (e) {}
   paintStatic();
   if (token) load(); else login();
 })();

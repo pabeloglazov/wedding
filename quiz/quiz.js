@@ -1731,7 +1731,7 @@ function viewPlayNet() {
       cl.codeEntry = true; cl.cur = () => null;
       cl.enterCode = (code, err) => {
         if (code.length !== 6) { if (err) err.textContent = 'Код состоит из 6 цифр'; return; }
-        ref('codes/' + code).once('value').then(s => { const v = s.val(); if (!v || !v.g) { if (err) err.textContent = 'Игра с таким кодом не найдена'; return; } location.replace(v.k === 'bingo' ? '../bingo/?view=play&g=' + v.g : BASE + '?view=play&g=' + v.g); })
+        ref('codes/' + code).once('value').then(s => { const v = s.val(); if (!v || !v.g) { if (err) err.textContent = 'Игра с таким кодом не найдена'; return; } location.replace(v.k === 'bingo' ? '../bingo/?view=play&g=' + v.g : v.k === 'svoya' ? '../svoya/?view=play&g=' + v.g : BASE + '?view=play&g=' + v.g); })
           .catch(() => { if (err) err.textContent = 'Нет связи, попробуйте ещё раз'; });
       };
       draw(); const pc = (P.get('c') || '').replace(/\D/g, ''); if (pc.length === 6) cl.enterCode(pc, null); else setTimeout(() => { const i = $('pCode'); if (i) i.focus(); }, 300);
