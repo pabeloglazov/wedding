@@ -1057,7 +1057,9 @@ async function ensureCode() {
   try {
     await gref(gid, 'meta').set({ host: NET.uid, t: TS() });
     if (!G || G.id !== gid) return;
+    ref('rkeys/' + gid + '/' + G.rkey).set(true).catch(() => {});
     gref(gid, 'q').set(pubQs(G));
+    lastCore = ''; lastPk = ''; netPush(true);
     if (G.code) {
       const r = await ref('codes/' + G.code).transaction(cur => !cur || cur.g === gid ? { g: gid, t: Date.now() } : undefined);
       if (r.committed) { ls('set', 'pbq_last', { gid, code: G.code }); return; }
@@ -2626,7 +2628,7 @@ function bootHost() {
   IMG.ready.then(() => {
     render();
     netReady.then(ok => {
-      if (G && G.net && ok) { attachNet(); lastCore = ''; lastPk = ''; netPush(true); ensureCode(); }
+      if (G && G.net && ok) { attachNet(); ensureCode(); }
       if (!G && edBuilt) paintForm();
       if (DEMO_GO && !G) { newGame(); window.scrollTo(0, 0); }
       accLoad().then(() => {
