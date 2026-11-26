@@ -227,31 +227,33 @@ window.addEventListener('message', e => {
 let built = false;
 function renderLive(force) {
   if (!S || VIEW !== 'host') return;
-  const r = S.rounds[S.ri];
+  const r = S.rounds[S.ri], run = S.ph === 'round' || S.ph === 'starting';
+  const inRound = run && r && r.k !== 'sm';
   if (!built || force) {
     built = true;
-    const inRound = (S.ph === 'starting' || S.ph === 'round') && r && r.k !== 'sm';
-    const teams = `<div class="pane"><h4>Общий счёт<span class="sp"></span><span class="muted" id="onl" style="letter-spacing:0;text-transform:none;font-size:12px"></span></h4><div class="tt" id="tt"></div><div class="codebox"><div><div class="k">Вход для команд</div><b id="cd"></b></div><span style="flex:1"></span><button class="btn ghost sm" id="bPh2">${ico('phone', 14)}Открыть телефон</button></div></div>`;
     $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('Игра-микс · ' + esc(S.title))}</a><span class="sp"></span><button class="btn ghost sm" id="bScr">${ico('monitor', 15)}Экран для проектора</button><button class="btn ghost sm" id="bPh">${ico('phone', 15)}Телефон</button><button class="btn ghost sm" id="bEnd">Завершить вечер</button></div></div>` +
-      `<div class="live"><div><div class="pane"><h4>Вечер</h4><div id="ctl"></div></div>${inRound || (S.ph === 'round' && r && r.k === 'sm') ? `<div style="margin-top:14px">${teams}</div>` : ''}</div>` +
-      `<div id="main">${inRound ? `<iframe class="frame" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1')}" allow="autoplay; fullscreen"></iframe>` :
+      `<div class="mixbar"><div class="in" id="ctl"></div></div>` +
+      `<div class="live2">${inRound ? `<iframe class="frame" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1')}" allow="autoplay; fullscreen"></iframe>` :
         S.ph === 'round' && r && r.k === 'sm' ? `<div class="hold"><h2>Секретная миссия</h2><p>Гости играют по своим телефонам — экран показывает QR на игру. Панель ведущего — в отдельной вкладке.</p><a class="btn gold" href="${esc(r.adm || '../host/')}" target="_blank" rel="noopener">${ico('ext', 15)}Открыть панель миссии</a></div>` :
-        `<div class="stg16"><iframe src="${BASE}?view=screen&g=${encodeURIComponent(S.id)}&pv=1" title="Экран"></iframe><span class="stl">${S.ph === 'lobby' ? 'Команды подключаются — нажмите раунд слева, он сразу запустится' : S.ph === 'between' ? 'Раунд завершён — нажмите следующий раунд слева' : 'Финал вечера'}</span></div><div style="margin-top:14px">${teams}</div>`}</div></div>`;
+        `<div class="lgrid"><div class="stg16"><iframe src="${BASE}?view=screen&g=${encodeURIComponent(S.id)}&pv=1" title="Экран"></iframe><span class="stl">${S.ph === 'lobby' ? 'Команды подключаются — нажмите раунд вверху, он сразу запустится' : S.ph === 'between' ? 'Раунд завершён — нажмите следующий раунд вверху' : 'Финал вечера'}</span></div>` +
+        `<div class="pane"><h4>Общий счёт<span class="sp"></span><span class="muted" id="onl" style="letter-spacing:0;text-transform:none;font-size:12px"></span></h4><div class="tt" id="tt"></div><div class="codebox"><div><div class="k">Вход для команд</div><b id="cd"></b></div><span style="flex:1"></span><button class="btn ghost sm" id="bPh2">${ico('phone', 14)}Открыть телефон</button></div></div></div>`}</div>`;
     { const b2 = $('bPh2'); if (b2) b2.onclick = () => window.open(`${BASE}?view=play&g=${S.id}`, '_blank'); }
     $('bScr').onclick = () => { if (!S.code) { toast('Подключаемся…'); return; } window.open(`${BASE}?view=screen&g=${S.id}`, 'pbm_screen'); };
     $('bPh').onclick = () => window.open(`${BASE}?view=play&g=${S.id}`, '_blank');
     $('bEnd').onclick = () => { if (!sure($('bEnd'))) return; endShow(); };
   }
-  const run = S.ph === 'round' || S.ph === 'starting';
-  $('ctl').innerHTML = `<div class="rtabs">${S.rounds.map((x, i) => `<button class="rt${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}">${gIco(x.k)}<span class="tx"><b>Раунд ${i + 1}</b><small>${esc(x.t)}</small></span>${i === S.ri && run ? '<span class="st live">идёт</span>' : S.done.indexOf(i) >= 0 ? '<span class="st">✓</span>' : ''}</button>`).join('')}</div>` +
-    `<div class="sctl"><div class="k" style="margin:12px 0 8px">Экран</div><div class="sg"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Рейтинг</button><button data-ov="teams" class="${S.ov === 'teams' ? 'on' : ''}"${Object.keys(S.names).length ? '' : ' disabled'}>Участники</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div>${S.ov === 'teams' && Object.keys(S.names).length ? (() => { const ids = Object.keys(S.names), i = Math.min(S.ti || 0, ids.length - 1); return `<div class="tpg"><button data-ts="-1"${i ? '' : ' disabled'}>‹</button><div><small>Команда ${i + 1} из ${ids.length}</small><b>${esc(S.names[ids[i]])}</b></div><button data-ts="1"${i < ids.length - 1 ? '' : ' disabled'}>›</button></div>`; })() : ''}</div>`;
+  const nT = Object.keys(S.names).length, ids = Object.keys(S.names), ti = Math.min(S.ti || 0, Math.max(0, nT - 1));
+  $('ctl').innerHTML = `<span class="mk">Раунды</span><div class="rpills">${S.rounds.map((x, i) => `<button class="rp${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}" title="${esc(x.t)}">${gIco(x.k)}<span><b>${i + 1}. ${esc(x.t)}</b></span>${i === S.ri && run ? '<i class="lv">идёт</i>' : S.done.indexOf(i) >= 0 ? '<i>✓</i>' : ''}</button>`).join('')}</div>` +
+    `<span class="sp"></span><span class="mk">Экран</span><div class="sgb"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Рейтинг</button><button data-ov="teams" class="${S.ov === 'teams' ? 'on' : ''}"${nT ? '' : ' disabled'}>Участники</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div>` +
+    (S.ov === 'teams' && nT ? `<div class="tpg"><button data-ts="-1"${ti ? '' : ' disabled'}>‹</button><div><small>Команда ${ti + 1} из ${nT}</small><b>${esc(S.names[ids[ti]])}</b></div><button data-ts="1"${ti < nT - 1 ? '' : ' disabled'}>›</button></div>` : '') +
+    `<span class="cdm">код <b>${S.code ? fmtCode(S.code) : '…'}</b></span>`;
   $('ctl').querySelectorAll('[data-go]').forEach(b => b.onclick = () => A.go(+b.dataset.go));
   $('ctl').querySelectorAll('[data-ov]').forEach(b => b.onclick = () => b.dataset.ov === 'score' ? A.liveScore() : A.ov(b.dataset.ov));
   $('bFinal').onclick = A.final;
   $('ctl').querySelectorAll('[data-ts]').forEach(b => b.onclick = () => A.tstep(+b.dataset.ts));
   const rank = Object.keys(S.names).map(id => ({ id, n: S.names[id], s: S.tot[id] || 0 })).sort((a, b) => b.s - a.s);
-  $('tt').innerHTML = rank.length ? rank.map((p, i) => `<div><em class="muted" style="font-style:normal;width:18px">${i + 1}</em><span>${esc(p.n)}</span><b>${nums(p.s)}</b></div>`).join('') : '<p class="muted" style="margin:0;font-size:14px">Команды появятся, когда войдут по QR</p>';
-  $('cd').textContent = S.code ? `${SHORT} · ${fmtCode(S.code)}` : 'подключаемся…';
+  if ($('tt')) $('tt').innerHTML = rank.length ? rank.map((p, i) => `<div><em class="muted" style="font-style:normal;width:18px">${i + 1}</em><span>${esc(p.n)}</span><b>${nums(p.s)}</b></div>`).join('') : '<p class="muted" style="margin:0;font-size:14px">Команды появятся, когда войдут по QR</p>';
+  if ($('cd')) $('cd').textContent = S.code ? `${SHORT} · ${fmtCode(S.code)}` : 'подключаемся…';
   { const o = $('onl'); if (o) { const n = Object.keys(ONLINE).filter(k => ONLINE[k] === true).length; o.textContent = `на связи: ${n}`; } }
 }
 
@@ -277,6 +279,7 @@ function viewScreen() {
     else if (C.ph === 'between') { const nx = R[C.ri + 1]; h = `<div class="kk">После раунда ${C.ri + 1} из ${C.n}</div><h1 style="font-size:3em">Общий счёт</h1><div class="msc">${rank.slice(0, 8).map((p, i) => `<div class="row${i === 0 && p.s > 0 ? ' t1' : ''}" style="animation-delay:${i * 80}ms"><span class="p">${i + 1}</span><span class="n">${esc(p.n)}</span><span class="s">${nums(p.s)}</span></div>`).join('') || '<p>Команд пока нет</p>'}</div>${nx ? `<div class="nxt">Дальше: ${esc(nx.t)} · ${GM[nx.k].n}</div>` : ''}`; }
     else if (C.ph === 'final') { const t = rank.slice(0, 3), o = [t[1], t[0], t[2]], hh = [62, 88, 44], pl = [2, 1, 3]; h = `<h1 style="text-align:center;font-size:3.4em">Победители вечера</h1><div class="pod">${o.map((p, i) => p ? `<div class="${pl[i] === 1 ? 'w' : ''}"><div class="nm">${esc(p.n)}</div><div class="sc">${nums(p.s)}</div><div class="bl" style="height:${hh[i]}%;animation-delay:${[.6, 1.2, 0][i]}s">${pl[i]}</div></div>` : '<div></div>').join('')}</div>`; }
     sf.innerHTML = `<div class="mst"><div class="in">${mark()}${h}</div></div>`;
+    { const h1 = sf.querySelector('.mlob h1'); if (h1) { const fit = () => { let k = 1; h1.style.fontSize = ''; const base = parseFloat(getComputedStyle(h1).fontSize); while (h1.scrollWidth > h1.clientWidth + 1 && k > .4) { k -= .05; h1.style.fontSize = base * k + 'px'; } }; fit(); requestAnimationFrame(fit); if (document.fonts) document.fonts.ready.then(fit); } }
     const q = $('qrc'); if (q) qr(q, C.ph === 'round' && C.rk === 'sm' ? C.play : `${BASE}?view=play&g=${C.id}`, 600);
   };
   const ovb = document.createElement('div'); ovb.className = 'movl'; document.body.appendChild(ovb); let ovk = '';
