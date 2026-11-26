@@ -306,7 +306,7 @@ function mountMedia(box, m, snd, gid) {
   const cover = m.k === 'audio' ? '<div class="cover"><div class="eq"><i></i><i></i><i></i><i></i><i></i></div><span>Слушаем</span></div>' : '';
   const id = ytId(m.src);
   if (id) {
-    const t0 = Math.round(+m.t0 || ytStart(m.src) || 0), t1 = Math.round(+m.t1 || 0);
+    const t0 = Math.round(+m.t0 || ytStart(m.src) || 0); let t1 = Math.round(+m.t1 || 0); if (t1 && t1 <= t0) t1 = t0 + t1; /* конец раньше начала — значит указали длительность */
     box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&enablejsapi=1&mute=${snd ? 0 : 1}&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&start=${t0}${t1 > t0 ? '&end=' + t1 : ''}${m.loop ? '&loop=1&playlist=' + encodeURIComponent(id) : ''}" allow="autoplay; encrypted-media" title="media"></iframe>` + cover;
     return;
   }
