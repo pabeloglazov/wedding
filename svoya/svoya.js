@@ -156,7 +156,7 @@ function sampleCfg() {
         { n: 'Песни Disney', qs: [
           YQ(S, 'Холодное сердце — «Отпусти и забудь»', 'Hu1Ynl2rRos', 0, 15, 60, 90),
           YQ(S, 'Король Лев — «Акуна Матата»', 'lxeH1-IgRzo', 0, 15, 40, 70),
-          YQ(S, 'Аладдин — «Смелой»', 'DvyZuTffEp8', 0, 15, 50, 80),
+          YQ(S, 'Аладдин — «Смелой»', 'rTYc5vkFsog', 13, 28, 106, 136),
           YQ(S, 'Моана — «Что меня ждёт»', 'C_UnQSj8vBs', 0, 15, 45, 75),
           YQ(S, 'Тайна Коко — «Я с тобой скоро чокнусь»', 'yDQhqD-znaY', 0, 12, 20, 45)] },
         { n: 'Заставки ТВ и сериалов', qs: [
@@ -181,7 +181,7 @@ function sampleCfg() {
     }]
   };
   /* ответы — ровно с припева (тайминги по синхронизированным текстам песен) */
-  const CH = {"Хоп хэй": ["mlhfnvTmaek", 56], "Нас не догонят": ["NQOR2O6mLXA", 22], "Районы-кварталы": ["1EozE3URh-8", 155], "Ты узнаешь её": ["du-zWWpnZSw", 100], "Два бриллианта": ["XtFwMWuMTPQ", 38], "Невозможное возможно": ["xVhl0_BKpDE", 19], "Лондон": ["djIAgcCnFmE", 69], "Жить в кайф": ["EsX-0VBb0j0", 47], "Имя 505": ["n3Go8ub9a1k", 34], "Неделимы": ["St9BslKyfgE", 50], "Мокрые кроссы": ["48Heq9b3UNU", 57], "Плачу на техно": ["L1Snj1Pt-Hs", 51], "Old Town Road": ["r7qovpFAGrQ", 12], "Знак": ["rgdPPz58Wsw", 50], "Детство": ["WJF5Z1WRcqw", 51], "Венера-Юпитер": ["u2XDNUHL_JM", 15], "Billie Jean": ["Zi_XLOBDo_Y", 86], "Happy": ["ZbZSe6N_BXs", 29], "Shake It Off": ["nfWlot6h_JM", 41], "September": ["Gs069dndIYk", 49], "Uptown Funk": ["OPf0YbXqDm0", 64], "My Heart Will Go On": ["9bFHsd3o1w0", 60], "Отпусти и забудь": ["Hu1Ynl2rRos", 58], "Акуна Матата": ["lxeH1-IgRzo", 20], "Смелой": ["DvyZuTffEp8", 52], "Что меня ждёт": ["C_UnQSj8vBs", 44], "Я с тобой скоро чокнусь": ["yDQhqD-znaY", 24]};
+  const CH = {"Хоп хэй": ["mlhfnvTmaek", 56], "Нас не догонят": ["NQOR2O6mLXA", 22], "Районы-кварталы": ["1EozE3URh-8", 155], "Ты узнаешь её": ["du-zWWpnZSw", 100], "Два бриллианта": ["XtFwMWuMTPQ", 38], "Невозможное возможно": ["xVhl0_BKpDE", 19], "Лондон": ["djIAgcCnFmE", 69], "Жить в кайф": ["EsX-0VBb0j0", 47], "Имя 505": ["n3Go8ub9a1k", 34], "Неделимы": ["St9BslKyfgE", 50], "Мокрые кроссы": ["48Heq9b3UNU", 57], "Плачу на техно": ["L1Snj1Pt-Hs", 51], "Old Town Road": ["r7qovpFAGrQ", 12], "Знак": ["rgdPPz58Wsw", 50], "Детство": ["WJF5Z1WRcqw", 51], "Венера-Юпитер": ["u2XDNUHL_JM", 15], "Billie Jean": ["Zi_XLOBDo_Y", 86], "Happy": ["ZbZSe6N_BXs", 29], "Shake It Off": ["nfWlot6h_JM", 41], "September": ["Gs069dndIYk", 49], "Uptown Funk": ["OPf0YbXqDm0", 64], "My Heart Will Go On": ["9bFHsd3o1w0", 60], "Отпусти и забудь": ["Hu1Ynl2rRos", 62], "Акуна Матата": ["0VrVt4A6sKY", 86], "Смелой": ["rTYc5vkFsog", 106], "Что меня ждёт": ["C_UnQSj8vBs", 44], "Я с тобой скоро чокнусь": ["yDQhqD-znaY", 24]};
   cfg.rounds.forEach(r => r.cats.forEach(c => c.qs.forEach(q => { const k = Object.keys(CH).find(x => q.a.indexOf(x) >= 0); if (k) { const [id, t] = CH[k]; q.am = { k: 'audio', src: 'https://youtu.be/' + id, t0: t, t1: t + 30 }; } })));
   return cfg;
 }
