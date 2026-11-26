@@ -164,9 +164,9 @@ function startShow() {
 function pub() { if (!S) return; ls('set', KEY_LIVE, S); renderLive(); push(); }
 function coreOf() {
   const r = S.rounds[S.ri] || null, rank = Object.keys(S.names).map(id => ({ id, n: S.names[id], s: S.tot[id] || 0 })).sort((a, b) => b.s - a.s);
-  return { id: S.id, ph: S.ph, title: S.title, code: S.code || '', ri: S.ri, n: S.rounds.length, rounds: S.rounds.map(x => ({ k: x.k, t: x.t })), rk: r ? r.k : '', rg: S.rg || '', play: r && r.k === 'sm' ? r.play : '', names: S.names, rank: rank.slice(0, 30), ov: S.ov || '', ti: S.ti || 0 };
+  return { id: S.id, ph: S.ph, title: S.title, code: S.code || '', ri: S.ri, n: S.rounds.length, rounds: S.rounds.map(x => ({ k: x.k, t: x.t })), rk: r ? r.k : '', rg: S.rg || '', play: r && r.k === 'sm' ? r.play : '', names: S.names, rank: rank.slice(0, 30), ov: S.ov || '', ti: S.ti || 0, cdz: S.cdz ? 1 : 0 };
 }
-function push() { if (!S || !NET.ok || !S.net) return; const c = JSON.stringify(coreOf()); if (c === lastCore) return; lastCore = c; gref(S.id, 'core').set(JSON.parse(c)).catch(() => {}); gref(S.id, 'scr').set(JSON.parse(c)).catch(() => {}); }
+function push() { if (!S || !NET.ok || !S.net) return; const c = JSON.stringify(coreOf()); if (c === lastCore) return; lastCore = c; gref(S.id, 'core').set(JSON.parse(c)).catch(e => console.warn('mix core', e && e.message)); gref(S.id, 'scr').set(JSON.parse(c)).catch(e => console.warn('mix scr', e && e.message)); }
 async function netStart() {
   const ok = await netReady; if (!ok || !S) return; const gid = S.id;
   try {
@@ -227,6 +227,8 @@ window.addEventListener('message', e => {
   if (e.data.pbmix === 'started' && (S.ph === 'starting' || S.ph === 'round') && e.data.gid) { if (S.rg !== e.data.gid) { S.rg = e.data.gid; S.ph = 'round'; pub(); } }
   if (e.data.pbmix === 'err') toast(e.data.msg || 'Ошибка раунда');
   if (e.data.pbmix === 'ov' && e.data.k === 'score') A.liveScore();
+  if (e.data.pbmix === 'ov' && e.data.k === 'qr') A.ov('qr');
+  if (e.data.pbmix === 'ov' && e.data.k === 'code') { S.cdz = S.cdz ? 0 : 1; pub(); }
 });
 let built = false;
 function renderLive(force) {
@@ -276,6 +278,7 @@ function viewScreen() {
   const draw = () => {
     if (!C) { sf.innerHTML = '<div class="mst"><div class="in"><h1>Ждём вечер…</h1></div></div>'; cur = ''; return; }
     drawOv();
+    { let pl = document.querySelector('.mcode'); if (!pl) { pl = document.createElement('div'); pl.className = 'mcode'; document.body.appendChild(pl); } const t = C.cdz && C.code ? `${esc(SHORT)} · код <b>${fmtCode(C.code)}</b>` : ''; if (pl._t !== t) { pl._t = t; pl.innerHTML = t; pl.classList.toggle('on', !!t); } }
     const k = C.ph === 'round' && C.rk !== 'sm' ? 'f:' + C.rg : C.ph === 'round' ? 'sm:' + C.ri : C.ph + ':' + JSON.stringify(C.rank) + C.code + JSON.stringify(C.names);
     if (k === cur) return; cur = k;
     if (C.ph === 'round' && C.rk !== 'sm' && C.rg) { sf.innerHTML = `<iframe src="${appUrl(C.rk, 'view=screen&g=' + C.rg + '&mix=1')}" allow="autoplay; fullscreen"></iframe>`; return; }

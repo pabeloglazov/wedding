@@ -455,7 +455,7 @@ const A = {
   pause() { if (G.ph !== 'q' && G.ph !== 'ans') return; G.hp = G.hp ? 0 : 1; publish(); },
   rnext() { A.round(G.ri + 1); },
   final() { G.ph = 'final'; G.ov = ''; G.cur = null; publish(); },
-  qr() { G.qrz = G.qrz ? 0 : 1; publish(); },
+  qr() { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'code' }, location.origin); return; } G.qrz = G.qrz ? 0 : 1; publish(); },
   qrbig() { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'qr' }, location.origin); return; } G.qrb = G.qrb ? 0 : 1; publish(); },
   snd() { G.snd = !G.snd; publish(); },
   replay() { const q = curQ(G) || curQQ(G); if (q && (G.ph === 'qq' || G.ph === 'qr' || G.cur) && (G.ph === 'ans' || G.ph === 'qr' ? mOk(q.am) && q.am.k !== 'image' : mOk(q.qm) && q.qm.k !== 'image')) { G.mr = (G.mr || 0) + 1; G.hp = 0; publish(); toast('Играем ещё раз'); } },

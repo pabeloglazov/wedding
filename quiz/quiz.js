@@ -444,7 +444,7 @@ function hostCmd(a) {
   if (a === 'next') { G.ov = ''; next(); } else if (a === 'qr') { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'qr' }, location.origin); return; } toggleQr(); }
   else if (a === 'snd') toggleSound(); else if (a === 'replay') replayMedia(); else if (a === 'skip') skipTimer();
   else if (a === 'scores') { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'score' }, location.origin); return; } G.ov = G.ov === 'scores' ? '' : 'scores'; publish(); }
-  else if (a === 'cdz') { G.cdz = G.cdz ? 0 : 1; publish(); }
+  else if (a === 'cdz') { if (MIX) { window.parent.postMessage({ pbmix: 'ov', k: 'code' }, location.origin); return; } G.cdz = G.cdz ? 0 : 1; publish(); }
   else if (a === 'teams') { G.ov = G.ov === 'teams' ? '' : 'teams'; G.ti = 0; publish(); }
   else if (a === 'tprev') { if (G.ti > 0) { G.ti--; publish(); } }
   else if (a === 'tnext') { if ((G.ti || 0) < Object.keys(G.players).length - 1) { G.ti = (G.ti || 0) + 1; publish(); } }
