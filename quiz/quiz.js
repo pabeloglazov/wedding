@@ -487,10 +487,11 @@ function xLogoDrag(root, br) {
     hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up);
   });
   br.addEventListener('pointerdown', e => {
-    e.preventDefault(); e.stopPropagation(); br.setPointerCapture(e.pointerId); br._drag = 1; br.classList.add('free');
+    e.preventDefault(); e.stopPropagation(); br.setPointerCapture(e.pointerId); br._drag = 1;
     const r = root.getBoundingClientRect(), b0 = br.getBoundingClientRect(), dx = e.clientX - b0.left, dy = e.clientY - b0.top;
+    br.style.left = ((b0.left - r.left) / r.width * 100) + '%'; br.style.top = ((b0.top - r.top) / r.height * 100) + '%'; br.classList.add('free');
     const mv = ev => { const x = Math.max(0, Math.min(r.width - b0.width, ev.clientX - r.left - dx)), y = Math.max(0, Math.min(r.height - b0.height, ev.clientY - r.top - dy)); br._p = { x: Math.round(x / r.width * 1000) / 10, y: Math.round(y / r.height * 1000) / 10 }; br.style.left = br._p.x + '%'; br.style.top = br._p.y + '%'; };
-    const up = () => { br.removeEventListener('pointermove', mv); br.removeEventListener('pointerup', up); br._drag = 0; if (br._p) { G.lgp = br._p; br._p = null; publish(); } };
+    const up = () => { br.removeEventListener('pointermove', mv); br.removeEventListener('pointerup', up); br._drag = 0; if (br._p) { G.lgp = br._p; br._p = null; publish(); } else if (!G.lgp) { br.classList.remove('free'); br.style.left = br.style.top = ''; } };
     br.addEventListener('pointermove', mv); br.addEventListener('pointerup', up);
   });
   br.addEventListener('dblclick', e => { e.stopPropagation(); G.lgp = null; G.lgs = 1; publish(); toast('Лого вернулось на место'); });
