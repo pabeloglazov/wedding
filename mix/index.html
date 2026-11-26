@@ -214,12 +214,19 @@ body.ph{background:#0d0c10}
 .tintro .dots{display:flex;gap:.5em}.tintro .dots i{width:.7em;height:.7em;border-radius:50%;background:rgba(255,255,255,.25)}.tintro .dots i.on{background:#fff}
 @keyframes tiK{from{opacity:0;transform:translateY(-1em)}to{opacity:.7}}
 @keyframes tiN{from{opacity:0;transform:scale(.6);filter:blur(12px)}to{opacity:1;transform:none;filter:none}}
+.stg16{position:relative;aspect-ratio:16/9;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:#0d0c14}
+.stg16 iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+.stg16 .stl{position:absolute;left:12px;bottom:12px;font-size:12px;font-weight:700;background:rgba(0,0,0,.55);color:#fff;border-radius:99px;padding:5px 12px;backdrop-filter:blur(6px)}
+.pane h4{display:flex;align-items:center;gap:10px}.pane h4 .sp{flex:1}
+.codebox{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.codebox .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:5px}
+.codebox .btn{border-radius:12px;height:38px;padding:0 14px;font-size:13px}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
-<script src="mix.js?v=9"></script>
+<script src="mix.js?v=10"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
    Вечер из раундов, каждый раунд — одна из наших игр. Один код на весь вечер, общий счёт.
    Ведущий: /mix/   Экран: ?view=screen&g=   Телефон: ?view=play&g=                  */
 const P = new URLSearchParams(location.search);
-const VIEW = P.get('view') || 'host';
+const VIEW = P.get('view') || 'host', PV = P.get('pv') === '1';
 const GID = (P.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
 const PF_API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
 const $ = id => document.getElementById(id);
@@ -230,13 +230,14 @@ function renderLive(force) {
   const r = S.rounds[S.ri];
   if (!built || force) {
     built = true;
+    const inRound = (S.ph === 'starting' || S.ph === 'round') && r && r.k !== 'sm';
+    const teams = `<div class="pane"><h4>Общий счёт<span class="sp"></span><span class="muted" id="onl" style="letter-spacing:0;text-transform:none;font-size:12px"></span></h4><div class="tt" id="tt"></div><div class="codebox"><div><div class="k">Вход для команд</div><b id="cd"></b></div><span style="flex:1"></span><button class="btn ghost sm" id="bPh2">${ico('phone', 14)}Открыть телефон</button></div></div>`;
     $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('Игра-микс · ' + esc(S.title))}</a><span class="sp"></span><button class="btn ghost sm" id="bScr">${ico('monitor', 15)}Экран для проектора</button><button class="btn ghost sm" id="bPh">${ico('phone', 15)}Телефон</button><button class="btn ghost sm" id="bEnd">Завершить вечер</button></div></div>` +
-      `<div class="live"><div><div class="pane"><h4>Вечер</h4><div id="ctl"></div></div><div class="pane" style="margin-top:14px"><h4>Общий счёт</h4><div class="tt" id="tt"></div><div class="codebox"><div><div class="k">Вход для команд</div><b id="cd"></b></div></div></div></div>` +
-      `<div id="main">${(S.ph === 'starting' || S.ph === 'round') && r && r.k !== 'sm' ? `<iframe class="frame" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1')}" allow="autoplay; fullscreen"></iframe>` :
+      `<div class="live"><div><div class="pane"><h4>Вечер</h4><div id="ctl"></div></div>${inRound || (S.ph === 'round' && r && r.k === 'sm') ? `<div style="margin-top:14px">${teams}</div>` : ''}</div>` +
+      `<div id="main">${inRound ? `<iframe class="frame" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1')}" allow="autoplay; fullscreen"></iframe>` :
         S.ph === 'round' && r && r.k === 'sm' ? `<div class="hold"><h2>Секретная миссия</h2><p>Гости играют по своим телефонам — экран показывает QR на игру. Панель ведущего — в отдельной вкладке.</p><a class="btn gold" href="${esc(r.adm || '../host/')}" target="_blank" rel="noopener">${ico('ext', 15)}Открыть панель миссии</a></div>` :
-        S.ph === 'lobby' ? `<div class="hold"><h2>Команды подключаются</h2><p>Откройте экран для проектора — на нём QR-код на весь вечер. Когда все в сборе, нажмите на раунд слева — он сразу запустится.</p></div>` :
-        S.ph === 'between' ? `<div class="hold"><h2>Раунд завершён</h2><p>На экране — общий счёт. Нажмите на любой раунд слева — он запустится, а счёт текущего сохранится.</p></div>` :
-        `<div class="hold"><h2>Финал</h2><p>На экране — победители вечера по сумме всех раундов.</p></div>`}</div></div>`;
+        `<div class="stg16"><iframe src="${BASE}?view=screen&g=${encodeURIComponent(S.id)}&pv=1" title="Экран"></iframe><span class="stl">${S.ph === 'lobby' ? 'Команды подключаются — нажмите раунд слева, он сразу запустится' : S.ph === 'between' ? 'Раунд завершён — нажмите следующий раунд слева' : 'Финал вечера'}</span></div><div style="margin-top:14px">${teams}</div>`}</div></div>`;
+    { const b2 = $('bPh2'); if (b2) b2.onclick = () => window.open(`${BASE}?view=play&g=${S.id}`, '_blank'); }
     $('bScr').onclick = () => { if (!S.code) { toast('Подключаемся…'); return; } window.open(`${BASE}?view=screen&g=${S.id}`, 'pbm_screen'); };
     $('bPh').onclick = () => window.open(`${BASE}?view=play&g=${S.id}`, '_blank');
     $('bEnd').onclick = () => { if (!sure($('bEnd'))) return; endShow(); };
@@ -251,6 +252,7 @@ function renderLive(force) {
   const rank = Object.keys(S.names).map(id => ({ id, n: S.names[id], s: S.tot[id] || 0 })).sort((a, b) => b.s - a.s);
   $('tt').innerHTML = rank.length ? rank.map((p, i) => `<div><em class="muted" style="font-style:normal;width:18px">${i + 1}</em><span>${esc(p.n)}</span><b>${nums(p.s)}</b></div>`).join('') : '<p class="muted" style="margin:0;font-size:14px">Команды появятся, когда войдут по QR</p>';
   $('cd').textContent = S.code ? `${SHORT} · ${fmtCode(S.code)}` : 'подключаемся…';
+  { const o = $('onl'); if (o) { const n = Object.keys(ONLINE).filter(k => ONLINE[k] === true).length; o.textContent = `на связи: ${n}`; } }
 }
 
 /* ================= экран ================= */
@@ -260,7 +262,7 @@ function viewScreen() {
   const sf = $('sf'); let C = null, cur = '';
   const ov = document.createElement('div'); ov.className = 'sndov'; ov.innerHTML = '<div>Нажмите, чтобы включить звук<small>и открыть на весь экран</small></div>';
   ov.onclick = () => { ov.remove(); const d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen || function () {}).call(d); };
-  document.body.appendChild(ov);
+  if (!PV) document.body.appendChild(ov);
   const mark = () => window.PB_BRAND ? `<div class="brandm">${PB_BRAND.mark(30)}<img src="${PB_BRAND.base}wordmark-white.png" alt="Beloglazov Event"></div>` : '';
   const draw = () => {
     if (!C) { sf.innerHTML = '<div class="mst"><div class="in"><h1>Ждём вечер…</h1></div></div>'; cur = ''; return; }
@@ -287,7 +289,7 @@ function viewScreen() {
   }
   draw();
   if (!GID) return;
-  netReady.then(ok => { if (!ok) return; const on = gref(GID, 'on/' + NET.uid), pr = () => { if (NET.connected) { on.onDisconnect().remove(); on.set('scr').catch(() => {}); } }; NET.subs.push(pr); pr(); gref(GID, 'scr').on('value', x => { const had = C; C = x.val(); if (!C && had) { sf.innerHTML = '<div class="mst"><div class="in"><h1>Спасибо, что играли!</h1></div></div>'; cur = 'end'; return; } draw(); }); });
+  netReady.then(ok => { if (!ok) return; const on = gref(GID, 'on/' + NET.uid), pr = () => { if (NET.connected && !PV) { on.onDisconnect().remove(); on.set('scr').catch(() => {}); } }; NET.subs.push(pr); pr(); gref(GID, 'scr').on('value', x => { const had = C; C = x.val(); if (!C && had) { sf.innerHTML = '<div class="mst"><div class="in"><h1>Спасибо, что играли!</h1></div></div>'; cur = 'end'; return; } draw(); }); });
 }
 
 /* ================= телефон ================= */
