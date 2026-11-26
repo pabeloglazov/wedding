@@ -540,8 +540,8 @@ function drawStage(root, S, snd) {
   if (S.ph === 'lobby') {
     if (same) { const t = inn.querySelector('.teams'); if (t) t.innerHTML = teamsHtml(S); const cd = inn.querySelector('.joinc .cd'); if (cd) cd.textContent = S.code ? fmtCode(S.code) : '······'; return; }
     inn.innerHTML = `<div class="lob"><div><div class="kk">Подключайтесь по QR-коду</div><h1>${esc(S.title)}</h1><div class="teams">${teamsHtml(S)}</div></div>` +
-      `<div class="joinc"><div class="qr" id="sqr"></div><div class="u">${esc(SHORT.replace(/^https?:\/\//, ''))}</div><small>код игры</small><div class="cd">${S.code ? fmtCode(S.code) : '······'}</div></div></div>`;
-    qr(inn.querySelector('#sqr'), `${location.origin}${location.pathname}?view=play&g=${S.id}`, 600);
+      (MIX ? '' : `<div class="joinc"><div class="qr" id="sqr"></div><div class="u">${esc(SHORT.replace(/^https?:\/\//, ''))}</div><small>код игры</small><div class="cd">${S.code ? fmtCode(S.code) : '······'}</div></div>`) + `</div>`;
+    if (!MIX) qr(inn.querySelector('#sqr'), `${location.origin}${location.pathname}?view=play&g=${S.id}`, 600);
     return;
   }
   if (S.ph === 'board') {
