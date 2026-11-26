@@ -535,6 +535,7 @@ function drawStage(root, S, snd) {
   const ov = S.ov === 'scores' && S.ph !== 'final' && S.ph !== 'lobby';
   const k = [ov ? 'sc' : S.ph, S.ri, S.cur ? S.cur.ci + '.' + S.cur.qi : ''].join('|');
   stageChrome(root, S);
+  root.classList.toggle('musq', !!(S && S.ph === 'q' && S.cur && S.cur.mus && S.ov !== 'scores'));
   const same = root._k === k; root._k = k;
   const mute = !!snd;
   if (ov) { inn.innerHTML = scoresHtml(S, 'Счёт'); return; }
@@ -556,7 +557,7 @@ function drawStage(root, S, snd) {
   if (S.ph === 'q' && S.cur && S.cur.mus) {
     const c = S.cur;
     if (!same) {
-      inn.innerHTML = `<div class="splash mus"><div class="cat">${esc(c.cat)}</div><div class="val">${esc(c.v)}</div><div class="eqw"><div class="eq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>${c.q.trim() ? `<div class="mq">${esc(c.q)}</div>` : ''}</div><div class="qm aud hid" id="qm"></div><div class="qfoot" id="qf"></div>`;
+      inn.innerHTML = `<div class="splash mus"><div class="cat">${esc(c.cat)}</div><div class="val">${esc(c.v)}</div><div class="eqw"><div class="eq wide">${'<i></i>'.repeat(18)}</div></div></div><div class="qm aud hid" id="qm"></div><div class="qfoot" id="qf"></div>`;
       const m = inn.querySelector('#qm'); mountMedia(m, c.qm, mute, S.id); m._mr = S.mr; m._snd = mute; m._pz = false;
     }
     const m = inn.querySelector('#qm'), sp = inn.querySelector('.splash');
@@ -567,7 +568,7 @@ function drawStage(root, S, snd) {
     if (sp) sp.classList.toggle('paused', pz);
     const f = inn.querySelector('#qf');
     const fh = S.act ? `<span class="bzp"><i>${ico('bolt')}</i>${esc(S.act)}</span>${S.qn.length ? `<span class="bzq">дальше: ${S.qn.map(esc).join(', ')}</span>` : ''}` :
-      `<span class="hintb">${ico('phone')}${S.wr ? 'Музыка дальше — кто знает? Жмите «Ответить!»' : 'Узнали? Жмите «Ответить!» на телефоне'}</span>`;
+''; 
     if (f && f._h !== fh) { f._h = fh; f.innerHTML = fh; }
     return;
   }
