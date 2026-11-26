@@ -4,6 +4,8 @@
 const P = new URLSearchParams(location.search);
 const VIEW = P.get('view') || 'host';
 const GID = (P.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
+/* игра-микс: игра открыта как раунд внутри /mix/ */
+const MIX = P.get('mix') === '1' && window.parent !== window, MIXNM = (P.get('nm') || '').trim().slice(0, 24);
 const PF_API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
 const DEMO_MAX = 3, DEMO_MIN = 60;
 const GAME = window.PB_GAME === 'fact' ? 'fact' : 'quiz';
@@ -417,7 +419,8 @@ function cpanHtml(o) {
 }
 
 /* ================= конфиг квиза ================= */
-const KEY_CFG = GAME === 'fact' ? 'pbf_cfg_v1' : 'pbq_cfg_v2', KEY_LIVE = GAME === 'fact' ? 'pbf_live_v1' : 'pbq_live_v2';
+const KEY_CFG = GAME === 'fact' ? 'pbf_cfg_v1' : 'pbq_cfg_v2', KEY_LIVE = (GAME === 'fact' ? 'pbf_live_v1' : 'pbq_live_v2') + (MIX ? '_mix' : '');
+const KEY_LASTQ = MIX ? 'pbq_last_mix' : 'pbq_last';
 const WSQ = GAME === 'fact' ? 'fq' : 'q', WSL = GAME === 'fact' ? 'flist' : 'list';
 const optFilled = o => !!(o && (o.t || '').trim());
 function normQ(q) {
@@ -1046,7 +1049,7 @@ async function allocCode(gid) {
 }
 async function startNet() {
   const gid = G.id;
-  ls('set', 'pbq_last', { gid, code: '' });
+  ls('set', KEY_LASTQ, { gid, code: '' });
   lastCore = ''; lastPk = '';
   try {
     await gref(gid, 'meta').set({ host: NET.uid, t: TS() });
@@ -1057,7 +1060,7 @@ async function startNet() {
     netPush(true);
     uploadImgs(gid);
     const code = await allocCode(gid);
-    if (G && G.id === gid && code) { G.code = code; ls('set', 'pbq_last', { gid, code }); publish(); }
+    if (G && G.id === gid && code) { G.code = code; ls('set', KEY_LASTQ, { gid, code }); publish(); }
   } catch (e) { console.warn('quiz net', e); }
 }
 /* продолжение игры после перезагрузки: заново прописываем код и данные игры (их могла удалить другая вкладка) */
@@ -1073,12 +1076,12 @@ async function ensureCode() {
     if (G.code) {
       const c = (await ref('codes/' + G.code).once('value').catch(() => null));
       const cv = c && c.val();
-      if (cv && cv.g === gid) { ls('set', 'pbq_last', { gid, code: G.code }); return; }
+      if (cv && cv.g === gid) { ls('set', KEY_LASTQ, { gid, code: G.code }); return; }
       const r = cv ? null : await ref('codes/' + G.code).transaction(cur => !cur ? { g: gid, t: Date.now() } : undefined).catch(() => null);
-      if (r && r.committed) { ls('set', 'pbq_last', { gid, code: G.code }); return; }
+      if (r && r.committed) { ls('set', KEY_LASTQ, { gid, code: G.code }); return; }
     }
     const code = await allocCode(gid);
-    if (G && G.id === gid && code) { G.code = code; ls('set', 'pbq_last', { gid, code }); publish(); }
+    if (G && G.id === gid && code) { G.code = code; ls('set', KEY_LASTQ, { gid, code }); publish(); }
   } catch (e) { console.warn('quiz code', e); }
 }
 function pickTime(a) { const t = +a.t, c = +a.c; return (isFinite(c) && c <= t + 50 && t - c <= 2500) ? c : t; }
@@ -1118,7 +1121,7 @@ function endNet() {
   hostOff.forEach(f => f()); hostOff = [];
   clearTimeout(scrTimer); scrTimer = null; clearTimeout(rvTimer); rvTimer = null;
   REM = {}; ONLINE = {};
-  const last = ls('get', 'pbq_last'); ls('del', 'pbq_last');
+  const last = ls('get', KEY_LASTQ); ls('del', KEY_LASTQ);
   if (NET.ok && last && last.gid) {
     const gid = last.gid;
     ['rkeys/', 'rv/', 'rc/', 'rem/'].forEach(p => ref(p + gid).remove().catch(() => {}));
@@ -1661,7 +1664,8 @@ function soundOverlay(onOk) {
 }
 function screenShell() {
   document.body.classList.add('solo-screen', 'no-cursor'); { let it = 0; const wake = () => { document.body.classList.remove('idle'); clearTimeout(it); it = setTimeout(() => document.body.classList.add('idle'), 3000); }; ['mousemove', 'mousedown', 'keydown'].forEach(ev => document.addEventListener(ev, wake, { passive: true })); wake(); } document.title = 'Экран · ' + GNAME;
-  $('app').innerHTML = '<div class="stage full" id="stg"></div><button class="btn ghost sm fsbtn" id="fs">⛶ На весь экран</button>';
+  $('app').innerHTML = '<div class="stage full" id="stg"></div>' + (MIX ? '' : '<button class="btn ghost sm fsbtn" id="fs">⛶ На весь экран</button>');
+  if (MIX) { SND.unlock(); return $('stg'); }
   $('fs').onclick = () => { SND.unlock(); const d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen || function () {}).call(d); };
   soundOverlay();
   return $('stg');
@@ -1731,7 +1735,7 @@ function viewPlayNet() {
       cl.codeEntry = true; cl.cur = () => null;
       cl.enterCode = (code, err) => {
         if (code.length !== 6) { if (err) err.textContent = 'Код состоит из 6 цифр'; return; }
-        ref('codes/' + code).once('value').then(s => { const v = s.val(); if (!v || !v.g) { if (err) err.textContent = 'Игра с таким кодом не найдена'; return; } location.replace(v.k === 'bingo' ? '../bingo/?view=play&g=' + v.g : v.k === 'svoya' ? '../svoya/?view=play&g=' + v.g : BASE + '?view=play&g=' + v.g); })
+        ref('codes/' + code).once('value').then(s => { const v = s.val(); if (!v || !v.g) { if (err) err.textContent = 'Игра с таким кодом не найдена'; return; } location.replace(v.k === 'bingo' ? '../bingo/?view=play&g=' + v.g : v.k === 'svoya' ? '../svoya/?view=play&g=' + v.g : v.k === 'mix' ? '../mix/?view=play&g=' + v.g : BASE + '?view=play&g=' + v.g); })
           .catch(() => { if (err) err.textContent = 'Нет связи, попробуйте ещё раз'; });
       };
       draw(); const pc = (P.get('c') || '').replace(/\D/g, ''); if (pc.length === 6) cl.enterCode(pc, null); else setTimeout(() => { const i = $('pCode'); if (i) i.focus(); }, 300);
@@ -1770,7 +1774,7 @@ function viewPlayNet() {
     on('q', v => { Q = v; imgs(); });
     if (!cl.role) {
       on('sc/' + me, v => { SC = v; cl.kicked = !!(v && v.kicked); cl.full = !!(v && v.full); if (cl.kicked) { gref(GID, 'on/' + me).remove(); } });
-      on('join/' + me, v => { J = v; if (v) { cl.table = v.table || 0; if (cl._presence) cl._presence(); } });
+      on('join/' + me, v => { J = v; if (v) { cl.table = v.table || 0; if (cl._presence) cl._presence(); } else if (MIXNM && !cl.joining && !cl._aj) { cl._aj = 1; cl.join(MIXNM, 0); } });
       on('ans/' + me, v => { MYA = v; if (v) Object.keys(v).forEach(k => { const x = v[k]; if (x && cl.picked[k] == null) cl.picked[k] = x.o != null ? x.o : x.v; }); });
     }
     setInterval(() => { const g = cl.cur(); if (g) updPhone(box, g, cl); }, 250);
@@ -2080,7 +2084,7 @@ function renderEditor() {
     (GAME === 'fact' ? `<div class="qhead"><h2>Факты о гостях</h2><span class="muted" id="qCount"></span></div><div class="hint tipline" style="margin:-4px 0 12px">Имя гостя и факт о нём. Фото — по желанию: появится на экране, когда откроется ответ.</div><div id="qList"></div><div class="addrow one"><button class="btn ghost" id="addFact">+ Факт о госте</button></div></div>` :
     `<div class="qhead"><h2>Вопросы</h2><span class="muted" id="qCount"></span><span class="sp"></span><button class="btn ghost sm" id="bImport">Вставить списком</button></div><div id="qList"></div>` +
     `<div class="addrow"><button class="btn ghost" data-add="choice">+ Вопрос</button><button class="btn ghost" data-add="photo">+ Фото-вопрос</button><button class="btn ghost" data-add="couple">+ Угадай ответ пары${lockTag('couple')}</button><button class="btn ghost" data-add="number">+ Ответ числом</button></div></div>`) +
-    `<div class="bar"><div class="in"><div style="min-width:0;flex:1"><div style="font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="bSum"></div><div class="muted" style="font-size:12px" id="bSub"></div></div><button class="btn gold" id="bStart"><span>Запустить</span><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg></button></div></div>`;
+    `<div class="bar"><div class="in"><div style="min-width:0;flex:1"><div style="font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="bSum"></div><div class="muted" style="font-size:12px" id="bSub"></div></div><button class="btn ghost" id="bMix" title="Добавить раунд из другой нашей игры">+ Раунд</button><button class="btn gold" id="bStart"><span>Запустить</span><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg></button></div></div>`;
   renderTop(); paintSync();
   if ($('bLogin2')) $('bLogin2').onclick = goLogin;
   $('fTitle').value = CFG.title; $('fCouple').value = CFG.couple; paintWed();
@@ -2091,6 +2095,7 @@ function renderEditor() {
   if ($('bImport')) $('bImport').onclick = openImport;
   if ($('addFact')) $('addFact').onclick = () => { CFG.facts.push(normFact({})); CFG.sampleF = 0; STORE.save(); paintFacts(); sum(); const c = $('qList').lastElementChild; if (c) { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); c.querySelector('.fname').focus({ preventScroll: true }); } };
   $('bStart').onclick = start;
+  $('bMix').onclick = () => { if (!wsKey()) { toast('Войдите, чтобы собрать игру-микс из нескольких игр'); setTimeout(goLogin, 1200); return; } STORE.pushAll(); setTimeout(() => { location.href = '../mix/?from=' + GAME + ':' + encodeURIComponent(CFG.id); }, 600); };
 }
 function addQ(type) {
   const [g, b] = coupleNames(CFG.couple);
@@ -2626,6 +2631,7 @@ function bootHost() {
     else if (m.type === 'answer') answer(m.pid, m.qi, m.a);
     else if (m.type === 'hello') send({ type: 'state', g: G });
   });
+  if (MIX) ls('del', KEY_LIVE);
   const saved = ls('get', KEY_LIVE);
   if (saved && saved.net && saved.phase !== 'final' && Date.now() - (saved.ts || 0) < 6 * 3600e3) { G = saved; ['players', 'ans', 'cpl', 'prevRank', 'banned'].forEach(k => { G[k] = G[k] || {}; }); }
   else { ls('del', KEY_LIVE); send({ type: 'reset' }); }
@@ -2658,6 +2664,7 @@ function bootHost() {
       if (DEMO_GO && !G) { newGame(); window.scrollTo(0, 0); }
       accLoad().then(() => {
         if (G) { if (unlocked() && (G.demo || G.cap !== guestCap())) { G.demo = false; G.cap = guestCap(); G.capHit = 0; publish(); } return; }
+        if (MIX && OPEN) { (OPEN === CFG.id ? Promise.resolve(CFG) : STORE.open(OPEN)).then(c => { CFG = c; newGame(); }, () => window.parent.postMessage({ pbmix: 'err', msg: 'Не получилось открыть игру' }, location.origin)); return; }
         if (TPL) STORE.save();
         renderTop(); if (edBuilt) { if (GAME === 'fact') paintShows(); else paintModes(); paintDesign(); paintForm(); paintQs(); const ac = document.querySelector('[data-add=couple]'); if (ac) ac.innerHTML = '+ Угадай ответ пары' + lockTag('couple'); } const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
         if (wsKey() && ok && OPEN && OPEN !== CFG.id) { STORE.open(OPEN).then(c => { CFG = c; ls('set', KEY_CFG, CFG); renderEditor(); window.scrollTo(0, 0); STORE.synced = 'ok'; paintSync(); }, () => toast('Не получилось открыть игру')); }
@@ -2668,6 +2675,12 @@ function bootHost() {
       });
     });
   });
+}
+/* связь с /mix/: сообщаем id запущенной игры и отдаём счёт */
+if (MIX) {
+  let posted = '';
+  setInterval(() => { if (G && G.id && G.code && posted !== G.id + G.code) { posted = G.id + G.code; window.parent.postMessage({ pbmix: 'started', k: GAME, gid: G.id, code: G.code }, location.origin); } }, 500);
+  window.addEventListener('message', e => { if (e.origin !== location.origin || !e.data || e.data.pbmix !== 'req' || !G) return; window.parent.postMessage({ pbmix: 'res', k: GAME, gid: G.id, players: Object.values(G.players || {}).map(p => ({ id: p.id, name: p.name, score: p.score || 0 })) }, location.origin); });
 }
 function boot() {
   applyAccent(CFG.accent);

@@ -117,6 +117,11 @@ function sampleCfg() {
         { n: 'Еда и напитки', qs: S5([['Из какого фрукта делают гуакамоле?', 'Авокадо'], ['Какая страна — родина пиццы?', 'Италия'], ['Как называется японский суп на основе соевой пасты?', 'Мисо-суп'], ['Из какого растения делают текилу?', 'Голубая агава'], ['Какой сыр кладут в классический греческий салат?', 'Фета']]) },
         { n: 'Наука', qs: S5([['Какая планета ближе всего к Солнцу?', 'Меркурий'], ['Какая химическая формула у воды?', 'H₂O'], ['Сколько костей в скелете взрослого человека?', '206'], ['Кто создал теорию относительности?', 'Альберт Эйнштейн'], ['Какой газ составляет большую часть воздуха на Земле?', 'Азот']]) }
       ]
+    }, {
+      n: 'Раунд 2 · Угадай мелодию', vals: [200, 400, 600, 800, 1000], cats: [
+        { n: 'Русские хиты', qs: [{ q: 'Угадайте песню', a: 'Иванушки International — «Тучи»', qm: { k: 'audio', src: 'https://youtu.be/X5Z9-4JV99c', t0: 18, t1: 33 }, am: { k: 'audio', src: 'https://youtu.be/X5Z9-4JV99c', t0: 49, t1: 75 } }, { q: 'Угадайте песню', a: 'Звери — «Районы-кварталы»', qm: { k: 'audio', src: 'https://youtu.be/is5iND3XNH0', t0: 46, t1: 61 }, am: { k: 'audio', src: 'https://youtu.be/is5iND3XNH0', t0: 62, t1: 88 } }, { q: 'Угадайте песню', a: 'Алла Пугачёва — «Миллион алых роз»', qm: { k: 'audio', src: 'https://youtu.be/At3Qo9n4_Uc', t0: 13, t1: 28 }, am: { k: 'audio', src: 'https://youtu.be/At3Qo9n4_Uc', t0: 61, t1: 86 } }, { q: 'Угадайте песню', a: 'Любэ — «Конь»', qm: { k: 'audio', src: 'https://youtu.be/LQDayLAfAHs', t0: 36, t1: 48 }, am: { k: 'audio', src: 'https://youtu.be/LQDayLAfAHs', t0: 48, t1: 73 } }, { q: 'Угадайте песню', a: 'Земляне — «Трава у дома»', qm: { k: 'audio', src: 'https://youtu.be/iPIiMvyO-SQ', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/iPIiMvyO-SQ', t0: 69, t1: 95 } }] },
+        { n: 'Зарубежные хиты', qs: [{ q: 'Угадайте песню', a: 'Michael Jackson — Billie Jean', qm: { k: 'audio', src: 'https://youtu.be/Zi_XLOBDo_Y', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/Zi_XLOBDo_Y', t0: 85, t1: 110 } }, { q: 'Угадайте песню', a: 'Pharrell Williams — Happy', qm: { k: 'audio', src: 'https://youtu.be/ZbZSe6N_BXs', t0: 33, t1: 48 }, am: { k: 'audio', src: 'https://youtu.be/ZbZSe6N_BXs', t0: 31, t1: 57 } }, { q: 'Угадайте песню', a: 'Taylor Swift — Shake It Off', qm: { k: 'audio', src: 'https://youtu.be/nfWlot6h_JM', t0: 42, t1: 57 }, am: { k: 'audio', src: 'https://youtu.be/nfWlot6h_JM', t0: 47, t1: 73 } }, { q: 'Угадайте песню', a: 'Earth, Wind & Fire — September', qm: { k: 'audio', src: 'https://youtu.be/Gs069dndIYk', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/Gs069dndIYk', t0: 49, t1: 75 } }, { q: 'Угадайте песню', a: 'Mark Ronson ft. Bruno Mars — Uptown Funk', qm: { k: 'audio', src: 'https://youtu.be/OPf0YbXqDm0', t0: 0, t1: 15 }, am: { k: 'audio', src: 'https://youtu.be/OPf0YbXqDm0', t0: 64, t1: 90 } }] }
+      ]
     }]
   };
 }
@@ -654,7 +659,7 @@ function renderEditor() {
   const n = cellsOf(CFG), QZ = R.t === 'quiz', cats = QZ ? 0 : R.cats.length, N = QZ ? 0 : R.vals.length;
   const cols = `grid-template-columns:repeat(${N},minmax(0,1fr)) 52px`;
   $('app').innerHTML = `<div class="top"><div class="in"><a class="brand" href="../">${BRAND('Своя игра · редактор')}</a><span class="sp"></span><span class="muted" style="font-size:12px" id="syncSt"></span><div class="acc" id="acc"></div></div></div>` +
-    `<div class="wrap wide"><div class="hero"><div class="k">Редактор</div><h1>Своя игра</h1><p>Табло «категории × стоимость» на проекторе. Ведущий открывает клетку, команды жмут «Ответить!» на телефонах — кто первый, тот отвечает. Верно — плюс очки, неверно — минус.</p></div>` +
+    `<div class="wrap wide"><div class="hero"><div class="k">Редактор</div><h1>Своя игра</h1><p>Табло «категории × стоимость» на проекторе. Ведущий открывает клетку, команды жмут «Ответить!» на телефонах — кто первый, тот отвечает. Верно — плюс очки, неверно — минус.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:-6px"><button class="btn ghost sm" id="bSample">Открыть пример игры</button><button class="btn ghost sm" id="bBlank">Новая пустая игра</button></div></div>` +
     (!unlocked() ? `<div class="notice">${ico('lock')}<span><b>Демо:</b> всё работает, до ${DEMO_MAX} команд. Свой цвет оформления — на тарифе «Продвинутый».</span><span class="sp"></span>${ACC.token ? '' : '<button class="btn ghost sm" id="nLogin">Войти</button>'}</div>` : '') +
     `<div class="card"><div class="fld"><label for="fTitle">Название игры</label><input class="inp" id="fTitle" maxlength="60" value="${esc(CFG.title)}"></div></div>` +
     `<div class="card"><h3>${ico('grid', 16)}Табло</h3>` +
@@ -675,6 +680,8 @@ function renderEditor() {
     `</div><div class="bar"><div class="in"><div class="t"><b>${esc(CFG.title)}</b><span>${CFG.rounds.length} ${plural(CFG.rounds.length, 'раунд', 'раунда', 'раундов')} · ${n} ${plural(n, 'вопрос', 'вопроса', 'вопросов')} готово</span></div><button class="btn gold" id="bStart"${n ? '' : ' disabled'}>${ico('play', 16)}Запустить</button></div></div>`;
   renderTop();
   if ($('nLogin')) $('nLogin').onclick = goLogin;
+  $('bSample').onclick = () => { if (!sureBtn($('bSample'))) return; CFG = normCfg(sampleCfg()); SEL = { r: 0, c: -1, q: -1 }; STORE.save(); renderEditor(); toast('Открыт пример — это новая игра, прежняя осталась в «Моих играх»'); };
+  $('bBlank').onclick = () => { if (!sureBtn($('bBlank'))) return; CFG = normCfg({ title: 'Новая игра', rounds: [{ n: 'Раунд 1', vals: [100, 200, 300, 400, 500], cats: [0, 1, 2, 3, 4].map(() => ({ n: '', qs: [] })) }] }); SEL = { r: 0, c: -1, q: -1 }; STORE.save(); renderEditor(); };
   const prevS = () => QZ ? quizPrevS(R) : ({ id: 'x', ph: 'board', title: CFG.title, acc: canColor() ? CFG.acc : DEF_ACC, rn: R.n, ri: SEL.r, cats: R.cats.map(c => c.n || '—'), vals: R.vals, grid: R.cats.map(c => c.qs.map(q => validQ(q) ? 0 : 2)), players: [] });
   drawStage($('prev'), prevS(), false);
   const sv = () => STORE.save();
@@ -685,7 +692,8 @@ function renderEditor() {
     const x = e.target.closest('[data-rdel]');
     if (x) { const t = x.closest('.rtab'); if (!t.classList.contains('sure')) { document.querySelectorAll('.rtab.sure').forEach(z => z.classList.remove('sure')); t.classList.add('sure'); x.innerHTML = 'Удалить?'; clearTimeout(t._t); t._t = setTimeout(() => { if (t.isConnected) { t.classList.remove('sure'); x.innerHTML = ico('x', 14); } }, 3000); return; } CFG.rounds.splice(+x.dataset.rdel, 1); SEL = { r: Math.min(SEL.r, CFG.rounds.length - 1), c: -1, q: -1 }; sv(); renderEditor(); toast('Раунд удалён'); return; }
     const b = e.target.closest('[data-r]'); if (!b) return;
-    if (b.dataset.r === 'add') { const i = CFG.rounds.length, m = i + 1; CFG.rounds.push(normRound({ n: 'Раунд ' + m, vals: R.vals.map((v, j) => (j + 1) * 100 * m), cats: R.cats.map(() => ({ n: '', qs: [] })) }, i)); SEL = { r: i, c: -1, q: -1 }; sv(); renderEditor(); return; }
+    if (b.dataset.r === 'add' && !b._own) { addRoundPick(b); return; }
+    if (b.dataset.r === 'add') { b._own = 0; const i = CFG.rounds.length, m = i + 1; CFG.rounds.push(normRound({ n: 'Раунд ' + m, vals: R.vals.map((v, j) => (j + 1) * 100 * m), cats: R.cats.map(() => ({ n: '', qs: [] })) }, i)); SEL = { r: i, c: -1, q: -1 }; sv(); renderEditor(); return; }
     SEL = { r: +b.dataset.r, c: -1, q: -1 };
     renderEditor();
   };
@@ -780,6 +788,19 @@ function renderQQEd(R, q, idx) {
   mediaPanel($('kQm'), q, 'qm', sv); mediaPanel($('kAm'), q, 'am', sv);
   $('kClose').onclick = () => { SEL.k = -1; renderEditor(); };
   $('kClr').onclick = () => { if (!sureBtn($('kClr'))) return; R.qs[idx] = Object.assign(blankQQ(), { type: q.type, pts: q.pts }); re(); };
+}
+const OTHER = [['quiz', 'Квиз о паре', '💍❓', '#c27078'], ['fact', 'Интересный факт', '💡🙋', '#d9a441'], ['bingo', 'Человеческое бинго', '🎯✅', '#6f9fc6'], ['sm', 'Секретная миссия', '🕶️💌', '#a7ae86']];
+function addRoundPick(btn) {
+  modal(`<div class="kmod"><div class="kh"><h3>Добавить раунд</h3><button class="icb" data-close aria-label="Закрыть">${ico('x', 18)}</button></div><div class="kgrid">` +
+    `<button class="kc" data-own="1"><span class="ka"><svg viewBox="0 0 108 64">${KART.board}</svg></span><b>Своя игра</b><small>Ещё одно табло в этой игре</small><span class="kb">Добавить</span></button>` +
+    OTHER.map(([k, n, em, c]) => `<button class="kc" data-mix="${k}"><span class="ka" style="background:linear-gradient(135deg,${c}aa,${c}22);font-size:38px;letter-spacing:4px">${em}</span><b>${n}</b><small>Соберём игру-микс: эта игра + ${n}</small><span class="kb">Добавить</span></button>`).join('') + '</div></div>', b => {
+    $('modal').classList.add('wide');
+    b.querySelector('[data-own]').onclick = () => { closeModal(); btn._own = 1; btn.click(); };
+    b.querySelectorAll('[data-mix]').forEach(x => x.onclick = () => {
+      if (!wsKey()) { toast('Войдите, чтобы собрать игру-микс'); setTimeout(goLogin, 1200); return; }
+      STORE.push(); setTimeout(() => { location.href = '../mix/?from=svoya:' + encodeURIComponent(CFG.id) + '&pick=' + x.dataset.mix; }, 700);
+    });
+  });
 }
 function focusQ() { const el = $('qed'); if (!el) return; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); const t = $('qQ'); if (t) t.focus({ preventScroll: true }); }
 function qCardHtml(R, q, ci, qi) {
@@ -1093,7 +1114,7 @@ function viewPlay() {
   const app = $('app');
   if (!GID) {
     app.innerHTML = `<div class="pv"><div class="mid"><div style="opacity:.9">${MARK(40)}</div><h2>Своя игра</h2><p>Введите код игры с экрана</p><input class="pin" id="cIn" inputmode="numeric" maxlength="7" placeholder="000 000" style="font-size:28px;letter-spacing:.2em"><button class="pbtn" id="cGo">Войти</button><p class="note" id="cErr"></p></div></div>`;
-    const go = () => { const c = $('cIn').value.replace(/\D/g, ''); if (c.length !== 6) { $('cErr').textContent = 'Код — 6 цифр'; return; } netReady.then(ok => { if (!ok) { $('cErr').textContent = 'Нет связи'; return; } ref('codes/' + c).once('value').then(s => { const v = s.val(); if (!v || !v.g) { $('cErr').textContent = 'Игра с таким кодом не найдена'; return; } location.replace(v.k === 'svoya' ? BASE + '?view=play&g=' + v.g : '../quiz/?view=play&g=' + v.g); }); }); };
+    const go = () => { const c = $('cIn').value.replace(/\D/g, ''); if (c.length !== 6) { $('cErr').textContent = 'Код — 6 цифр'; return; } netReady.then(ok => { if (!ok) { $('cErr').textContent = 'Нет связи'; return; } ref('codes/' + c).once('value').then(s => { const v = s.val(); if (!v || !v.g) { $('cErr').textContent = 'Игра с таким кодом не найдена'; return; } location.replace(v.k === 'svoya' ? BASE + '?view=play&g=' + v.g : v.k === 'mix' ? '../mix/?view=play&g=' + v.g : '../quiz/?view=play&g=' + v.g); }); }); };
     $('cGo').onclick = go; $('cIn').onkeydown = e => { if (e.key === 'Enter') go(); };
     return;
   }

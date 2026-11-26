@@ -9,10 +9,11 @@
 const P = new URLSearchParams(location.search);
 const VIEW = P.get('view') || 'host';
 const GID = (P.get('g') || '').replace(/[^a-z0-9]/gi, '').slice(0, 20);
+const MIX = P.get('mix') === '1' && window.parent !== window, MIXNM = (P.get('nm') || '').trim().slice(0, 24);
 const PF_API = 'https://script.google.com/macros/s/AKfycbwvLVfMge8_eCpteZrgj-MpxqO1W_TvQoMAz0jxqx42W8ySqwz2xmutpwKfVGUGZXcG3w/exec';
 const DEMO_MAX = 3, DEMO_MIN = 60;
 const GNAME = 'Человеческое бинго';
-const KEY_CFG = 'pbb_cfg_v1', KEY_LIVE = 'pbb_live_v1', KEY_DEMO = 'pbb_demo_end', KEY_LAST = 'pbb_last';
+const KEY_CFG = 'pbb_cfg_v1', KEY_LIVE = 'pbb_live_v1' + (MIX ? '_mix' : ''), KEY_DEMO = 'pbb_demo_end', KEY_LAST = MIX ? 'pbb_last_mix' : 'pbb_last';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -515,7 +516,8 @@ function soundOverlay() {
 function screenShell() {
   document.body.classList.add('solo-screen'); document.title = 'Экран · ' + GNAME;
   { let it = 0; const wake = () => { document.body.classList.remove('idle'); clearTimeout(it); it = setTimeout(() => document.body.classList.add('idle'), 3000); }; ['mousemove', 'mousedown', 'keydown'].forEach(ev => document.addEventListener(ev, wake, { passive: true })); wake(); }
-  $('app').innerHTML = '<div class="stage full" id="stg"></div><button class="btn ghost sm fsbtn" id="fs">⛶ На весь экран</button>';
+  $('app').innerHTML = '<div class="stage full" id="stg"></div>' + (MIX ? '' : '<button class="btn ghost sm fsbtn" id="fs">⛶ На весь экран</button>');
+  if (MIX) { SND.unlock(); return $('stg'); }
   $('fs').onclick = () => { SND.unlock(); const d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen || function () {}).call(d); };
   soundOverlay();
   return $('stg');
@@ -748,7 +750,7 @@ function viewPlayNet() {
     sub('core', v => { C = v; if (!v && Q) { gone = true; PHMSG = 'Игра завершена. Спасибо, что играли!'; } });
     sub('q', v => { Q = v; });
     sub('sc/' + me, v => { SC = v; cl.kicked = !!(v && v.kicked); cl.nospace = !!(v && v.nospace); cl.demo = !!(v && v.demo); if (cl.kicked) on.remove(); });
-    sub('join/' + me, v => { J = v; if (v) presence(); });
+    sub('join/' + me, v => { J = v; if (v) presence(); else if (MIXNM && !cl.joining && !cl._aj) { cl._aj = 1; cl.join(MIXNM); } });
     setInterval(() => { const S = cl.cur(); if (S) updPhone(box, S, cl); }, 1000);
   });
 }
@@ -782,7 +784,7 @@ function renderEditor() {
     `<div class="qhead"><h2>Приметы</h2><span class="tag" id="tCount"></span><span class="sp"></span><button class="btn ghost sm" id="bLib">📚 Библиотека</button><button class="btn ghost sm" id="bReset">↺ Стандартные</button></div>` +
     `<p class="muted" style="margin:-4px 0 12px;font-size:14px">Короткие и проверяемые в разговоре: «был на Байкале», «левша». Чем больше примет, тем разнообразнее карточки.</p>` +
     `<div id="tList"></div><button class="btn ghost addone" id="bAdd">+ Своя примета</button></div>` +
-    `<div class="bar"><div class="in"><div style="flex:1;min-width:0"><b id="bSum" style="color:var(--ink)"></b><div class="muted" style="font-size:12px" id="bSub"></div></div><button class="btn gold" id="bStart">Запустить игру ▶</button></div></div>`;
+    `<div class="bar"><div class="in"><div style="flex:1;min-width:0"><b id="bSum" style="color:var(--ink)"></b><div class="muted" style="font-size:12px" id="bSub"></div></div><button class="btn ghost" id="bMix" title="Добавить раунд из другой нашей игры">+ Раунд</button><button class="btn gold" id="bStart">Запустить игру ▶</button></div></div>`;
   renderTop();
   const bl = $('bLogin2'); if (bl) bl.onclick = goLogin;
   const bind = (id, k) => { const el = $(id); el.value = CFG[k]; el.oninput = () => { CFG[k] = el.value; saveCfg(); sum(); }; };
@@ -795,6 +797,7 @@ function renderEditor() {
   $('bLib').onclick = openLib;
   $('bReset').onclick = () => { if (!confirmTwice($('bReset'), 'Заменить список?')) return; CFG.traits = LIB.slice(0, 20).map(t => ({ id: uid(6), t })); saveCfg(); paintTraits(); };
   $('bStart').onclick = start;
+  $('bMix').onclick = () => { if (!wsKey()) { toast('Войдите, чтобы собрать игру-микс из нескольких игр'); setTimeout(goLogin, 1200); return; } saveCfg(); setTimeout(() => { location.href = '../mix/?from=bingo:' + encodeURIComponent(CFG.id); }, 600); };
   paintTraits();
 }
 function confirmTwice(btn, label) { if (btn.dataset.sure) return true; const old = btn.textContent; btn.dataset.sure = 1; btn.textContent = label; setTimeout(() => { if (btn) { delete btn.dataset.sure; btn.textContent = old; } }, 3000); return false; }
@@ -924,6 +927,7 @@ function bootHost() {
     else if (m.type === 'find') { if (setCell(m.pid, m.cell, m.v)) publish(); else send({ type: 'state', g: G }); }
     else if (m.type === 'hello') send({ type: 'state', g: G });
   });
+  if (MIX) ls('del', KEY_LIVE);
   const saved = ls('get', KEY_LIVE);
   if (saved && saved.phase !== 'final' && Date.now() - (saved.ts || 0) < 6 * 3600e3 && Array.isArray(saved.traits)) { G = saved; ['players', 'finds', 'banned'].forEach(k => { G[k] = G[k] || {}; }); G.feed = G.feed || []; G.ev = G.ev || []; }
   else { ls('del', KEY_LIVE); send({ type: 'reset' }); }
@@ -950,12 +954,18 @@ function bootHost() {
     if (DEMO_GO && !G) { newGame(); window.scrollTo(0, 0); }
     accLoad().then(() => {
       if (G) { if (unlocked() && (G.demo || G.cap !== guestCap())) { G.demo = false; G.cap = guestCap(); G.capHit = 0; publish(); } return; }
+      if (MIX) { const k2 = wsKey(); if (!k2 || !ok || !OPEN) { window.parent.postMessage({ pbmix: 'err', msg: 'Не получилось открыть игру' }, location.origin); return; } ref(`ws/${k2}/bq/${OPEN}`).once('value').then(x => { if (!x.val()) throw 0; CFG = normCfg(x.val()); newGame(); }).catch(() => window.parent.postMessage({ pbmix: 'err', msg: 'Не получилось открыть игру' }, location.origin)); return; }
       renderTop(); const dn = $('demoN'); if (dn) { dn.innerHTML = demoNote(); if ($('bLogin2')) $('bLogin2').onclick = goLogin; }
       const k = wsKey();
       if (k && ok && OPEN) ref(`ws/${k}/bq/${OPEN}`).once('value').then(s => { if (s.val()) { CFG = normCfg(s.val()); ls('set', KEY_CFG, CFG); renderEditor(); window.scrollTo(0, 0); } }, () => {});
       else if (k && ok) saveCfg();
     });
   });
+}
+if (MIX) {
+  let posted = '';
+  setInterval(() => { if (G && G.id && G.code && posted !== G.id + G.code) { posted = G.id + G.code; window.parent.postMessage({ pbmix: 'started', k: 'bingo', gid: G.id, code: G.code }, location.origin); } }, 500);
+  window.addEventListener('message', e => { if (e.origin !== location.origin || !e.data || e.data.pbmix !== 'req' || !G) return; window.parent.postMessage({ pbmix: 'res', k: 'bingo', gid: G.id, players: Object.keys(G.players || {}).map(id => { const p = G.players[id]; return { id, name: p.name, score: (p.ln || 0) * 200 + (p.nf || 0) * 20 }; }) }, location.origin); });
 }
 function boot() {
   if (VIEW === 'screen') return GID ? viewScreenNet() : viewScreenLocal();
