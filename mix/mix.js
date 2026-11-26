@@ -150,13 +150,13 @@ function pickSaved(k) {
 /* ================= вечер: пульт ведущего ================= */
 let S = null, JOIN = {}, ONLINE = {}, offs = [], lastCore = '';
 function startShow() {
-  S = { id: uid(12), title: CFG.title, rounds: JSON.parse(JSON.stringify(CFG.rounds)).map(r => Object.assign(r, { t: titleOf(r) })), ri: -1, ph: 'lobby', rg: '', rk: '', code: '', tot: {}, names: {}, done: [] };
+  S = { id: uid(12), title: CFG.title, rounds: JSON.parse(JSON.stringify(CFG.rounds)).map(r => Object.assign(r, { t: titleOf(r) })), ri: -1, ph: 'lobby', rg: '', rk: '', code: '', tot: {}, res: {}, names: {}, done: [], ov: '' };
   ls('set', KEY_LIVE, S); renderLive(true); netStart();
 }
 function pub() { if (!S) return; ls('set', KEY_LIVE, S); renderLive(); push(); }
 function coreOf() {
   const r = S.rounds[S.ri] || null, rank = Object.keys(S.names).map(id => ({ id, n: S.names[id], s: S.tot[id] || 0 })).sort((a, b) => b.s - a.s);
-  return { id: S.id, ph: S.ph, title: S.title, code: S.code || '', ri: S.ri, n: S.rounds.length, rounds: S.rounds.map(x => ({ k: x.k, t: x.t })), rk: r ? r.k : '', rg: S.rg || '', play: r && r.k === 'sm' ? r.play : '', names: S.names, rank: rank.slice(0, 30) };
+  return { id: S.id, ph: S.ph, title: S.title, code: S.code || '', ri: S.ri, n: S.rounds.length, rounds: S.rounds.map(x => ({ k: x.k, t: x.t })), rk: r ? r.k : '', rg: S.rg || '', play: r && r.k === 'sm' ? r.play : '', names: S.names, rank: rank.slice(0, 30), ov: S.ov || '' };
 }
 function push() { if (!S || !NET.ok || !S.net) return; const c = JSON.stringify(coreOf()); if (c === lastCore) return; lastCore = c; gref(S.id, 'core').set(JSON.parse(c)).catch(() => {}); gref(S.id, 'scr').set(JSON.parse(c)).catch(() => {}); }
 async function netStart() {
@@ -182,15 +182,26 @@ function endShow() {
 }
 const A = {
   start(i) { if (!S.rounds[i]) return; S.ri = i; S.rg = ''; S.rk = S.rounds[i].k; S.ph = S.rk === 'sm' ? 'round' : 'starting'; built = false; pub(); },
-  finishRound() {
-    const r = S.rounds[S.ri], fr = $('rf');
-    const done = players => { (players || []).forEach(p => { if (!p || !p.id) return; S.tot[p.id] = (S.tot[p.id] || 0) + (+p.score || 0); if (!S.names[p.id] && p.name) S.names[p.id] = p.name; }); if (S.done.indexOf(S.ri) < 0) S.done.push(S.ri); S.ph = 'between'; S.rg = ''; built = false; pub(); };
-    if (!r || r.k === 'sm' || !fr || !fr.contentWindow) return done([]);
+  finishRound(then) {
+    const r = S.rounds[S.ri], fr = $('rf'), ri = S.ri;
+    const done = players => {
+      const m = {}; (players || []).forEach(p => { if (!p || !p.id) return; m[p.id] = +p.score || 0; if (!S.names[p.id] && p.name) S.names[p.id] = p.name; });
+      if (r && r.k !== 'sm') S.res[ri] = m;
+      S.tot = {}; Object.values(S.res).forEach(x => Object.keys(x).forEach(id => { S.tot[id] = (S.tot[id] || 0) + x[id]; }));
+      if (S.done.indexOf(ri) < 0) S.done.push(ri);
+      S.rg = ''; built = false;
+      if (then) then(); else { S.ph = 'between'; pub(); }
+    };
+    if (!r || r.k === 'sm' || !fr || !fr.contentWindow) return done(null);
     let got = false; const h = e => { if (e.origin !== location.origin || !e.data || e.data.pbmix !== 'res') return; got = true; window.removeEventListener('message', h); done(e.data.players); };
     window.addEventListener('message', h); fr.contentWindow.postMessage({ pbmix: 'req' }, location.origin);
-    setTimeout(() => { if (!got) { window.removeEventListener('message', h); done([]); } }, 2500);
+    setTimeout(() => { if (!got) { window.removeEventListener('message', h); done(S.res[ri] ? Object.keys(S.res[ri]).map(id => ({ id, score: S.res[ri][id] })) : null); } }, 2500);
   },
-  final() { S.ph = 'final'; S.rg = ''; built = false; pub(); }
+  /* переключение на любой раунд: текущий закрываем (счёт сохраняется), выбранный запускаем */
+  go(i) { if (i === S.ri && (S.ph === 'round' || S.ph === 'starting')) return; if (S.ph === 'round' || S.ph === 'starting') A.finishRound(() => A.start(i)); else A.start(i); },
+  ov(k) { S.ov = S.ov === k ? '' : k; pub(); },
+  scoresNow() { if (S.ph === 'round' || S.ph === 'starting') A.finishRound(() => { S.ph = 'between'; pub(); }); else { S.ph = 'between'; S.ov = ''; built = false; pub(); } },
+  final() { const f = () => { S.ph = 'final'; S.rg = ''; S.ov = ''; built = false; pub(); }; if (S.ph === 'round' || S.ph === 'starting') A.finishRound(f); else f(); }
 };
 window.addEventListener('message', e => {
   if (VIEW !== 'host' || e.origin !== location.origin || !e.data || !S) return;
@@ -207,25 +218,19 @@ function renderLive(force) {
       `<div class="live"><div><div class="pane"><h4>Вечер</h4><div id="ctl"></div></div><div class="pane" style="margin-top:14px"><h4>Общий счёт</h4><div class="tt" id="tt"></div><div class="codebox"><div><div class="k">Вход для команд</div><b id="cd"></b></div></div></div></div>` +
       `<div id="main">${(S.ph === 'starting' || S.ph === 'round') && r && r.k !== 'sm' ? `<iframe class="frame" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1')}" allow="autoplay; fullscreen"></iframe>` :
         S.ph === 'round' && r && r.k === 'sm' ? `<div class="hold"><h2>Секретная миссия</h2><p>Гости играют по своим телефонам — экран показывает QR на игру. Панель ведущего — в отдельной вкладке.</p><a class="btn gold" href="${esc(r.adm || '../host/')}" target="_blank" rel="noopener">${ico('ext', 15)}Открыть панель миссии</a></div>` :
-        S.ph === 'lobby' ? `<div class="hold"><h2>Команды подключаются</h2><p>Откройте экран для проектора — на нём QR-код на весь вечер. Когда все в сборе, начинайте первый раунд.</p></div>` :
-        S.ph === 'between' ? `<div class="hold"><h2>Раунд завершён</h2><p>На экране — общий счёт. Начинайте следующий раунд, когда будете готовы.</p></div>` :
+        S.ph === 'lobby' ? `<div class="hold"><h2>Команды подключаются</h2><p>Откройте экран для проектора — на нём QR-код на весь вечер. Когда все в сборе, нажмите на раунд слева — он сразу запустится.</p></div>` :
+        S.ph === 'between' ? `<div class="hold"><h2>Раунд завершён</h2><p>На экране — общий счёт. Нажмите на любой раунд слева — он запустится, а счёт текущего сохранится.</p></div>` :
         `<div class="hold"><h2>Финал</h2><p>На экране — победители вечера по сумме всех раундов.</p></div>`}</div></div>`;
     $('bScr').onclick = () => { if (!S.code) { toast('Подключаемся…'); return; } window.open(`${BASE}?view=screen&g=${S.id}`, 'pbm_screen'); };
     $('bPh').onclick = () => window.open(`${BASE}?view=play&g=${S.id}`, '_blank');
     $('bEnd').onclick = () => { if (!sure($('bEnd'))) return; endShow(); };
   }
-  const nx = S.rounds.findIndex((x, i) => S.done.indexOf(i) < 0 && i !== (S.ph === 'round' || S.ph === 'starting' ? S.ri : -1));
-  let main = '';
-  if (S.ph === 'starting') main = `<button class="btn gold nextb" disabled>Запускаем раунд…</button>`;
-  else if (S.ph === 'round') main = `<button class="btn gold nextb" id="bFin">Завершить раунд → общий счёт</button>`;
-  else if (S.ph === 'final') main = `<button class="btn gold nextb" disabled>Вечер окончен</button>`;
-  else main = nx >= 0 ? `<button class="btn gold nextb" id="bNx">${ico('play', 15)} Раунд ${nx + 1}: ${esc(S.rounds[nx].t)}</button>` : `<button class="btn gold nextb" id="bF">Показать победителей вечера</button>`;
-  $('ctl').innerHTML = main + S.rounds.map((x, i) => `<div class="lr${i === S.ri && (S.ph === 'round' || S.ph === 'starting') ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}"><span class="em" style="background:${GM[x.k].c}33">${GM[x.k].em.slice(0, 2)}</span><div class="tx"><b>${i + 1}. ${esc(x.t)}</b><span>${GM[x.k].n}${S.done.indexOf(i) >= 0 ? ' · сыгран' : ''}</span></div></div>`).join('') +
-    (S.ph !== 'final' && S.done.length ? `<button class="btn ghost sm" id="bF2" style="width:100%;margin-top:6px">Победители вечера</button>` : '');
-  if ($('bFin')) $('bFin').onclick = A.finishRound;
-  if ($('bNx')) $('bNx').onclick = () => A.start(nx);
-  if ($('bF')) $('bF').onclick = A.final;
-  if ($('bF2')) $('bF2').onclick = () => { if (S.ph === 'round') A.finishRound(); setTimeout(A.final, S.ph === 'round' ? 2700 : 0); };
+  const run = S.ph === 'round' || S.ph === 'starting';
+  $('ctl').innerHTML = `<div class="rtabs">${S.rounds.map((x, i) => `<button class="rt${i === S.ri && run ? ' cur' : ''}${S.done.indexOf(i) >= 0 ? ' done' : ''}" data-go="${i}"><span class="em" style="background:${GM[x.k].c}33">${GM[x.k].em.slice(0, 2)}</span><span class="tx"><b>Раунд ${i + 1}</b><small>${esc(x.t)}</small></span>${i === S.ri && run ? '<i class="live">идёт</i>' : S.done.indexOf(i) >= 0 ? '<i>✓</i>' : ''}</button>`).join('')}</div>` +
+    `<div class="sctl"><div class="k" style="margin:12px 0 8px">Экран</div><div class="sg"><button data-ov="qr" class="${S.ov === 'qr' ? 'on' : ''}">QR-код</button><button data-ov="score" class="${S.ov === 'score' ? 'on' : ''}">Общий счёт</button><button id="bFinal" class="${S.ph === 'final' ? 'on' : ''}">Победители</button></div></div>`;
+  $('ctl').querySelectorAll('[data-go]').forEach(b => b.onclick = () => A.go(+b.dataset.go));
+  $('ctl').querySelectorAll('[data-ov]').forEach(b => b.onclick = () => A.ov(b.dataset.ov));
+  $('bFinal').onclick = A.final;
   const rank = Object.keys(S.names).map(id => ({ id, n: S.names[id], s: S.tot[id] || 0 })).sort((a, b) => b.s - a.s);
   $('tt').innerHTML = rank.length ? rank.map((p, i) => `<div><em class="muted" style="font-style:normal;width:18px">${i + 1}</em><span>${esc(p.n)}</span><b>${nums(p.s)}</b></div>`).join('') : '<p class="muted" style="margin:0;font-size:14px">Команды появятся, когда войдут по QR</p>';
   $('cd').textContent = S.code ? `${SHORT} · ${fmtCode(S.code)}` : 'подключаемся…';
@@ -242,6 +247,7 @@ function viewScreen() {
   const mark = () => window.PB_BRAND ? `<div class="brandm">${PB_BRAND.mark(30)}<img src="${PB_BRAND.base}wordmark-white.png" alt="Beloglazov Event"></div>` : '';
   const draw = () => {
     if (!C) { sf.innerHTML = '<div class="mst"><div class="in"><h1>Ждём вечер…</h1></div></div>'; cur = ''; return; }
+    drawOv();
     const k = C.ph === 'round' && C.rk !== 'sm' ? 'f:' + C.rg : C.ph === 'round' ? 'sm:' + C.ri : C.ph + ':' + JSON.stringify(C.rank) + C.code + JSON.stringify(C.names);
     if (k === cur) return; cur = k;
     if (C.ph === 'round' && C.rk !== 'sm' && C.rg) { sf.innerHTML = `<iframe src="${appUrl(C.rk, 'view=screen&g=' + C.rg + '&mix=1')}" allow="autoplay; fullscreen"></iframe>`; return; }
@@ -254,6 +260,13 @@ function viewScreen() {
     sf.innerHTML = `<div class="mst"><div class="in">${mark()}${h}</div></div>`;
     const q = $('qrc'); if (q) qr(q, C.ph === 'round' && C.rk === 'sm' ? C.play : `${BASE}?view=play&g=${C.id}`, 600);
   };
+  const ovb = document.createElement('div'); ovb.className = 'movl'; document.body.appendChild(ovb); let ovk = '';
+  function drawOv() {
+    const k = C && C.ov ? C.ov + JSON.stringify(C.rank) + C.code : ''; if (k === ovk) return; ovk = k;
+    ovb.classList.toggle('on', !!k); if (!k) { ovb.innerHTML = ''; return; }
+    if (C.ov === 'qr') { ovb.innerHTML = `<div class="joinc big"><div class="qr" id="oqr"></div><div class="u">${esc(SHORT)}</div><small>код вечера</small><div class="cd">${fmtCode(C.code)}</div></div>`; qr($('oqr'), `${BASE}?view=play&g=${C.id}`, 600); }
+    else ovb.innerHTML = `<div class="mst" style="position:absolute"><div class="in"><div class="kk">Раунд ${Math.max(1, C.ri + 1)} из ${C.n}</div><h1 style="font-size:3em">Общий счёт</h1><div class="msc">${(C.rank || []).slice(0, 8).map((p, i) => `<div class="row${i === 0 && p.s > 0 ? ' t1' : ''}"><span class="p">${i + 1}</span><span class="n">${esc(p.n)}</span><span class="s">${nums(p.s)}</span></div>`).join('')}</div></div></div>`;
+  }
   draw();
   if (!GID) return;
   netReady.then(ok => { if (!ok) return; const on = gref(GID, 'on/' + NET.uid), pr = () => { if (NET.connected) { on.onDisconnect().remove(); on.set('scr').catch(() => {}); } }; NET.subs.push(pr); pr(); gref(GID, 'scr').on('value', x => { C = x.val(); draw(); }); });

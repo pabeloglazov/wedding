@@ -2680,7 +2680,7 @@ function bootHost() {
 if (MIX) {
   let posted = '';
   setInterval(() => { if (G && G.id && G.code && posted !== G.id + G.code) { posted = G.id + G.code; window.parent.postMessage({ pbmix: 'started', k: GAME, gid: G.id, code: G.code }, location.origin); } }, 500);
-  window.addEventListener('message', e => { if (e.origin !== location.origin || !e.data || e.data.pbmix !== 'req' || !G) return; window.parent.postMessage({ pbmix: 'res', k: GAME, gid: G.id, players: Object.values(G.players || {}).map(p => ({ id: p.id, name: p.name, score: p.score || 0 })) }, location.origin); });
+  window.addEventListener('message', e => { if (e.origin !== location.origin || !e.data || e.data.pbmix !== 'req' || !G) return; window.parent.postMessage({ pbmix: 'res', k: GAME, gid: G.id, players: Object.keys(G.players || {}).map(id => ({ id, name: G.players[id].name, score: G.players[id].score || 0 })) }, location.origin); });
 }
 function boot() {
   applyAccent(CFG.accent);
