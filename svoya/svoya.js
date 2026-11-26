@@ -114,16 +114,17 @@ function YQ(q, a, id, t0, t1, a0, a1) { const u = 'https://youtu.be/' + id; retu
 function sampleCfg() {
   const S = 'Угадайте песню', Z = 'Откуда эта заставка?', Snd = 'Что это за звук?', F = 'Из какого фильма эта музыка?';
   const H = (a, id, a0, a1) => YQ(S, a, id, 10, 25, a0 || 55, a1 || 85);
+  const HA = (a, id, aid, a0) => { const x = YQ(S, a, id, 10, 25, a0, a0 + 30); x.am.src = 'https://youtu.be/' + aid; return x; };
   return {
     id: uid(10), title: 'Музыкальная своя игра', acc: DEF_ACC, minus: true, mode: 'buzz', updated: Date.now(),
     rounds: [{
       n: 'Раунд 1 · Угадай мелодию', vals: [100, 200, 300, 400, 500], cats: [
         { n: 'Хиты 90-х', qs: [
-          H('Руки Вверх — «Крошка моя»', 'AwXKXl692KU'),
-          H('Андрей Губин — «Зима-холода»', 'UYvUNJ_kyNI'),
+          HA('Руки Вверх — «Крошка моя»', 'AwXKXl692KU', 'dIHxMXdBDZ0', 127),
+          HA('Андрей Губин — «Зима-холода»', 'UYvUNJ_kyNI', 'jwUVEId2_So', 87),
           H('Леонид Агутин — «Хоп хэй лала лэй»', 'mlhfnvTmaek'),
-          H('Валерий Меладзе — «Самба белого мотылька»', 'SAUbHAwTJ-Y'),
-          H('Отпетые мошенники — «Люби меня, люби»', 'XOoNJPLlKjY')] },
+          H('Валерий Меладзе — «Самба белого мотылька»', 'SAUbHAwTJ-Y', 64, 94),
+          H('Отпетые мошенники — «Люби меня, люби»', 'XOoNJPLlKjY', 98, 128)] },
         { n: 'Хиты 2000-х', qs: [
           H('Тату — «Нас не догонят»', 'zOhH8cp93lE'),
           H('Звери — «Районы-кварталы»', 'is5iND3XNH0'),
