@@ -307,22 +307,14 @@ function ytCmd(f, func) { try { f.contentWindow.postMessage(JSON.stringify({ eve
 function pauseMedia(box) { if (!box) return; box.querySelectorAll('iframe').forEach(f => ytCmd(f, 'pauseVideo')); box.querySelectorAll('audio,video').forEach(el => el.pause()); }
 function playMedia(box) { if (!box) return; box.querySelectorAll('iframe').forEach(f => ytCmd(f, 'playVideo')); box.querySelectorAll('audio,video').forEach(el => el.play().catch(() => {})); }
 /* звуки: кнопка на телефоне и сигнал на экране — синтез, без файлов */
-const BZ = { p: null, b: null, src: null };
-if (VIEW === 'play') document.addEventListener('pointerdown', () => SFX.prep(), { once: true, capture: true });
 const SFX = (() => {
   let ac = null; const ctx = () => { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {} return ac; };
   const tone = (f0, f1, dur, type, vol, delay = 0) => { const a = ctx(); if (!a) return; const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02); };
   return {
     unlock: ctx,
-    press() { if (BZ.b) { this.buzz(); return; } this.prep(); tone(220, 880, .12, 'square', .18); tone(660, 1320, .16, 'triangle', .22, .1); tone(990, 1980, .22, 'sine', .18, .2); },
+    press() { tone(220, 880, .12, 'square', .18); tone(660, 1320, .16, 'triangle', .22, .1); tone(990, 1980, .22, 'sine', .18, .2); },
     synthBuzz() { tone(140, 120, .5, 'sawtooth', .22); tone(280, 240, .5, 'square', .08); tone(880, 1760, .25, 'sine', .2, .05); },
-    /* сигнал «кто-то нажал»: свой звук buzz.mp3 (заранее декодирован), запасной — синтез */
-    prep() { if (BZ.p) return; const a = ctx(); if (!a) return; BZ.p = fetch(new URL('buzz.mp3?v=1', location.href)).then(r => r.arrayBuffer()).then(x => new Promise((ok, no) => a.decodeAudioData(x, ok, no))).then(b => { BZ.b = b; }).catch(() => { BZ.p = null; }); },
-    buzz() {
-      const a = ctx(); if (!a || !BZ.b) { this.synthBuzz(); this.prep(); return; }
-      try { if (BZ.src) BZ.src.stop(); } catch (e) {}
-      const s = a.createBufferSource(), g = a.createGain(); g.gain.value = .9; s.buffer = BZ.b; s.connect(g).connect(a.destination); s.start(); BZ.src = s;
-    }
+    buzz() { this.synthBuzz(); }
   };
 })();
 function setMute(box, snd) {
@@ -590,7 +582,7 @@ function logoDrag(root) {
   br.addEventListener('dblclick', () => { G.lgp = null; publish(); toast('Лого вернулось на место'); });
 }
 function drawStage(root, S, snd) {
-  if (!root) return; if (snd && S && S.mode === 'buzz') SFX.prep();
+  if (!root) return;
   root.style.setProperty('--acc', S && S.acc ? S.acc : DEF_ACC);
   let inn = root.querySelector('.in'); if (!inn) { root.innerHTML = `<div class="in"></div><div class="codem"></div><div class="qrov"></div><div class="brandm">${window.PB_BRAND ? `${PB_BRAND.mark(30)}<img src="${PB_BRAND.base}wordmark-white.png" alt="Beloglazov Event">` : '<b>Beloglazov Event</b>'}</div>`; inn = root.querySelector('.in'); }
   if (!S) { root._k = ''; inn.innerHTML = '<div class="splash"><div class="cat" style="opacity:.6">Ждём игру…</div></div>'; return; }
@@ -1313,5 +1305,5 @@ function bootHost() {
 if (VIEW === 'screen') viewScreen();
 else if (VIEW === 'play') viewPlay();
 else bootHost();
-window.__svoya = { get g() { return G; }, A, BZ, get cfg() { return CFG; }, get ANS() { return ANS; } };
+window.__svoya = { get g() { return G; }, A, get cfg() { return CFG; }, get ANS() { return ANS; } };
 })();
