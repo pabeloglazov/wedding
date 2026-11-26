@@ -443,6 +443,14 @@ const A = {
   teams() { G.ov = G.ov === 'teams' ? '' : 'teams'; G.ti = 0; publish(); },
   tprev() { if (G.ti > 0) { G.ti--; publish(); } },
   tnext() { if ((G.ti || 0) < Object.keys(G.players).length - 1) { G.ti = (G.ti || 0) + 1; publish(); } },
+  moveRound(f, t) {
+    if (f === t || !G.rounds[f]) return;
+    const ord = G.rounds.map((_, i) => i); ord.splice(t, 0, ord.splice(f, 1)[0]);
+    const pos = {}; ord.forEach((old, ni) => { pos[old] = ni; });
+    G.rounds = ord.map(i => G.rounds[i]);
+    const pl = {}; Object.keys(G.pl || {}).forEach(k => { const m = k.match(/^(\d+)-(.*)$/); if (m && pos[+m[1]] != null) pl[pos[+m[1]] + '-' + m[2]] = G.pl[k]; else pl[k] = G.pl[k]; }); G.pl = pl;
+    G.ri = pos[G.ri] != null ? pos[G.ri] : G.ri; publish(); toast('Порядок раундов изменён');
+  },
   logo() { G.lgh = G.lgh ? 0 : 1; publish(); },
   pause() { if (G.ph !== 'q' && G.ph !== 'ans') return; G.hp = G.hp ? 0 : 1; publish(); },
   rnext() { A.round(G.ri + 1); },
@@ -1177,7 +1185,8 @@ function bindCtl() {
   const c = $('ctl');
   c.querySelectorAll('[data-j]').forEach(b => b.onclick = () => b.dataset.j === '2' ? A.skip() : A.judge(b.dataset.j === '1'));
   c.querySelectorAll('[data-pk]').forEach(b => b.onclick = () => { const [ci, qi] = b.dataset.pk.split('.').map(Number); A.pick(ci, qi); });
-  c.querySelectorAll('[data-ri]').forEach(b => b.onclick = () => A.round(+b.dataset.ri));
+  c.querySelectorAll('[data-ri]').forEach(b => b.onclick = () => { if (Date.now() - (window._rsDrag || 0) < 400) return; A.round(+b.dataset.ri); });
+  { const sg = $('rSeg'); if (sg) { sg.title = 'Зажмите номер раунда и перетащите, чтобы поменять порядок'; sortable(sg, 'button', 'button', (f, t) => { window._rsDrag = Date.now(); A.moveRound(f, t); }, true); } }
   c.querySelectorAll('[data-qs]').forEach(b => b.onclick = () => A.qStart(+b.dataset.qs));
   c.querySelectorAll('[data-acc]').forEach(b => b.onclick = () => A.accept(b.dataset.acc));
   c.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const k = b.dataset.c; A[k](); });
