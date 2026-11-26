@@ -928,7 +928,7 @@ function bootHost() {
     else if (m.type === 'find') { if (setCell(m.pid, m.cell, m.v)) publish(); else send({ type: 'state', g: G }); }
     else if (m.type === 'hello') send({ type: 'state', g: G });
   });
-  if (MIX) ls('del', KEY_LIVE);
+  if (MIX) { const sv = ls('get', KEY_LIVE), rg = P.get('rg'); if (!(sv && rg && sv.id === rg)) ls('del', KEY_LIVE); }
   const saved = ls('get', KEY_LIVE);
   if (saved && saved.phase !== 'final' && Date.now() - (saved.ts || 0) < 6 * 3600e3 && Array.isArray(saved.traits)) { G = saved; ['players', 'finds', 'banned'].forEach(k => { G[k] = G[k] || {}; }); G.feed = G.feed || []; G.ev = G.ev || []; }
   else { ls('del', KEY_LIVE); send({ type: 'reset' }); }

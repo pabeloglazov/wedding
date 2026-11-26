@@ -2742,7 +2742,7 @@ function bootHost() {
     else if (m.type === 'answer') answer(m.pid, m.qi, m.a);
     else if (m.type === 'hello') send({ type: 'state', g: G });
   });
-  if (MIX) ls('del', KEY_LIVE);
+  if (MIX) { const sv = ls('get', KEY_LIVE), rg = P.get('rg'); if (!(sv && rg && sv.id === rg)) ls('del', KEY_LIVE); } /* обновили страницу микса — продолжаем тот же раунд */
   const saved = ls('get', KEY_LIVE);
   if (saved && saved.net && saved.phase !== 'final' && Date.now() - (saved.ts || 0) < 6 * 3600e3) { G = saved; ['players', 'ans', 'cpl', 'prevRank', 'banned'].forEach(k => { G[k] = G[k] || {}; }); }
   else { ls('del', KEY_LIVE); send({ type: 'reset' }); }

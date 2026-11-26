@@ -1316,13 +1316,16 @@ function viewPlay() {
 /* ================= запуск ================= */
 function bootHost() {
   if (MIX) {
-    ls('del', KEY_LIVE); const OPEN = P.get('open');
+    const OPEN = P.get('open'), sv = ls('get', KEY_LIVE), rg = P.get('rg');
+    if (sv && rg && sv.id === rg) { G = sv; G.netOn = false; renderLive(true); startNet(); }
+    else ls('del', KEY_LIVE);
     let posted = '';
     setInterval(() => { if (G && G.code && posted !== G.id + G.code) { posted = G.id + G.code; window.parent.postMessage({ pbmix: 'started', k: 'svoya', gid: G.id, code: G.code }, location.origin); } }, 500);
     window.addEventListener('message', e => { if (e.origin !== location.origin || !e.data || e.data.pbmix !== 'req' || !G) return; window.parent.postMessage({ pbmix: 'res', k: 'svoya', gid: G.id, players: Object.keys(G.players).map(id => ({ id, name: G.players[id].name, score: G.players[id].score || 0 })) }, location.origin); });
-    $('app').innerHTML = '<div class="wrap"><p class="muted">Загружаем раунд…</p></div>';
+    if (!G) $('app').innerHTML = '<div class="wrap"><p class="muted">Загружаем раунд…</p></div>';
     accLoad().then(() => netReady).then(ok => {
       const k = wsKey();
+      if (G) { renderLive(); return; }
       if (!ok || !k || !OPEN) { window.parent.postMessage({ pbmix: 'err', msg: 'Не получилось открыть игру' }, location.origin); return; }
       ref(`ws/${k}/sq/${OPEN}`).once('value').then(x => { if (!x.val()) throw 0; CFG = normCfg(x.val()); newGame(); }).catch(() => window.parent.postMessage({ pbmix: 'err', msg: 'Не получилось открыть игру' }, location.origin));
     });

@@ -236,7 +236,7 @@ function renderLive(force) {
   if (!built || force) {
     built = true;
     $('app').innerHTML = `<div class="top mtop"><div class="in"><a class="brand" href="../">${BRAND('')}</a><div class="rpills" id="ctl"></div><span class="sp"></span><span class="cdm" id="cdm"></span><button class="btn ghost sm" id="bScr">${ico('monitor', 15)}Экран</button><button class="btn ghost sm" id="bPh">${ico('phone', 15)}Телефон</button><button class="btn ghost sm" id="bEnd">Завершить вечер</button></div></div>` +
-      (inRound ? `<iframe class="frame full" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1')}" allow="autoplay; fullscreen"></iframe>` :
+      (inRound ? `<iframe class="frame full" id="rf" src="${appUrl(r.k, 'open=' + encodeURIComponent(r.id) + '&mix=1' + (S.rg ? '&rg=' + encodeURIComponent(S.rg) : ''))}" allow="autoplay; fullscreen"></iframe>` :
         `<div class="live2">${S.ph === 'round' && r && r.k === 'sm' ? `<div class="hold"><h2>Секретная миссия</h2><p>Гости играют по своим телефонам — экран показывает QR на игру. Панель ведущего — в отдельной вкладке.</p><a class="btn gold" href="${esc(r.adm || '../host/')}" target="_blank" rel="noopener">${ico('ext', 15)}Открыть панель миссии</a></div>` :
         `<div class="lgrid"><div><div class="pane" id="scp"></div></div><div><div class="stg16"><iframe src="${BASE}?view=screen&g=${encodeURIComponent(S.id)}&pv=1" title="Экран"></iframe><span class="stl">${S.ph === 'lobby' ? 'Команды подключаются — нажмите раунд вверху, он сразу запустится' : S.ph === 'between' ? 'Раунд завершён — нажмите следующий раунд вверху' : 'Финал вечера'}</span></div>` +
         `<div class="pane" style="margin-top:14px"><h4>Общий счёт<span class="sp"></span><span class="muted" id="onl" style="letter-spacing:0;text-transform:none;font-size:12px"></span></h4><div class="tt" id="tt"></div><div class="codebox"><div><div class="k">Вход для команд</div><b id="cd"></b></div><span style="flex:1"></span><button class="btn ghost sm" id="bPh2">${ico('phone', 14)}Открыть телефон</button></div></div></div></div>`}</div>`);
@@ -345,7 +345,7 @@ function viewPlay() {
 }
 
 /* ================= запуск ================= */
-const TAB = Math.random().toString(36).slice(2);
+let TAB = ''; try { TAB = sessionStorage.getItem('pbm_tab') || ''; if (!TAB) { TAB = Math.random().toString(36).slice(2); sessionStorage.setItem('pbm_tab', TAB); } } catch (e) { TAB = Math.random().toString(36).slice(2); }
 setInterval(() => { if (VIEW === 'host' && S && S.id) try { localStorage.setItem('pbm_hb', JSON.stringify({ id: S.id, tab: TAB, t: Date.now() })); } catch (e) {} }, 1500);
 function bootHost() {
   const live = ls('get', KEY_LIVE), FROM = P.get('from'), OPEN = P.get('open'), PICK = P.get('pick');
